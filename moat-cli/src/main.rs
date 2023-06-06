@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
 
     // let data = json_file(cli.json_path, ts_override)?;
-    WalletPath::set_cache_dir(&cli.profile)?;
+    // WalletPath::set_cache_dir(&cli.profile)?;
     let wallet_path =
         WalletPath::from(cli.profile.as_path().join("wallet.dat"));
     let config_path = cli.profile.as_path().join("gov_config.toml");

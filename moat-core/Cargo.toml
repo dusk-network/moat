@@ -23,7 +23,8 @@ blake3 = "1.3"
 blake2 = { version = "0.10", default-features = false }
 
 # Stack
-dusk-wallet = "0.14"
+#dusk-wallet = "0.14"
+dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", branch = "rkyv" }
 rand = "0.8"
 dusk-pki = "0.10.0-rc.1"
 dusk-bytes = "0.1.6"

@@ -4,6 +4,4 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-mod error;
-mod request;
-mod request_json;
+pub struct Request(pub Vec<u8>);

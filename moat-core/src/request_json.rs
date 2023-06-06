@@ -6,24 +6,31 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::Error;
+use crate::request::Request;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
-use crate::error::Error;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct RequestJson {
     pub user: String,
     pub provider: String,
-    pub body: String
+    pub body: String,
 }
 
 impl RequestJson {
-    pub fn from_file<T: AsRef<Path>>( path: T) -> Result<RequestJson, Error> {
+    pub fn from_file<T: AsRef<Path>>(path: T) -> Result<RequestJson, Error> {
         let mut content = String::new();
         let file = File::open(path.as_ref())?;
         let mut reader = BufReader::new(file);
         reader.read_to_string(&mut content)?;
-        serde_json::from_str(&content).map_err(|e|e.into())
+        serde_json::from_str(&content).map_err(|e| e.into())
+    }
+
+    pub fn to_request(&self) -> Request {
+        let serialized = serde_json::to_string(&self)
+            .expect("Request json serialization should work");
+        Request(serialized.as_bytes().to_vec())
     }
 }
