@@ -1,0 +1,2 @@
+[workspace]
+members = ["moat-cli", "moat-core", "wallet-accessor"]

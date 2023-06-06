@@ -1,0 +1,4 @@
+rusk_address = "https://devnet.nodes.dusk.network:8585"
+prover_address = "https://devnet.provers.dusk.network:8686"
+graphql_address = "http://devnet.nodes.dusk.network:9500/graphql"
+
