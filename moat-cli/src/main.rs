@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let cli = Args::parse();
 
-    let ts_override = cli.now.then(|| {
+    let _ts_override = cli.now.then(|| {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time should go forward")
@@ -36,9 +36,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // WalletPath::set_cache_dir(&cli.profile)?;
     let wallet_path =
         WalletPath::from(cli.profile.as_path().join("wallet.dat"));
-    let config_path = cli.profile.as_path().join("gov_config.toml");
+    let _config_path = cli.profile.as_path().join("gov_config.toml");
 
-    let wallet_accessor = WalletAccessor {
+    let _wallet_accessor = WalletAccessor {
         pwd: cli.password,
         path: wallet_path,
     };

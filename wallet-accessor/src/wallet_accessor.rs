@@ -8,7 +8,6 @@ use dusk_wallet::gas::Gas;
 use dusk_wallet::{SecureWalletFile, Wallet, WalletPath};
 use dusk_wallet_core::{MAX_CALL_SIZE, Transaction};
 use rusk_abi::ModuleId;
-use dusk_bls12_381::BlsScalar;
 use rkyv::ser::serializers::AllocSerializer;
 use serde::{Deserialize, Serialize};
 use toml_base_config::BaseConfig;
@@ -47,6 +46,7 @@ impl WalletAccessor {
         &self,
         data: C,
         contract_id: ModuleId,
+        call_name: String,
         gas_limit: u64,
         gas_price: Option<u64>,
     ) -> Result<Vec<u8>, dusk_wallet::Error>
@@ -54,11 +54,11 @@ impl WalletAccessor {
         C: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
         let wallet_accessor = WalletAccessor { path: self.path.clone(), pwd: self.pwd.clone()};
-        let mut wallet = Wallet::from_file(wallet_accessor)?;
+        let wallet = Wallet::from_file(wallet_accessor)?;
         let sender = wallet.default_address();
         let mut gas = Gas::new(gas_limit);
         gas.set_price(gas_price);
-        let tx: Transaction = wallet.execute(sender, contract_id, "TODO".to_string(), data, gas).await?;
+        let tx: Transaction = wallet.execute(sender, contract_id, call_name, data, gas).await?;
         Ok(tx.to_hash_input_bytes())
     }
 }
