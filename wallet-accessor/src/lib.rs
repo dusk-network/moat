@@ -1,3 +1,3 @@
 mod wallet_accessor;
 
-pub use wallet_accessor::WalletAccessor;
+pub use crate::wallet_accessor::WalletAccessor;

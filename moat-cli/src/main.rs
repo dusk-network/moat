@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .as_millis() as u64
     });
 
-    let data = json_file(cli.json_path, ts_override)?;
+    // let data = json_file(cli.json_path, ts_override)?;
     WalletPath::set_cache_dir(&cli.profile)?;
     let wallet_path =
         WalletPath::from(cli.profile.as_path().join("wallet.dat"));
