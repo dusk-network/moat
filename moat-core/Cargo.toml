@@ -1,0 +1,32 @@
+[package]
+name = "moat-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Parsing
+csv = "1.1"
+serde = { version = "1", features = ["derive"] }
+tracing = "0.1"
+serde_json = "1.0"
+
+# Network connection
+gql_client = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Data type helpers
+chrono = { version = "0.4", features = ["serde"] }
+bs58 = "0.4"
+toml-base-config = "0.1"
+blake3 = "1.3"
+blake2 = { version = "0.10", default-features = false }
+
+# Stack
+dusk-wallet = "0.14"
+rand = "0.8"
+dusk-pki = "0.10.0-rc.1"
+dusk-bytes = "0.1.6"
+dusk-abi = "0.11.0"
+dusk-bls12_381-sign = "0.3.0-rc"
+dusk-bls12_381 = { version = "0.9", default-features = false, features = ["alloc", "pairings", "endo"] }
