@@ -13,8 +13,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use clap::Parser;
 use dusk_wallet::WalletPath;
-use governance_core::prelude::*;
 use tracing::Level;
+use wallet_caller_lib::WalletAccessor;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -38,14 +38,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
         WalletPath::from(cli.profile.as_path().join("wallet.dat"));
     let config_path = cli.profile.as_path().join("gov_config.toml");
 
-    let wallet = SecureWallet {
+    let wallet_accessor = WalletAccessor {
         pwd: cli.password,
         path: wallet_path,
     };
 
-    let contract = Governance::new(wallet, config_path)?;
-
-    contract.send_data(data).await?;
+    // let contract = Governance::new(wallet, config_path)?;
+    //
+    // contract.send_data(data).await?;
 
     Ok(())
 }

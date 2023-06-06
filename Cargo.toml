@@ -1,2 +1,2 @@
 [workspace]
-members = ["moat-cli", "moat-core"]
+members = ["moat-cli", "moat-core", "wallet-caller-lib"]
