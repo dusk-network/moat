@@ -1,5 +1,5 @@
 [package]
-name = "wallet-caller-lib"
+name = "wallet-accessor"
 version = "0.1.0"
 edition = "2021"
 

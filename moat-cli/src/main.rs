@@ -14,7 +14,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use clap::Parser;
 use dusk_wallet::WalletPath;
 use tracing::Level;
-use wallet_caller_lib::WalletAccessor;
+use wallet_accessor::WalletAccessor;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
