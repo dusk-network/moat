@@ -12,7 +12,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct RequestJson {
     pub user: String,
     pub provider: String,

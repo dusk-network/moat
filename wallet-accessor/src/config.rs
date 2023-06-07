@@ -7,7 +7,7 @@
 use toml_base_config::BaseConfig;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct BlockchainAccessConfig {
     pub rusk_address: String,
     pub prover_address: String,

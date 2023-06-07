@@ -11,7 +11,7 @@ use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 use rusk_abi::ModuleId;
 
 
-struct RequestSender;
+pub struct RequestSender;
 
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];

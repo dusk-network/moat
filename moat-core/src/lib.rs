@@ -8,3 +8,7 @@ mod error;
 mod request;
 mod request_json;
 mod request_sender;
+
+pub use error::Error;
+pub use request_json::RequestJson;
+pub use request_sender::RequestSender;
