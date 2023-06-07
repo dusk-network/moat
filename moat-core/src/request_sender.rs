@@ -8,6 +8,8 @@ use crate::error::Error;
 use crate::request::Request;
 use dusk_wallet::WalletPath;
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
+use rusk_abi::ModuleId;
+
 
 struct RequestSender;
 
@@ -21,7 +23,7 @@ impl RequestSender {
     /// main orchestrating function sending requests to the license contract
     /// it drives wallet accessor instantiation
     /// accepts Request as argument
-    pub fn send(
+    pub async fn send(
         request: Request,
         cfg: &BlockchainAccessConfig,
         wallet_path: WalletPath,
@@ -31,7 +33,7 @@ impl RequestSender {
             path: wallet_path,
             pwd: password,
         };
-        wallet_accessor.send(request, LICENSE_CONTRACT_ID, "noop".to_string(), cfg)?;
+        wallet_accessor.send(request, LICENSE_CONTRACT_ID, "noop".to_string(), cfg).await?;
         Ok(())
     }
 }

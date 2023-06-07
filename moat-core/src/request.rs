@@ -4,4 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use bytecheck::CheckBytes;
+use rkyv::{Archive, Deserialize, Serialize};
+
+#[derive(Archive, Serialize, Deserialize)]
+#[archive_attr(derive(CheckBytes))]
 pub struct Request(pub Vec<u8>);

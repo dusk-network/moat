@@ -11,7 +11,7 @@ use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
 use dusk_wallet_core::{Transaction, MAX_CALL_SIZE};
 use rkyv::ser::serializers::AllocSerializer;
 use rusk_abi::ModuleId;
-use serde::{Deserialize, Serialize};
+use tracing::info;
 
 #[derive(Debug)]
 pub struct WalletAccessor {
@@ -45,7 +45,7 @@ impl WalletAccessor {
             pwd: self.pwd.clone(),
         };
         let mut wallet = Wallet::from_file(wallet_accessor)?;
-        let (_, sec_key) = wallet.provisioner_keys(wallet.default_address())?;
+        // let (_, sec_key) = wallet.provisioner_keys(wallet.default_address())?;
         let transport_tcp = TransportTCP::new(
             cfg.rusk_address.clone(),
             cfg.prover_address.clone(),
@@ -59,9 +59,11 @@ impl WalletAccessor {
 
         assert!(wallet.is_online(), "Wallet is not online");
 
-        let gql = GraphQL::new(cfg.graphql_address.clone(), |s| {
-            tracing::info!(target: "graphql", "{s}",);
-        });
+        // todo: we might add gql here to be able to obtain
+        // confirmation that transaction has
+        // let gql = GraphQL::new(cfg.graphql_address.clone(), |s| {
+        //     tracing::info!(target: "graphql", "{s}",);
+        // });
 
         info!("Sending request");
 
@@ -72,7 +74,7 @@ impl WalletAccessor {
             .execute(sender, contract_id, call_name, data, gas)
             .await?;
         let tx_id = rusk_abi::hash(tx.to_hash_input_bytes());
-        gql.wait_for(&tx_id).await?;
+        // gql.wait_for(&tx_id).await?;
         Ok(tx_id)
     }
 }
