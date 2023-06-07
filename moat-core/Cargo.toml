@@ -31,3 +31,4 @@ dusk-bytes = "0.1.6"
 dusk-abi = "0.11.0"
 dusk-bls12_381-sign = "0.3.0-rc"
 dusk-bls12_381 = { version = "0.9", default-features = false, features = ["alloc", "pairings", "endo"] }
+wallet-accessor = { path = "../wallet-accessor" }
