@@ -10,8 +10,8 @@ use moat_core::{Error, RequestJson, RequestSender};
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 use toml_base_config::BaseConfig;
 
-#[test]
-fn send_request() -> Result<(), Error> {
+#[tokio::test]
+async fn send_request() -> Result<(), Error> {
 
     let request_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request.json");
     let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
@@ -31,7 +31,7 @@ fn send_request() -> Result<(), Error> {
     println!("11={:?}", request);
     println!("22={:?}", blockchain_access_config);
 
-    RequestSender::send(request, &blockchain_access_config, wallet_path, password);
+    RequestSender::send(request, &blockchain_access_config, wallet_path, password).await?;
 
     Ok(())
 }
