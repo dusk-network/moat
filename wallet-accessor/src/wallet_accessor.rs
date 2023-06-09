@@ -44,6 +44,7 @@ impl WalletAccessor {
             path: self.path.clone(),
             pwd: self.pwd.clone(),
         };
+        println!("Loading wallet from file {}", wallet_accessor.path);
         let mut wallet = Wallet::from_file(wallet_accessor)?;
         // let (_, sec_key) = wallet.provisioner_keys(wallet.default_address())?;
         let transport_tcp = TransportTCP::new(
@@ -67,9 +68,16 @@ impl WalletAccessor {
 
         info!("Sending request");
 
-        let sender = wallet.default_address();
+        // let sender = wallet.default_address(); // todo - go back to default address
+        let sender = wallet.addresses().get(1).expect("address exists");
         let mut gas = Gas::new(cfg.gas_limit);
         gas.set_price(cfg.gas_price);
+
+        // pub const TX_TRANSFER: u8 = 0x04;
+        // let payload = (Self::seed(&transfers), TX_TRANSFER, transfers);
+        // let data = Self::signed_payload(&sec_key, payload);
+
+        println!("Gas={:?}", gas);
         let tx: Transaction = wallet
             .execute(sender, contract_id, call_name, data, gas)
             .await?;
@@ -77,4 +85,5 @@ impl WalletAccessor {
         // gql.wait_for(&tx_id).await?;
         Ok(tx_id)
     }
+
 }

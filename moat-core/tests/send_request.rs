@@ -10,7 +10,7 @@ use moat_core::{Error, RequestJson, RequestSender};
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 use toml_base_config::BaseConfig;
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 async fn send_request() -> Result<(), Error> {
 
     let request_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request.json");
@@ -22,11 +22,11 @@ async fn send_request() -> Result<(), Error> {
 
     let blockchain_access_config = BlockchainAccessConfig::load_path(config_path)?;
 
-    // todo: missing path to wallet
+    // todo: missing proper path to wallet passing mechanism here
     let wallet_path =
-        WalletPath::from(PathBuf::from("abc").as_path().join("wallet.dat"));
-    // todo: missing password
-    let password = String::from("abc");
+        WalletPath::from(PathBuf::from("/Users/miloszm/.dusk/rusk-wallet").as_path().join("wallet.dat"));
+    // todo: missing proper password passing mechanism here
+    let password = String::from("hyundai23!");
 
     println!("11={:?}", request);
     println!("22={:?}", blockchain_access_config);
