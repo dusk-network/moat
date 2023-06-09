@@ -68,8 +68,8 @@ impl WalletAccessor {
 
         info!("Sending request");
 
-        // let sender = wallet.default_address(); // todo - go back to default address
-        let sender = wallet.addresses().get(1).expect("address exists");
+        let sender = wallet.default_address();
+        // let sender = wallet.addresses().get(1).expect("address exists");
         let mut gas = Gas::new(cfg.gas_limit);
         gas.set_price(cfg.gas_price);
 
