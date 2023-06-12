@@ -4,34 +4,40 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use std::path::{Path, PathBuf};
 use dusk_wallet::WalletPath;
 use moat_core::{Error, RequestJson, RequestSender};
-use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
+use std::path::PathBuf;
 use toml_base_config::BaseConfig;
+use wallet_accessor::BlockchainAccessConfig;
+
+// todo: wallet path and password belong in test config
+const WALLET_PATH: &str = "/Users/miloszm/.dusk/rusk-wallet";
+const PASSWORD: &str = "hyundai23!";
 
 #[tokio::test(flavor = "multi_thread")]
 async fn send_request() -> Result<(), Error> {
-
-    let request_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request.json");
+    let request_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request.json");
     let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
 
     let request_json = RequestJson::from_file(request_path)?;
 
     let request = request_json.to_request();
 
-    let blockchain_access_config = BlockchainAccessConfig::load_path(config_path)?;
+    let blockchain_access_config =
+        BlockchainAccessConfig::load_path(config_path)?;
 
-    // todo: missing proper path to wallet passing mechanism here
-    let wallet_path =
-        WalletPath::from(PathBuf::from("/Users/miloszm/.dusk/rusk-wallet").as_path().join("wallet.dat"));
-    // todo: missing proper password passing mechanism here
-    let password = String::from("hyundai23!");
+    let wallet_path = WalletPath::from(
+        PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
+    );
 
-    println!("11={:?}", request);
-    println!("22={:?}", blockchain_access_config);
-
-    RequestSender::send(request, &blockchain_access_config, wallet_path, password).await?;
+    RequestSender::send(
+        request,
+        &blockchain_access_config,
+        wallet_path,
+        PASSWORD.to_string(),
+    )
+    .await?;
 
     Ok(())
 }

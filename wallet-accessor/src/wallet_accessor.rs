@@ -7,7 +7,7 @@
 use crate::BlockchainAccessConfig;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
-use dusk_wallet::{Dusk, SecureWalletFile, TransportTCP, Wallet, WalletPath};
+use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
 use dusk_wallet_core::{Transaction, MAX_CALL_SIZE};
 use rkyv::ser::serializers::AllocSerializer;
 use rusk_abi::ModuleId;
@@ -46,7 +46,8 @@ impl WalletAccessor {
         };
         println!("Loading wallet from file {}", wallet_accessor.path);
         let mut wallet = Wallet::from_file(wallet_accessor)?;
-        // let (_, sec_key) = wallet.provisioner_keys(wallet.default_address())?;
+        // let (_, sec_key) =
+        // wallet.provisioner_keys(wallet.default_address())?;
         let transport_tcp = TransportTCP::new(
             cfg.rusk_address.clone(),
             cfg.prover_address.clone(),
@@ -91,5 +92,4 @@ impl WalletAccessor {
         // gql.wait_for(&tx_id).await?;
         Ok(tx_id)
     }
-
 }

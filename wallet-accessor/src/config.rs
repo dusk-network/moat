@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use toml_base_config::BaseConfig;
 use serde::{Deserialize, Serialize};
+use toml_base_config::BaseConfig;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct BlockchainAccessConfig {

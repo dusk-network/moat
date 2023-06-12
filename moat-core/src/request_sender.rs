@@ -7,19 +7,18 @@
 use crate::error::Error;
 use crate::request::Request;
 use dusk_wallet::WalletPath;
-use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 use rusk_abi::ModuleId;
-
+use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 pub struct RequestSender;
 
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
-    bytes[0] = 0x01; // 0xf8; todo - temporarily we make it the TRANSFER contract
+    bytes[0] = 0x01; // 0xf8; todo: - temporarily we make it the TRANSFER contract
     ModuleId::from_bytes(bytes)
 };
 
-const method_name: &str = "root"; // todo - temporarily we make it root, it should be License contract's noop
+const METHOD_NAME: &str = "root"; // todo: - temporarily we make it root, it should be License contract's noop
 
 impl RequestSender {
     /// main orchestrating function sending requests to the license contract
@@ -35,7 +34,9 @@ impl RequestSender {
             path: wallet_path,
             pwd: password,
         };
-        wallet_accessor.send(request, LICENSE_CONTRACT_ID, method_name.to_string(), cfg).await?;
+        wallet_accessor
+            .send(request, LICENSE_CONTRACT_ID, METHOD_NAME.to_string(), cfg)
+            .await?;
         Ok(())
     }
 }
