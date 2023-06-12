@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+#![feature(stmt_expr_attributes)]
 mod args;
 
 use crate::args::Args;
