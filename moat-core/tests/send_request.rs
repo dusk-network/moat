@@ -11,7 +11,7 @@ use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 
 // todo: wallet path and password belong in test config
-const WALLET_PATH: &str = "/Users/miloszm/.dusk/rusk-wallet";
+const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PASSWORD: &str = "hyundai23!";
 
 #[tokio::test(flavor = "multi_thread")]

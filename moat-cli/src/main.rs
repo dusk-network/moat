@@ -9,12 +9,13 @@ mod args;
 use crate::args::Args;
 
 use std::error::Error;
-use std::time::{SystemTime, UNIX_EPOCH};
+use toml_base_config::BaseConfig;
 
 use clap::Parser;
 use dusk_wallet::WalletPath;
+use moat_core::{RequestJson, RequestSender};
 use tracing::Level;
-use wallet_accessor::WalletAccessor;
+use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -25,27 +26,28 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let cli = Args::parse();
 
-    let _ts_override = cli.now.then(|| {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time should go forward")
-            .as_millis() as u64
-    });
+    let json_path = cli.json_path.as_path();
+    let config_path = cli.config_path.as_path();
+    let wallet_path = cli.wallet_path.as_path();
+    let password = cli.password;
 
-    // let data = json_file(cli.json_path, ts_override)?;
-    // WalletPath::set_cache_dir(&cli.profile)?;
-    let wallet_path =
-        WalletPath::from(cli.profile.as_path().join("wallet.dat"));
-    let _config_path = cli.profile.as_path().join("gov_config.toml");
+    let request_json = RequestJson::from_file(json_path)?;
+    let request = request_json.to_request();
 
-    let _wallet_accessor = WalletAccessor {
-        pwd: cli.password,
-        path: wallet_path,
-    };
+    let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
+    let blockchain_access_config =
+        BlockchainAccessConfig::load_path(config_path)?;
 
-    // let contract = Governance::new(wallet, config_path)?;
-    //
-    // contract.send_data(data).await?;
+    RequestSender::send(
+        request,
+        &blockchain_access_config,
+        wallet_path,
+        password,
+    )
+    .await?;
+
+    #[rustfmt::skip]
+    // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --password hyundai23! ./moat-cli/request.json
 
     Ok(())
 }

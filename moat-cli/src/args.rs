@@ -15,15 +15,15 @@ pub struct Args {
     /// Path of the JSON file to be processed
     pub json_path: PathBuf,
 
-    /// Directory to store user data [default: `$HOME/.dusk/rusk-wallet`]
+    /// Wallet directory [default: `$HOME/.dusk/rusk-wallet`]
     #[clap(short, long)]
-    pub profile: PathBuf,
+    pub wallet_path: PathBuf,
 
-    /// Set the password for wallet's creation
+    /// Config directory
+    #[clap(short, long)]
+    pub config_path: PathBuf,
+
+    /// Password for the wallet
     #[clap(long, env = "RUSK_WALLET_PWD")]
     pub password: String,
-
-    /// Use current timestamp instead of the one specified in the input file
-    #[clap(long)]
-    pub now: bool,
 }
