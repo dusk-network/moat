@@ -10,9 +10,10 @@ use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 
-// todo: wallet path and password belong in test config
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PASSWORD: &str = "hyundai23!";
+const GAS_LIMIT: u64 = 500_000_000;
+const GAS_PRICE: u64 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn send_request() -> Result<(), Error> {
@@ -36,6 +37,8 @@ async fn send_request() -> Result<(), Error> {
         &blockchain_access_config,
         wallet_path,
         PASSWORD.to_string(),
+        GAS_LIMIT,
+        GAS_PRICE,
     )
     .await?;
 

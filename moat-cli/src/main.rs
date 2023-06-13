@@ -31,6 +31,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let config_path = cli.config_path.as_path();
     let wallet_path = cli.wallet_path.as_path();
     let password = cli.password;
+    let gas_limit = cli.gas_limit;
+    let gas_price = cli.gas_price;
 
     let request_json = RequestJson::from_file(json_path)?;
     let request = request_json.to_request();
@@ -44,6 +46,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         &blockchain_access_config,
         wallet_path,
         password,
+        gas_limit,
+        gas_price,
     )
     .await?;
 

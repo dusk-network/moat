@@ -29,13 +29,22 @@ impl RequestSender {
         cfg: &BlockchainAccessConfig,
         wallet_path: WalletPath,
         password: String,
+        gas_limit: u64,
+        gas_price: u64,
     ) -> Result<(), Error> {
         let wallet_accessor = WalletAccessor {
             path: wallet_path,
             pwd: password,
         };
         wallet_accessor
-            .send(request, LICENSE_CONTRACT_ID, METHOD_NAME.to_string(), cfg)
+            .send(
+                request,
+                LICENSE_CONTRACT_ID,
+                METHOD_NAME.to_string(),
+                cfg,
+                gas_limit,
+                gas_price,
+            )
             .await?;
         Ok(())
     }

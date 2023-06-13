@@ -36,6 +36,8 @@ impl WalletAccessor {
         contract_id: ModuleId,
         call_name: String,
         cfg: &BlockchainAccessConfig,
+        gas_limit: u64,
+        gas_price: u64,
     ) -> Result<BlsScalar, dusk_wallet::Error>
     where
         C: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
@@ -72,8 +74,8 @@ impl WalletAccessor {
         let sender = wallet.default_address();
         // let rcvr = wallet.addresses().get(1).expect("address exists");
         // let sender = wallet.addresses().get(1).expect("address exists");
-        let mut gas = Gas::new(cfg.gas_limit);
-        gas.set_price(cfg.gas_price);
+        let mut gas = Gas::new(gas_limit);
+        gas.set_price(gas_price);
 
         // pub const TX_TRANSFER: u8 = 0x04;
         // let payload = (Self::seed(&transfers), TX_TRANSFER, transfers);
