@@ -46,10 +46,7 @@ impl WalletAccessor {
             path: self.path.clone(),
             pwd: self.pwd.clone(),
         };
-        println!("Loading wallet from file {}", wallet_accessor.path);
         let mut wallet = Wallet::from_file(wallet_accessor)?;
-        // let (_, sec_key) =
-        // wallet.provisioner_keys(wallet.default_address())?;
         let transport_tcp = TransportTCP::new(
             cfg.rusk_address.clone(),
             cfg.prover_address.clone(),
@@ -61,10 +58,10 @@ impl WalletAccessor {
             })
             .await?;
 
-        assert!(wallet.is_online(), "Wallet is not online");
+        assert!(wallet.is_online(), "Wallet should be online");
 
         // todo: we might add gql here to be able to obtain
-        // confirmation that transaction has
+        // confirmation that transaction has been successfully submitted
         // let gql = GraphQL::new(cfg.graphql_address.clone(), |s| {
         //     tracing::info!(target: "graphql", "{s}",);
         // });
@@ -73,17 +70,9 @@ impl WalletAccessor {
 
         let sender = wallet.default_address();
         // let rcvr = wallet.addresses().get(1).expect("address exists");
-        // let sender = wallet.addresses().get(1).expect("address exists");
         let mut gas = Gas::new(gas_limit);
         gas.set_price(gas_price);
 
-        // pub const TX_TRANSFER: u8 = 0x04;
-        // let payload = (Self::seed(&transfers), TX_TRANSFER, transfers);
-        // let data = Self::signed_payload(&sec_key, payload);
-
-        // let data = ();
-
-        println!("Gas={:?}", gas);
         let tx: Transaction = wallet
             .execute(sender, contract_id, call_name, data, gas)
             .await?;
