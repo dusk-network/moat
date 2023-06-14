@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::WalletPath;
-use moat_core::{Error, RequestJson, RequestSender};
+use moat_core::{Error, Request, RequestJson, RequestSender};
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -23,7 +23,7 @@ async fn send_request() -> Result<(), Error> {
 
     let request_json = RequestJson::from_file(request_path)?;
 
-    let request = request_json.to_request_rkyv();
+    let request = Request::from(&request_json);
 
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;

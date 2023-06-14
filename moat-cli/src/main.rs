@@ -14,7 +14,7 @@ use toml_base_config::BaseConfig;
 
 use clap::Parser;
 use dusk_wallet::WalletPath;
-use moat_core::{RequestJson, RequestSender};
+use moat_core::{Request, RequestJson, RequestSender};
 use tracing::Level;
 use wallet_accessor::BlockchainAccessConfig;
 
@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let gas_price = cli.gas_price;
 
     let request_json = RequestJson::from_file(json_path)?;
-    let request = request_json.to_request_rkyv();
+    let request = Request::from(&request_json);
 
     let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let blockchain_access_config =
