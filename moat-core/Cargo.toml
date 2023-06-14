@@ -15,6 +15,7 @@ rusk-abi = "0.8.0-alpha"
 wallet-accessor = { path = "../wallet-accessor" }
 rkyv = { version = "0.7", default-features = false }
 bytecheck = "0.6"
+gql_client = "1"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
