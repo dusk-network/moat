@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use serde::{Deserialize, Serialize};
+use rkyv::{Archive, Deserialize};
 
 use crate::error::Error;
 use crate::request::Request;
@@ -12,8 +12,15 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct RequestJson {
+    pub user: String,
+    pub provider: String,
+    pub body: String,
+}
+
+#[derive(Debug, Archive, rkyv::Deserialize, rkyv::Serialize)]
+pub struct RequestBody {
     pub user: String,
     pub provider: String,
     pub body: String,
@@ -32,5 +39,22 @@ impl RequestJson {
         let serialized = serde_json::to_string(&self)
             .expect("Request json serialization should work");
         Request(serialized.as_bytes().to_vec())
+    }
+
+    pub fn to_request_rkyv(&self) -> Request {
+        let rb = RequestBody {
+            user: self.user.clone(),
+            provider: self.provider.clone(),
+            body: self.body.clone(),
+        };
+        let serialized = rkyv::to_bytes::<_, 16384>(&rb)
+            .expect("Request serialization should work").to_vec();
+        Request(serialized)
+    }
+
+    pub fn from_request_rkyv(buf: Vec<u8>) -> RequestBody {
+        let archived = unsafe { rkyv::archived_root::<RequestBody>(buf.as_slice()) };
+        let deserialized: RequestBody = archived.deserialize(&mut rkyv::Infallible).unwrap();
+        return deserialized
     }
 }

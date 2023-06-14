@@ -4,9 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use base64::{Engine as _, engine::general_purpose};
 use crate::error::Error;
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
+use crate::request_json::RequestBody;
+use crate::RequestJson;
 
 pub struct RequestRetriever;
 
@@ -46,7 +49,7 @@ impl RequestRetriever {
     pub async fn retrieve(cfg: &BlockchainAccessConfig) -> Result<(), Error>{
         let client = Client::new(cfg.graphql_address.clone());
 
-        let txid= "61f978ec921ff4da4d2a73e1424e5a251f508228f5243630132ec2f1a876b305";
+        let txid= "3eb9e81322f484b4367db41dde033f1b025436a05fc86344009f6b5097cd300d";
 
         let query =
             "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid);
@@ -55,11 +58,15 @@ impl RequestRetriever {
 
         let tx_json: TxJson = serde_json::from_str(response.as_ref().unwrap().transactions.get(0).unwrap().json.as_str()).expect("json conversion should work");
 
-        let request_encoded = tx_json.call.CallData.clone();
+        let request_base64 = tx_json.call.CallData.clone();
+        let request_rkyv = general_purpose::STANDARD.decode(request_base64.clone()).unwrap();
+        let request_body: RequestBody = RequestJson::from_request_rkyv(request_rkyv.clone());
 
         println!("resp={:?}", response);
         println!("tx_json={:?}", tx_json);
-        println!("request_encoded={:?}", request_encoded);
+        println!("request_base64={:?}", request_base64);
+        println!("request_rkyv={}", hex::encode(request_rkyv));
+        println!("request_body={:?}", request_body);
 
         Ok(())
     }

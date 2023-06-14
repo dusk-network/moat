@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let gas_price = cli.gas_price;
 
     let request_json = RequestJson::from_file(json_path)?;
-    let request = request_json.to_request();
+    let request = request_json.to_request_rkyv();
 
     let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let blockchain_access_config =

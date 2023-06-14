@@ -16,6 +16,8 @@ wallet-accessor = { path = "../wallet-accessor" }
 rkyv = { version = "0.7", default-features = false }
 bytecheck = "0.6"
 gql_client = "1"
+base64 = "0.21"
+hex = "0.4"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }

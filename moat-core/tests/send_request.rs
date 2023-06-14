@@ -23,7 +23,7 @@ async fn send_request() -> Result<(), Error> {
 
     let request_json = RequestJson::from_file(request_path)?;
 
-    let request = request_json.to_request();
+    let request = request_json.to_request_rkyv();
 
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
