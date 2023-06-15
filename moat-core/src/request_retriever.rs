@@ -43,8 +43,24 @@ struct TxJson {
     pub call: CallInfoJson,
 }
 
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+struct Header {
+    pub height: u64,
+    pub seed: String,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+struct Block {
+    pub header: Header,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+struct Blocks {
+    pub blocks: Vec<Block>,
+}
+
 impl RequestRetriever {
-    pub async fn retrieve(cfg: &BlockchainAccessConfig) -> Result<(), Error> {
+    pub async fn retrieve_transaction(cfg: &BlockchainAccessConfig) -> Result<(), Error> {
         let client = Client::new(cfg.graphql_address.clone());
 
         let txid =
@@ -79,6 +95,23 @@ impl RequestRetriever {
         println!("request_base64={:?}", request_base64);
         println!("request_rkyv={}", hex::encode(request_rkyv));
         println!("request_body={:?}", request_body);
+
+        Ok(())
+    }
+
+    pub async fn retrieve_block(cfg: &BlockchainAccessConfig) -> Result<(), Error> {
+        let client = Client::new(cfg.graphql_address.clone());
+
+        let block_height= "97117";
+
+        let query =
+            "{blocks(height:9999){ header{height, seed }}}".replace("9999", block_height);
+
+        let response =
+            client.query::<Blocks>(&query).await.expect("todo:"); // todo: remove expect and replace with ?
+
+        println!("resp={:?}", response);
+        println!("blocks={:?}", response.unwrap());
 
         Ok(())
     }

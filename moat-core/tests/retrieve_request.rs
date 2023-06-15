@@ -15,7 +15,8 @@ async fn retrieve_request() -> Result<(), Error> {
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
 
-    RequestRetriever::retrieve(&blockchain_access_config).await?;
+    // RequestRetriever::retrieve_transaction(&blockchain_access_config).await?;
+    RequestRetriever::retrieve_block(&blockchain_access_config).await?;
 
     Ok(())
 }
