@@ -12,20 +12,20 @@ use wallet_accessor::BlockchainAccessConfig;
 
 pub struct RequestRetriever;
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 struct ContractInfo {
     pub method: String,
     pub contract: String,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 struct Tx {
     pub txid: String,
     pub contractinfo: ContractInfo,
     pub json: String,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 struct Transactions {
     pub transactions: Vec<Tx>,
 }
@@ -52,6 +52,7 @@ struct Header {
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 struct Block {
     pub header: Header,
+    pub transactions: Transactions,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
@@ -104,8 +105,10 @@ impl RequestRetriever {
 
         let block_height= "97117";
 
+        // todo: this will fail if there are no transactions in a given block, so first we need to
+        // make sure that a block has transactions
         let query =
-            "{blocks(height:9999){ header{height, seed }}}".replace("9999", block_height);
+            "{blocks(height:9999){ header{height, seed }, transactions{txid, json}}}".replace("9999", block_height);
 
         let response =
             client.query::<Blocks>(&query).await.expect("todo:"); // todo: remove expect and replace with ?
