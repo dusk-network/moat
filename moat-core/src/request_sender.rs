@@ -5,10 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::request::Request;
 use dusk_wallet::WalletPath;
 use rusk_abi::ModuleId;
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
+use zk_citadel::license::Request;
 
 pub struct RequestSender;
 

@@ -4,8 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_bytes::Serializable;
+use dusk_pki::SecretSpendKey;
 use dusk_wallet::WalletPath;
-use moat_core::{Error, Request, RequestJson, RequestSender};
+use moat_core::{Error, RequestCreator, RequestJson, RequestSender};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -23,7 +27,12 @@ async fn send_request() -> Result<(), Error> {
 
     let request_json = RequestJson::from_file(request_path)?;
 
-    let request = Request::from(&request_json);
+    let rng = &mut StdRng::seed_from_u64(0xcafe);
+    let request = RequestCreator::create_from_hex(
+        request_json.user_ssk,
+        request_json.provider_psk,
+        rng,
+    )?;
 
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
@@ -41,6 +50,10 @@ async fn send_request() -> Result<(), Error> {
         GAS_PRICE,
     )
     .await?;
+
+    // todo: remove
+    let ssk = SecretSpendKey::random(rng);
+    println!("ssk={}", hex::encode(ssk.to_bytes()));
 
     Ok(())
 }

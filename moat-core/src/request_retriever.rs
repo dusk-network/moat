@@ -5,7 +5,6 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{RequestBody, RequestJson};
 use base64::{engine::general_purpose, Engine as _};
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
@@ -61,11 +60,13 @@ struct Blocks {
 }
 
 impl RequestRetriever {
-    pub async fn retrieve_transaction(cfg: &BlockchainAccessConfig) -> Result<(), Error> {
+    pub async fn retrieve_transaction(
+        cfg: &BlockchainAccessConfig,
+    ) -> Result<(), Error> {
         let client = Client::new(cfg.graphql_address.clone());
 
         let txid =
-            "3eb9e81322f484b4367db41dde033f1b025436a05fc86344009f6b5097cd300d";
+            "ce90bb9d95192668cfe240d4eea0574bfdf1e7cdfe800f53a034077d2b55dc01";
 
         let query =
             "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid);
@@ -89,29 +90,31 @@ impl RequestRetriever {
         let request_rkyv = general_purpose::STANDARD
             .decode(request_base64.clone())
             .unwrap();
-        let request_body = RequestBody::from(request_rkyv.clone());
+
+        // todo: add here checking if request_rkyv can be deserialized and
+        // is a request that we have actually sent
 
         println!("resp={:?}", response);
         println!("tx_json={:?}", tx_json);
         println!("request_base64={:?}", request_base64);
         println!("request_rkyv={}", hex::encode(request_rkyv));
-        println!("request_body={:?}", request_body);
 
         Ok(())
     }
 
-    pub async fn retrieve_block(cfg: &BlockchainAccessConfig) -> Result<(), Error> {
+    pub async fn retrieve_block(
+        cfg: &BlockchainAccessConfig,
+    ) -> Result<(), Error> {
         let client = Client::new(cfg.graphql_address.clone());
 
-        let block_height= "97117";
+        let block_height = "97117";
 
-        // todo: this will fail if there are no transactions in a given block, so first we need to
-        // make sure that a block has transactions
+        // todo: this will fail if there are no transactions in a given block,
+        // so first we need to make sure that a block has transactions
         let query =
             "{blocks(height:9999){ header{height, seed }, transactions{txid, json}}}".replace("9999", block_height);
 
-        let response =
-            client.query::<Blocks>(&query).await.expect("todo:"); // todo: remove expect and replace with ?
+        let response = client.query::<Blocks>(&query).await.expect("todo:"); // todo: remove expect and replace with ?
 
         println!("resp={:?}", response);
         println!("blocks={:?}", response.unwrap());

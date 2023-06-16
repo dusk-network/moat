@@ -4,19 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rkyv::{Archive, Deserialize};
-
 use crate::error::Error;
-use crate::request::Request;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct RequestJson {
-    pub user: String,
-    pub provider: String,
-    pub body: String,
+    pub user_ssk: String,
+    pub provider_psk: String,
 }
 
 impl RequestJson {
@@ -26,11 +22,5 @@ impl RequestJson {
         let mut reader = BufReader::new(file);
         reader.read_to_string(&mut content)?;
         serde_json::from_str(&content).map_err(|e| e.into())
-    }
-
-    pub fn to_request(&self) -> Request {
-        let serialized = serde_json::to_string(&self)
-            .expect("Request json serialization should work");
-        Request(serialized.as_bytes().to_vec())
     }
 }

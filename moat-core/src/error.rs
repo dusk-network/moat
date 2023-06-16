@@ -15,6 +15,10 @@ pub enum Error {
     FileError(Arc<std::io::Error>),
     #[error(transparent)]
     DuskWalletError(Arc<dusk_wallet::Error>),
+    #[error("A serialization error occurred: {0:?}")]
+    BytesError(Arc<dusk_bytes::Error>),
+    #[error(transparent)]
+    HexError(Arc<hex::FromHexError>),
 }
 
 impl From<serde_json::Error> for Error {
@@ -32,5 +36,17 @@ impl From<std::io::Error> for Error {
 impl From<dusk_wallet::Error> for Error {
     fn from(e: dusk_wallet::Error) -> Self {
         Error::DuskWalletError(Arc::from(e))
+    }
+}
+
+impl From<dusk_bytes::Error> for Error {
+    fn from(e: dusk_bytes::Error) -> Self {
+        Error::BytesError(Arc::from(e))
+    }
+}
+
+impl From<hex::FromHexError> for Error {
+    fn from(e: hex::FromHexError) -> Self {
+        Error::HexError(Arc::from(e))
     }
 }

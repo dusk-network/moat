@@ -14,3 +14,4 @@ moat-core = { path = "../moat-core" }
 wallet-accessor = { path = "../wallet-accessor" }
 tracing = "0.1"
 tracing-subscriber = "0.3"
+rand = "0.8"

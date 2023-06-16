@@ -9,12 +9,13 @@ mod args;
 
 use crate::args::Args;
 
-use std::error::Error;
-use toml_base_config::BaseConfig;
-
 use clap::Parser;
 use dusk_wallet::WalletPath;
-use moat_core::{Request, RequestJson, RequestSender};
+use moat_core::{RequestCreator, RequestJson, RequestSender};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
+use std::error::Error;
+use toml_base_config::BaseConfig;
 use tracing::Level;
 use wallet_accessor::BlockchainAccessConfig;
 
@@ -35,7 +36,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let gas_price = cli.gas_price;
 
     let request_json = RequestJson::from_file(json_path)?;
-    let request = Request::from(&request_json);
+    let rng = &mut StdRng::seed_from_u64(0xcafe);
+    let request = RequestCreator::create_from_hex(
+        request_json.user_ssk,
+        request_json.provider_psk,
+        rng,
+    )?;
 
     let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let blockchain_access_config =
