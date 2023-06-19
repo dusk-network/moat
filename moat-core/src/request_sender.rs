@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
+use dusk_jubjub::BlsScalar;
 use dusk_wallet::WalletPath;
 use rusk_abi::ModuleId;
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
@@ -31,12 +32,12 @@ impl RequestSender {
         password: String,
         gas_limit: u64,
         gas_price: u64,
-    ) -> Result<(), Error> {
+    ) -> Result<BlsScalar, Error> {
         let wallet_accessor = WalletAccessor {
             path: wallet_path,
             pwd: password,
         };
-        wallet_accessor
+        let tx_id = wallet_accessor
             .send(
                 request,
                 LICENSE_CONTRACT_ID,
@@ -46,6 +47,6 @@ impl RequestSender {
                 gas_price,
             )
             .await?;
-        Ok(())
+        Ok(tx_id)
     }
 }

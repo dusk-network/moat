@@ -30,7 +30,7 @@ impl RequestCreator {
         let request = Request::new(psk_lp, &lsa, &k_lic, rng);
         Ok(request)
     }
-    pub fn create_from_hex<
+    pub fn create_from_hex_args<
         R: RngCore + CryptoRng,
         S: AsRef<str>,
         T: AsRef<str>,

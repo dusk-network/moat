@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let request_json = RequestJson::from_file(json_path)?;
     let rng = &mut StdRng::seed_from_u64(0xcafe);
-    let request = RequestCreator::create_from_hex(
+    let request = RequestCreator::create_from_hex_args(
         request_json.user_ssk,
         request_json.provider_psk,
         rng,
