@@ -4,10 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::{Error, PayloadRetriever, RequestRetriever};
+use moat_core::{Error, RequestRetriever};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
-use zk_citadel::license::Request;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn retrieve_block() -> Result<(), Error> {

@@ -4,10 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use bytecheck::CheckBytes;
-use rkyv::{
-    archived_root, Archive, Archived, Deserialize, Infallible, Serialize,
-};
+use rkyv::{archived_root, Archive, Deserialize, Infallible};
 
 use crate::error::Error;
 use crate::retrieval_types::{Transactions, TxJson};
@@ -46,10 +43,9 @@ impl PayloadRetriever {
         )
         .expect("json conversion should work");
 
-        let payload_base64 = tx_json.call.CallData.clone();
-        let payload_ser = general_purpose::STANDARD
-            .decode(payload_base64.clone())
-            .unwrap();
+        let payload_base64 = tx_json.call.CallData;
+        let payload_ser =
+            general_purpose::STANDARD.decode(payload_base64).unwrap();
 
         let payload = unsafe { archived_root::<P>(payload_ser.as_slice()) };
         let p: P = payload.deserialize(&mut Infallible).expect("Infallible");

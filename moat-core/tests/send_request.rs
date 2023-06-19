@@ -4,16 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_bytes::Serializable;
-use dusk_pki::SecretSpendKey;
 use dusk_wallet::WalletPath;
 use moat_core::{
-    Error, PayloadRetriever, RequestCreator, RequestJson, RequestRetriever,
-    RequestSender,
+    Error, PayloadRetriever, RequestCreator, RequestJson, RequestSender,
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use rkyv::Serialize;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -82,7 +78,7 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
             PayloadRetriever::retrieve_tx_payload(tx_id.as_ref().clone(), &bac)
                 .await;
         if result.is_err() && i < (NUM_RETRIES - 1) {
-            sleep(Duration::from_millis(1000));
+            let _ = sleep(Duration::from_millis(1000));
             continue;
         }
         return result;

@@ -23,6 +23,7 @@ pub struct Transactions {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[allow(non_snake_case)]
 pub struct CallInfoJson {
     pub ContractID: String,
     pub FnName: String,

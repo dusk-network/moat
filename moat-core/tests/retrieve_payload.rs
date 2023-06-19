@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::{Error, PayloadRetriever, RequestRetriever};
+use moat_core::{Error, PayloadRetriever};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;

@@ -4,14 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use bytecheck::CheckBytes;
-use rkyv::{
-    archived_root, Archive, Archived, Deserialize, Infallible, Serialize,
-};
+// use rkyv::{
+//     archived_root, Archive, Archived, Deserialize, Infallible, Serialize,
+// };
 
 use crate::error::Error;
 use crate::retrieval_types::Blocks;
-use base64::{engine::general_purpose, Engine as _};
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
 
