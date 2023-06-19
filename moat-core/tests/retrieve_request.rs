@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::{Error, RequestRetriever};
+use moat_core::{Error, PayloadRetriever, RequestRetriever};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
@@ -19,7 +19,7 @@ async fn retrieve_request() -> Result<(), Error> {
     const TXID: &str =
         "ce90bb9d95192668cfe240d4eea0574bfdf1e7cdfe800f53a034077d2b55dc01";
 
-    let _: Request = RequestRetriever::retrieve_tx_payload(
+    let _: Request = PayloadRetriever::retrieve_tx_payload(
         TXID,
         &blockchain_access_config,
     )
