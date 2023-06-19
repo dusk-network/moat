@@ -40,9 +40,7 @@ async fn send_request() -> Result<(), Error> {
         request_json.provider_psk,
         rng,
     )?;
-    let request_vec = rkyv::to_bytes::<_, 8192>(&request)
-        .unwrap()
-        .to_vec();
+    let request_vec = rkyv::to_bytes::<_, 8192>(&request).unwrap().to_vec();
 
     let bac = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -61,27 +59,33 @@ async fn send_request() -> Result<(), Error> {
     .await?;
 
     let tx_id_hex = format!("{:x}", tx_id);
-    assert!(check_request_in_blockchain(request_vec, tx_id_hex, &bac).await);
+    let retrieved_request =
+        get_request_from_blockchain(tx_id_hex, &bac).await?;
+    assert_eq!(
+        request_vec,
+        rkyv::to_bytes::<_, 8192>(&retrieved_request)
+            .unwrap()
+            .to_vec(),
+        "requests not equal"
+    );
 
     Ok(())
 }
 
-async fn check_request_in_blockchain<S: AsRef<str>>(
-    request_vec: Vec<u8>,
+async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,
     bac: &BlockchainAccessConfig,
-) -> bool {
-    let NUM_RETRIES = 20;
-    for _ in 0..NUM_RETRIES {
-        let result: Result<Request, Error> =
+) -> Result<Request, Error> {
+    const NUM_RETRIES: i32 = 20;
+    for i in 0..NUM_RETRIES {
+        let result =
             PayloadRetriever::retrieve_tx_payload(tx_id.as_ref().clone(), &bac)
                 .await;
-        if result.is_err() {
+        if result.is_err() && i < (NUM_RETRIES - 1) {
             sleep(Duration::from_millis(1000));
-        } else {
-            let request = result.unwrap();
-            return request_vec == rkyv::to_bytes::<_, 8192>(&request).unwrap().to_vec()
+            continue;
         }
+        return result;
     }
-    false
+    unreachable!()
 }
