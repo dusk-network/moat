@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use gql_client::Client;
 use moat_core::{Error, RequestRetriever};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -12,10 +13,16 @@ use wallet_accessor::BlockchainAccessConfig;
 async fn retrieve_block() -> Result<(), Error> {
     let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
 
-    let blockchain_access_config =
+    let cfg =
         BlockchainAccessConfig::load_path(config_path)?;
 
-    RequestRetriever::retrieve_block(&blockchain_access_config).await?;
+    let client = Client::new(cfg.graphql_address.clone());
+
+    const BLOCK_HEIGHT: u64 = 276701;
+
+    let txs = RequestRetriever::retrieve_txs_from_block(&client, BLOCK_HEIGHT).await?;
+
+    assert_eq!(txs.transactions.len(), 1);
 
     Ok(())
 }
