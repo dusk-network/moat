@@ -45,7 +45,7 @@ pub struct Header {
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Block {
     pub header: Header,
-    pub transactions: Transactions,
+    pub transactions: Vec<Tx>,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]

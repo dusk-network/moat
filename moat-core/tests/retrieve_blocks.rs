@@ -18,11 +18,13 @@ async fn retrieve_block() -> Result<(), Error> {
 
     let client = Client::new(cfg.graphql_address.clone());
 
-    const BLOCK_HEIGHT: u64 = 276701;
+    const BLOCK_HEIGHT: u64 = 97117;
 
     let txs = RequestRetriever::retrieve_txs_from_block(&client, BLOCK_HEIGHT).await?;
 
     assert_eq!(txs.transactions.len(), 1);
+
+    println!("transactions={:?}", txs);
 
     Ok(())
 }

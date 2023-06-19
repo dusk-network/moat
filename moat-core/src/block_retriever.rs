@@ -20,7 +20,7 @@ impl RequestRetriever {
         let mut transactions = Transactions::default();
 
         let query =
-            "{blocks(height:9999){ header{height, seed }, transactions{txid, json}}}".replace("9999", block_height_str.as_str());
+            "{blocks(height:9999){ header{height, seed }, transactions{txid, contractinfo{method, contract}, json}}}".replace("9999", block_height_str.as_str());
 
         let result = client.query::<Blocks>(&query).await.map_err(|e|e.into());
 
@@ -29,7 +29,7 @@ impl RequestRetriever {
             Ok(None) => Ok(Transactions::default()),
             Ok(Some(blocks)) => {
                 for block in blocks.blocks {
-                    transactions.transactions.extend(block.transactions.transactions);
+                    transactions.transactions.extend(block.transactions);
                 }
                 Ok(transactions)
             }
