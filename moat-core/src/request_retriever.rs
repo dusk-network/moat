@@ -4,6 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use bytecheck::CheckBytes;
+use rkyv::{
+    archived_root, Archive, Archived, Deserialize, Infallible, Serialize,
+};
+
 use crate::error::Error;
 use base64::{engine::general_purpose, Engine as _};
 use gql_client::Client;
@@ -60,16 +65,19 @@ struct Blocks {
 }
 
 impl RequestRetriever {
-    pub async fn retrieve_transaction(
+    pub async fn retrieve_tx_payload<P, S>(
+        txid: S,
         cfg: &BlockchainAccessConfig,
-    ) -> Result<(), Error> {
+    ) -> Result<P, Error>
+    where
+        P: Archive,
+        P::Archived: Deserialize<P, Infallible>,
+        S: AsRef<str>,
+    {
         let client = Client::new(cfg.graphql_address.clone());
 
-        let txid =
-            "ce90bb9d95192668cfe240d4eea0574bfdf1e7cdfe800f53a034077d2b55dc01";
-
         let query =
-            "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid);
+            "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid.as_ref());
 
         let response =
             client.query::<Transactions>(&query).await.expect("todo:"); // todo: remove expect and replace with ?
@@ -86,20 +94,14 @@ impl RequestRetriever {
         )
         .expect("json conversion should work");
 
-        let request_base64 = tx_json.call.CallData.clone();
-        let request_rkyv = general_purpose::STANDARD
-            .decode(request_base64.clone())
+        let payload_base64 = tx_json.call.CallData.clone();
+        let payload_ser = general_purpose::STANDARD
+            .decode(payload_base64.clone())
             .unwrap();
 
-        // todo: add here checking if request_rkyv can be deserialized and
-        // is a request that we have actually sent
-
-        println!("resp={:?}", response);
-        println!("tx_json={:?}", tx_json);
-        println!("request_base64={:?}", request_base64);
-        println!("request_rkyv={}", hex::encode(request_rkyv));
-
-        Ok(())
+        let payload = unsafe { archived_root::<P>(payload_ser.as_slice()) };
+        let p: P = payload.deserialize(&mut Infallible).expect("Infallible");
+        Ok(p)
     }
 
     pub async fn retrieve_block(
