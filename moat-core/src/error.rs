@@ -19,6 +19,8 @@ pub enum Error {
     BytesError(Arc<dusk_bytes::Error>),
     #[error(transparent)]
     HexError(Arc<hex::FromHexError>),
+    #[error("A GraphQL error occurred: {0:?}")]
+    GQLError(Box<str>),
 }
 
 impl From<serde_json::Error> for Error {
@@ -48,5 +50,11 @@ impl From<dusk_bytes::Error> for Error {
 impl From<hex::FromHexError> for Error {
     fn from(e: hex::FromHexError) -> Self {
         Error::HexError(Arc::from(e))
+    }
+}
+
+impl From<gql_client::GraphQLError> for Error {
+    fn from(e: gql_client::GraphQLError) -> Self {
+        Error::GQLError(Box::from(e.message()))
     }
 }

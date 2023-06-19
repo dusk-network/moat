@@ -32,8 +32,7 @@ impl PayloadRetriever {
         let query =
             "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid.as_ref());
 
-        let response =
-            client.query::<Transactions>(&query).await.expect("todo:"); // todo: remove expect and replace with ?
+        let response = client.query::<Transactions>(&query).await?;
 
         let tx_json: TxJson = serde_json::from_str(
             response

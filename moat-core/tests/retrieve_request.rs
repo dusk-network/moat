@@ -19,11 +19,9 @@ async fn retrieve_request() -> Result<(), Error> {
     const TXID: &str =
         "ce90bb9d95192668cfe240d4eea0574bfdf1e7cdfe800f53a034077d2b55dc01";
 
-    let _: Request = PayloadRetriever::retrieve_tx_payload(
-        TXID,
-        &blockchain_access_config,
-    )
-    .await?;
+    let _: Request =
+        PayloadRetriever::retrieve_tx_payload(TXID, &blockchain_access_config)
+            .await?;
 
     Ok(())
 }
