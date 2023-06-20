@@ -17,7 +17,7 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 
     let client = Client::new(cfg.graphql_address.clone());
 
-    const BLOCK_HEIGHT: u64 = 97117;
+    const BLOCK_HEIGHT: u64 = 317042;
 
     let txs =
         TxsRetriever::retrieve_txs_from_block(&client, BLOCK_HEIGHT).await?;

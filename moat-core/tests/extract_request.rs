@@ -17,3 +17,25 @@ fn extract_request_not_present() -> Result<(), Error> {
     assert!(result.is_err());
     Ok(())
 }
+
+#[test]
+fn extract_request_present() -> Result<(), Error> {
+    let tx_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/tx_with_request.json");
+    let tx = Tx::from_file(tx_path)?;
+
+    let result = RequestExtractor::extract_request_from_tx(&tx);
+    assert!(result.is_ok());
+    Ok(())
+}
+
+#[test]
+fn extract_bad_payload() -> Result<(), Error> {
+    let tx_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/tx_bad_payload.json");
+    let tx = Tx::from_file(tx_path)?;
+
+    let result = RequestExtractor::extract_request_from_tx(&tx);
+    assert!(result.is_err());
+    Ok(())
+}

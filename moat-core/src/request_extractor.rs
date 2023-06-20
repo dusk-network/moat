@@ -4,8 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rkyv::{archived_root, Archive, Deserialize, Infallible};
-use std::mem;
+use rkyv::{Deserialize, Infallible, check_archived_root};
 
 use crate::error::Error;
 use crate::retrieval_types::{Tx, TxJson};
@@ -19,16 +18,12 @@ impl RequestExtractor {
     pub fn extract_request_from_tx(tx: &Tx) -> Result<Request, Error> {
         let tx_json: TxJson = serde_json::from_str(tx.json.as_str())
             .expect("json conversion should work");
-        println!("obtained TxJson={:?}", tx_json);
         let payload_base64 = tx_json.call.CallData;
-        let payload_ser =
-            general_purpose::STANDARD.decode(payload_base64).unwrap();
-        if payload_ser.len() < mem::size_of::<<Request as Archive>::Archived>()
-        {
-            return Err(RequestNotPresent);
-        }
+        let payload_ser = general_purpose::STANDARD
+            .decode(payload_base64)
+            .map_err(|_| RequestNotPresent)?;
         let payload =
-            unsafe { archived_root::<Request>(payload_ser.as_slice()) };
+            check_archived_root::<Request>(payload_ser.as_slice()).map_err(|_|RequestNotPresent)?;
         let request: Request =
             payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(request)
