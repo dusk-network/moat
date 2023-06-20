@@ -16,9 +16,8 @@ impl RequestScanner {
     fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
-            match RequestExtractor::extract_request_from_tx(tx) {
-                Ok(request) => requests.push(request),
-                _ => (),
+            if let Ok(request) = RequestExtractor::extract_request_from_tx(tx) {
+                requests.push(request)
             }
         }
         requests
@@ -47,7 +46,7 @@ impl RequestScanner {
         let txs = TxsRetriever::retrieve_txs_from_block_range(
             &client,
             height_beg,
-            height_end_excl
+            height_end_excl,
         )
         .await?;
         let requests = RequestScanner::scan_transactions(txs);

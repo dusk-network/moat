@@ -10,7 +10,8 @@ use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn scan_requests_in_lasts_blocks() -> Result<(), Error> {
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -27,7 +28,8 @@ async fn scan_requests_in_lasts_blocks() -> Result<(), Error> {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn scan_requests_in_block_range() -> Result<(), Error> {
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -35,7 +37,8 @@ async fn scan_requests_in_block_range() -> Result<(), Error> {
     const HEIGHT_END_EXCL: u64 = 317048;
 
     let requests =
-        RequestScanner::scan_block_range(HEIGHT_BEG, HEIGHT_END_EXCL, &cfg).await?;
+        RequestScanner::scan_block_range(HEIGHT_BEG, HEIGHT_END_EXCL, &cfg)
+            .await?;
 
     println!("requests={:?}", requests);
     println!("there were {} requests found", requests.len());

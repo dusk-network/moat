@@ -23,30 +23,26 @@ impl TxsRetriever {
         .await
     }
 
+    // range retrieval seems to have a limit of 10k
     pub async fn retrieve_txs_from_block_range(
         client: &Client,
         height_beg: u64,
-        height_end_excl: u64,
+        height_end: u64,
     ) -> Result<Transactions, Error> {
         let mut transactions = Transactions::default();
-        for height in height_beg..height_end_excl {
-            let single_block_query = height_end_excl == height_beg + 1;
-            let height_str = format!("{}", height);
-            println!("retrieving {}", height_str);
-            let query =
-                "{blocks(height:9999){ header{height, seed }, transactions{txid, contractinfo{method, contract}, json}}}".replace("9999", height_str.as_str());
-            let result =
-                client.query::<Blocks>(&query).await.map_err(|e| e.into());
-            match result {
-                e @ Err(_) if single_block_query => {
-                    return e.map(|_| Transactions::default())
-                }
-                Err(_) | Ok(None) => (),
-                Ok(Some(blocks)) => {
-                    for block in blocks.blocks {
-                        transactions.transactions.extend(block.transactions);
-                    }
-                }
+        let range_str = format!("{},{}", height_beg, height_end);
+        println!("retrieving {}", range_str);
+        let query =
+            "{transactions(blocksrange: [####]){txid, contractinfo{method, contract}, json}}".replace("####", range_str.as_str());
+        let result = client
+            .query::<Transactions>(&query)
+            .await
+            .map_err(|e| e.into());
+        match result {
+            e @ Err(_) => return e.map(|_| Transactions::default()),
+            Ok(None) => (),
+            Ok(Some(txs)) => {
+                transactions.transactions.extend(txs.transactions);
             }
         }
         Ok(transactions)

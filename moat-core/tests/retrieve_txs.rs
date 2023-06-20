@@ -11,7 +11,8 @@ use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
 async fn retrieve_txs_from_block() -> Result<(), Error> {
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -29,14 +30,15 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn retrieve_txs_from_block_range() -> Result<(), Error> {
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
     let client = Client::new(cfg.graphql_address.clone());
 
     const BLOCK_HEIGHT_BEG: u64 = 97117;
-    const BLOCK_HEIGHT_END: u64 = 97127;
+    const BLOCK_HEIGHT_END: u64 = 107117;
 
     let txs = TxsRetriever::retrieve_txs_from_block_range(
         &client,
@@ -52,7 +54,8 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
