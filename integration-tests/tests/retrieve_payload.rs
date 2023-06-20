@@ -4,26 +4,27 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use gql_client::Client;
 use moat_core::{Error, PayloadRetriever};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
-// todo: we assume that the transaction contains payload of type Request
-// this is an integration test, not a unit test
 #[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "integration_tests"), ignore)]
 async fn retrieve_payload() -> Result<(), Error> {
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
-    let blockchain_access_config =
-        BlockchainAccessConfig::load_path(config_path)?;
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = Client::new(config.graphql_address.clone());
 
     const TXID: &str =
-        "1136b127bd037276499bee489c25a4bf9501e8d68f93dd666f1ab9eb39c72a04";
+        "5f486c6f4edc9321e15a83993aa68463e733fc482acbde979881450c83c92a0e";
 
     let request: Request =
-        PayloadRetriever::retrieve_tx_payload(TXID, &blockchain_access_config)
-            .await?;
+        PayloadRetriever::retrieve_payload(TXID, &client).await?;
 
     println!("request={:?}", request);
 

@@ -1,0 +1,23 @@
+[package]
+name = "integration-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+moat-core={ path = "../moat-core" }
+
+[dev-dependencies]
+zk-citadel = { path="../../citadel" }
+wallet-accessor = { path = "../wallet-accessor" }
+dusk-wallet = { path = "../../wallet-cli" }
+tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
+toml-base-config = "0.1"
+#gql_client = "1"
+gql_client = { path = "../../gql-client-rs" }
+rand = "0.8"
+rkyv = { version = "0.7", default-features = false }
+bytecheck = "0.6"
+
+[features]
+integration_tests = []
+expensive_tests = []

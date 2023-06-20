@@ -7,11 +7,11 @@
 use crate::error::Error;
 use dusk_jubjub::BlsScalar;
 use dusk_wallet::WalletPath;
+use rkyv::ser::serializers::AllocSerializer;
 use rusk_abi::ModuleId;
-use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
-use zk_citadel::license::Request;
+use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
-pub struct RequestSender;
+pub struct PayloadSender;
 
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
@@ -21,25 +21,28 @@ const LICENSE_CONTRACT_ID: ModuleId = {
 
 const METHOD_NAME: &str = "root"; // todo: - temporarily we make it root, it should be License contract's noop
 
-impl RequestSender {
-    /// main orchestrating function sending requests to the license contract
-    /// it drives wallet accessor instantiation
-    /// accepts Request as argument
-    pub async fn send(
-        request: Request,
+const MAX_CALL_SIZE: usize = 65536;
+
+impl PayloadSender {
+    /// Sends a given payload to blockchain
+    pub async fn send<P>(
+        payload: P,
         cfg: &BlockchainAccessConfig,
         wallet_path: WalletPath,
-        password: String,
+        password: Password,
         gas_limit: u64,
         gas_price: u64,
-    ) -> Result<BlsScalar, Error> {
+    ) -> Result<BlsScalar, Error>
+    where
+        P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
+    {
         let wallet_accessor = WalletAccessor {
             path: wallet_path,
             pwd: password,
         };
         let tx_id = wallet_accessor
             .send(
-                request,
+                payload,
                 LICENSE_CONTRACT_ID,
                 METHOD_NAME.to_string(),
                 cfg,

@@ -4,19 +4,28 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use crate::BlockchainAccessConfig;
+use blake3::Hash;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
 use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
 use dusk_wallet_core::{Transaction, MAX_CALL_SIZE};
 use rkyv::ser::serializers::AllocSerializer;
 use rusk_abi::ModuleId;
+use std::str::FromStr;
 use tracing::info;
+
+#[derive(Debug, Clone)]
+pub enum Password {
+    Pwd(String),
+    PwdHash(String),
+}
 
 #[derive(Debug)]
 pub struct WalletAccessor {
     pub path: WalletPath,
-    pub pwd: String,
+    pub pwd: Password,
 }
 
 impl SecureWalletFile for WalletAccessor {
@@ -25,7 +34,12 @@ impl SecureWalletFile for WalletAccessor {
     }
 
     fn pwd(&self) -> blake3::Hash {
-        blake3::hash(self.pwd.as_bytes())
+        match &self.pwd {
+            Pwd(s) => blake3::hash(s.as_bytes()),
+            PwdHash(h) => {
+                Hash::from_str(h.as_str()).unwrap_or(Hash::from([0u8; 32]))
+            }
+        }
     }
 }
 
@@ -60,12 +74,6 @@ impl WalletAccessor {
 
         assert!(wallet.is_online(), "Wallet should be online");
 
-        // todo: we might add gql here to be able to obtain
-        // confirmation that transaction has been successfully submitted
-        // let gql = GraphQL::new(cfg.graphql_address.clone(), |s| {
-        //     tracing::info!(target: "graphql", "{s}",);
-        // });
-
         info!("Sending request");
 
         let sender = wallet.default_address();
@@ -81,7 +89,6 @@ impl WalletAccessor {
         //     .await?;
         let tx_id = rusk_abi::hash(tx.to_hash_input_bytes());
         info!("TX_ID={:x}", tx_id);
-        // gql.wait_for(&tx_id).await?;
         Ok(tx_id)
     }
 }

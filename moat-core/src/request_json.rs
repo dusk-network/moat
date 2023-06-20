@@ -4,10 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::error::Error;
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::Path;
+use crate::json_loader::JsonLoader;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct RequestJson {
@@ -15,12 +12,4 @@ pub struct RequestJson {
     pub provider_psk: String,
 }
 
-impl RequestJson {
-    pub fn from_file<T: AsRef<Path>>(path: T) -> Result<RequestJson, Error> {
-        let mut content = String::new();
-        let file = File::open(path.as_ref())?;
-        let mut reader = BufReader::new(file);
-        reader.read_to_string(&mut content)?;
-        serde_json::from_str(&content).map_err(|e| e.into())
-    }
-}
+impl JsonLoader for RequestJson {}

@@ -4,51 +4,29 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rkyv::{archived_root, Archive, Deserialize, Infallible};
+use bytecheck::CheckBytes;
+use rkyv::validation::validators::DefaultValidator;
+use rkyv::{Archive, Deserialize, Infallible};
 
 use crate::error::Error;
-use crate::retrieval_types::{Transactions, TxJson};
-use base64::{engine::general_purpose, Engine as _};
+use crate::{PayloadExtractor, TxRetriever};
 use gql_client::Client;
-use wallet_accessor::BlockchainAccessConfig;
 
 pub struct PayloadRetriever;
 
 impl PayloadRetriever {
-    pub async fn retrieve_tx_payload<P, S>(
+    /// Retrieves payload of a transaction with a given tx id
+    pub async fn retrieve_payload<P, S>(
         txid: S,
-        cfg: &BlockchainAccessConfig,
+        client: &Client,
     ) -> Result<P, Error>
     where
         P: Archive,
-        P::Archived: Deserialize<P, Infallible>,
+        P::Archived: Deserialize<P, Infallible>
+            + for<'b> CheckBytes<DefaultValidator<'b>>,
         S: AsRef<str>,
     {
-        let client = Client::new(cfg.graphql_address.clone());
-
-        let query =
-            "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid.as_ref());
-
-        let response = client.query::<Transactions>(&query).await?;
-
-        let tx_json: TxJson = serde_json::from_str(
-            response
-                .as_ref()
-                .unwrap()
-                .transactions
-                .get(0)
-                .unwrap()
-                .json
-                .as_str(),
-        )
-        .expect("json conversion should work");
-
-        let payload_base64 = tx_json.call.CallData;
-        let payload_ser =
-            general_purpose::STANDARD.decode(payload_base64).unwrap();
-
-        let payload = unsafe { archived_root::<P>(payload_ser.as_slice()) };
-        let p: P = payload.deserialize(&mut Infallible).expect("Infallible");
-        Ok(p)
+        let tx = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
+        PayloadExtractor::payload_from_tx(&tx)
     }
 }

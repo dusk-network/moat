@@ -9,8 +9,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
-    #[error("RequestNotPresent")]
-    RequestNotPresent,
+    #[error("Payload not present or incorrect: {0:?}")]
+    PayloadNotPresent(Box<str>),
     #[error(transparent)]
     JsonParsingError(Arc<serde_json::Error>),
     #[error(transparent)]
@@ -23,6 +23,10 @@ pub enum Error {
     HexError(Arc<hex::FromHexError>),
     #[error("A GraphQL error occurred: {0:?}")]
     GQLError(Box<str>),
+    #[error("TransactionNotFound")]
+    TransactionNotFound,
+    #[error("A base64 decode error occurred: {0:?}")]
+    Base64DecodeError(Arc<base64::DecodeError>),
 }
 
 impl From<serde_json::Error> for Error {
@@ -58,5 +62,11 @@ impl From<hex::FromHexError> for Error {
 impl From<gql_client::GraphQLError> for Error {
     fn from(e: gql_client::GraphQLError) -> Self {
         Error::GQLError(Box::from(e.message()))
+    }
+}
+
+impl From<base64::DecodeError> for Error {
+    fn from(e: base64::DecodeError) -> Self {
+        Error::Base64DecodeError(Arc::from(e))
     }
 }
