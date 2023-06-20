@@ -4,13 +4,16 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{RequestExtractor, Transactions};
+use crate::error::Error;
+use crate::{RequestExtractor, Transactions, TxsRetriever};
+use gql_client::Client;
+use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
 pub struct RequestScanner;
 
 impl RequestScanner {
-    pub fn scan(txs: Transactions) -> Vec<Request> {
+    fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
             match RequestExtractor::extract_request_from_tx(tx) {
@@ -19,5 +22,19 @@ impl RequestScanner {
             }
         }
         requests
+    }
+
+    pub async fn scan_last_blocks(
+        last_n_blocks: u32,
+        cfg: &BlockchainAccessConfig,
+    ) -> Result<Vec<Request>, Error> {
+        let client = Client::new(cfg.graphql_address.clone());
+        let txs = TxsRetriever::retrieve_txs_from_last_n_blocks(
+            &client,
+            last_n_blocks,
+        )
+        .await?;
+        let requests = RequestScanner::scan_transactions(txs);
+        Ok(requests)
     }
 }

@@ -4,8 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use gql_client::Client;
-use moat_core::{Error, RequestScanner, TxsRetriever};
+use moat_core::{Error, RequestScanner};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 
@@ -15,12 +14,10 @@ async fn scan_requests() -> Result<(), Error> {
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
-    let client = Client::new(cfg.graphql_address.clone());
+    const SCAN_N_LAST_BLOCKS: u32 = 10000;
 
-    const N: u32 = 10000;
-    let txs = TxsRetriever::retrieve_txs_from_last_n_blocks(&client, N).await?;
-
-    let requests = RequestScanner::scan(txs);
+    let requests =
+        RequestScanner::scan_last_blocks(SCAN_N_LAST_BLOCKS, &cfg).await?;
 
     println!("requests={:?}", requests);
     println!("there were {} requests found", requests.len());
