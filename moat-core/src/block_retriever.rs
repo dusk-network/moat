@@ -4,9 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use gql_client::Client;
 use crate::error::Error;
 use crate::retrieval_types::{Blocks, Transactions};
+use gql_client::Client;
 
 pub struct RequestRetriever;
 
@@ -15,24 +15,62 @@ impl RequestRetriever {
         client: &Client,
         block_height: u64,
     ) -> Result<Transactions, Error> {
-        let block_height_str = format!("{}", block_height);
+        RequestRetriever::retrieve_txs_from_block_range(
+            client,
+            block_height,
+            block_height + 1,
+        )
+        .await
+    }
 
+    pub async fn retrieve_txs_from_block_range(
+        client: &Client,
+        height_beg: u64,
+        height_end_excl: u64,
+    ) -> Result<Transactions, Error> {
         let mut transactions = Transactions::default();
+        for height in height_beg..height_end_excl {
+            let single_block_query = height_end_excl == height_beg + 1;
+            let height_str = format!("{}", height);
+            println!("retrieving {}", height_str);
+            let query =
+                "{blocks(height:9999){ header{height, seed }, transactions{txid, contractinfo{method, contract}, json}}}".replace("9999", height_str.as_str());
+            let result =
+                client.query::<Blocks>(&query).await.map_err(|e| e.into());
+            match result {
+                e @ Err(_) if single_block_query => {
+                    return e.map(|_| Transactions::default())
+                }
+                Err(_) | Ok(None) => (),
+                Ok(Some(blocks)) => {
+                    for block in blocks.blocks {
+                        transactions.transactions.extend(block.transactions);
+                    }
+                }
+            }
+        }
+        Ok(transactions)
+    }
 
+    pub async fn retrieve_txs_from_last_n_blocks(
+        client: &Client,
+        n: u32,
+    ) -> Result<Transactions, Error> {
+        let mut transactions = Transactions::default();
+        let n_str = format!("{}", n);
+        println!("retrieving {}", n_str);
         let query =
-            "{blocks(height:9999){ header{height, seed }, transactions{txid, contractinfo{method, contract}, json}}}".replace("9999", block_height_str.as_str());
-
-        let result = client.query::<Blocks>(&query).await.map_err(|e|e.into());
-
+            "{blocks(last:9999){ header{height, seed }, transactions{txid, contractinfo{method, contract}, json}}}".replace("9999", n_str.as_str());
+        let result = client.query::<Blocks>(&query).await.map_err(|e| e.into());
         match result {
-            e@Err(_) => e.map(|_|Transactions::default()),
-            Ok(None) => Ok(Transactions::default()),
+            e @ Err(_) => return e.map(|_| Transactions::default()),
+            Ok(None) => (),
             Ok(Some(blocks)) => {
                 for block in blocks.blocks {
                     transactions.transactions.extend(block.transactions);
                 }
-                Ok(transactions)
             }
         }
+        Ok(transactions)
     }
 }

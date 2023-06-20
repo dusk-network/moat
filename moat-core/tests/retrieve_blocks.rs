@@ -13,16 +13,60 @@ use wallet_accessor::BlockchainAccessConfig;
 async fn retrieve_block() -> Result<(), Error> {
     let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
 
-    let cfg =
-        BlockchainAccessConfig::load_path(config_path)?;
+    let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
     let client = Client::new(cfg.graphql_address.clone());
 
     const BLOCK_HEIGHT: u64 = 97117;
 
-    let txs = RequestRetriever::retrieve_txs_from_block(&client, BLOCK_HEIGHT).await?;
+    let txs = RequestRetriever::retrieve_txs_from_block(&client, BLOCK_HEIGHT)
+        .await?;
 
     assert_eq!(txs.transactions.len(), 1);
+
+    println!("transactions={:?}", txs);
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn retrieve_block_range() -> Result<(), Error> {
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
+
+    let cfg = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = Client::new(cfg.graphql_address.clone());
+
+    const BLOCK_HEIGHT_BEG: u64 = 97117;
+    const BLOCK_HEIGHT_END: u64 = 97127;
+
+    let txs = RequestRetriever::retrieve_txs_from_block_range(
+        &client,
+        BLOCK_HEIGHT_BEG,
+        BLOCK_HEIGHT_END,
+    )
+    .await?;
+
+    assert_eq!(txs.transactions.len(), 1);
+
+    println!("transactions={:?}", txs);
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn retrieve_last_n_blocks() -> Result<(), Error> {
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
+
+    let cfg = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = Client::new(cfg.graphql_address.clone());
+
+    const N: u32 = 10000;
+    let txs =
+        RequestRetriever::retrieve_txs_from_last_n_blocks(&client, N).await?;
+
+    // assert_eq!(txs.transactions.len(), 1);
 
     println!("transactions={:?}", txs);
 

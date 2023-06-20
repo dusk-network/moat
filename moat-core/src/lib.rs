@@ -4,17 +4,17 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+mod block_retriever;
 mod error;
 mod payload_retriever;
 mod request_creator;
 mod request_json;
-mod block_retriever;
 mod request_sender;
 mod retrieval_types;
 
+pub use block_retriever::RequestRetriever;
 pub use error::Error;
 pub use payload_retriever::PayloadRetriever;
 pub use request_creator::RequestCreator;
 pub use request_json::RequestJson;
-pub use block_retriever::RequestRetriever;
 pub use request_sender::RequestSender;
