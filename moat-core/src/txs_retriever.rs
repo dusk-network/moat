@@ -8,14 +8,14 @@ use crate::error::Error;
 use crate::retrieval_types::{Blocks, Transactions};
 use gql_client::Client;
 
-pub struct RequestRetriever;
+pub struct TxsRetriever;
 
-impl RequestRetriever {
+impl TxsRetriever {
     pub async fn retrieve_txs_from_block(
         client: &Client,
         block_height: u64,
     ) -> Result<Transactions, Error> {
-        RequestRetriever::retrieve_txs_from_block_range(
+        TxsRetriever::retrieve_txs_from_block_range(
             client,
             block_height,
             block_height + 1,

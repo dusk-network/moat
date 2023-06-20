@@ -4,6 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::error::Error;
+use std::fs::File;
+use std::io::{BufReader, Read};
+use std::path::Path;
+
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct ContractInfo {
     pub method: String,
@@ -15,6 +20,17 @@ pub struct Tx {
     pub txid: String,
     pub contractinfo: ContractInfo,
     pub json: String,
+}
+
+// todo:
+impl Tx {
+    pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Tx, Error> {
+        let mut content = String::new();
+        let file = File::open(path.as_ref())?;
+        let mut reader = BufReader::new(file);
+        reader.read_to_string(&mut content)?;
+        serde_json::from_str(&content).map_err(|e| e.into())
+    }
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
