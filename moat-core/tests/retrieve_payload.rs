@@ -13,7 +13,7 @@ use zk_citadel::license::Request;
 // this is an integration test, not a unit test
 #[tokio::test(flavor = "multi_thread")]
 async fn retrieve_payload() -> Result<(), Error> {
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;

@@ -25,8 +25,8 @@ const GAS_PRICE: u64 = 1;
 #[tokio::test(flavor = "multi_thread")]
 async fn send_request() -> Result<(), Error> {
     let request_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request.json");
-    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let request_json = RequestJson::from_file(request_path)?;
 
