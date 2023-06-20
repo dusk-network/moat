@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rkyv::{Deserialize, Infallible, check_archived_root};
+use rkyv::{check_archived_root, Deserialize, Infallible};
 
 use crate::error::Error;
 use crate::retrieval_types::{Tx, TxJson};
@@ -22,8 +22,8 @@ impl RequestExtractor {
         let payload_ser = general_purpose::STANDARD
             .decode(payload_base64)
             .map_err(|_| RequestNotPresent)?;
-        let payload =
-            check_archived_root::<Request>(payload_ser.as_slice()).map_err(|_|RequestNotPresent)?;
+        let payload = check_archived_root::<Request>(payload_ser.as_slice())
+            .map_err(|_| RequestNotPresent)?;
         let request: Request =
             payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(request)
