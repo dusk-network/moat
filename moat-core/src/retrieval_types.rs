@@ -58,23 +58,23 @@ pub struct Header {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct Block {
+pub struct BlockWithTxs {
     pub header: Header,
     pub transactions: Vec<Tx>,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Blocks {
-    pub blocks: Vec<Block>,
+    pub blocks: Vec<BlockWithTxs>,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct Block2 {
+pub struct Block {
     pub header: Header,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct QueryResult {
-    pub blocks: Vec<Block2>,
+    pub blocks: Vec<Block>,
     pub transactions: Vec<Tx>,
 }
