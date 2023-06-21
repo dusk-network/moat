@@ -37,17 +37,18 @@ impl RequestScanner {
         Ok(requests)
     }
 
+    /// Returns found requests and current top block height
     pub async fn scan_block_range(
         height_beg: u64,
         height_end: u64,
         cfg: &BlockchainAccessConfig,
-    ) -> Result<Vec<Request>, Error> {
+    ) -> Result<(Vec<Request>, u64), Error> {
         let client = Client::new(cfg.graphql_address.clone());
-        let (txs, _) = TxsRetriever::retrieve_txs_from_block_range(
+        let (txs, top) = TxsRetriever::retrieve_txs_from_block_range(
             &client, height_beg, height_end,
         )
         .await?;
         let requests = RequestScanner::scan_transactions(txs);
-        Ok(requests)
+        Ok((requests, top))
     }
 }

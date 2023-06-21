@@ -34,7 +34,6 @@ impl TxsRetriever {
         let mut transactions = Transactions::default();
         let mut top_block: u64 = 0;
         let range_str = format!("{},{}", height_beg, height_end);
-        println!("retrieving {}", range_str);
         let query =
             "{blocks(height:-1){header{height}}, transactions(blocksrange: [####]){txid, contractinfo{method, contract}, json}}".replace("####", range_str.as_str());
         let result = client
@@ -65,7 +64,6 @@ impl TxsRetriever {
     ) -> Result<Transactions, Error> {
         let mut transactions = Transactions::default();
         let n_str = format!("{}", n);
-        println!("retrieving {}", n_str);
         let query =
             "{blocks(last:9999){ header{height}, transactions{txid, contractinfo{method, contract}, json}}}".replace("9999", n_str.as_str());
         let result = client.query::<Blocks>(&query).await.map_err(|e| e.into());

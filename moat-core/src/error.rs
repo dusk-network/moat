@@ -9,8 +9,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
-    #[error("RequestNotPresent")]
-    RequestNotPresent,
+    #[error("Request not present or incorrect: {0:?}")]
+    RequestNotPresent(Box<str>),
     #[error(transparent)]
     JsonParsingError(Arc<serde_json::Error>),
     #[error(transparent)]

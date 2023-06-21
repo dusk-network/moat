@@ -16,14 +16,13 @@ pub struct RequestExtractor;
 
 impl RequestExtractor {
     pub fn extract_request_from_tx(tx: &Tx) -> Result<Request, Error> {
-        let tx_json: TxJson = serde_json::from_str(tx.json.as_str())
-            .expect("json conversion should work");
+        let tx_json: TxJson = serde_json::from_str(tx.json.as_str())?;
         let payload_base64 = tx_json.call.CallData;
         let payload_ser = general_purpose::STANDARD
             .decode(payload_base64)
-            .map_err(|_| RequestNotPresent)?;
+            .map_err(|_| RequestNotPresent(Box::from("base64 decoding error")))?;
         let payload = check_archived_root::<Request>(payload_ser.as_slice())
-            .map_err(|_| RequestNotPresent)?;
+            .map_err(|_| RequestNotPresent(Box::from("rkyv deserialization error")))?;
         let request: Request =
             payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(request)
