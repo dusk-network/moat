@@ -40,14 +40,17 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
     const BLOCK_HEIGHT_BEG: u64 = 97117;
     const BLOCK_HEIGHT_END: u64 = 107117;
 
-    let txs = TxsRetriever::retrieve_txs_from_block_range(
+    let (txs, top_block) = TxsRetriever::retrieve_txs_from_block_range(
         &client,
         BLOCK_HEIGHT_BEG,
         BLOCK_HEIGHT_END,
     )
     .await?;
 
+    assert!(top_block > 0);
+
     println!("transactions={:?}", txs);
+    println!("current top block={}", top_block);
 
     Ok(())
 }

@@ -55,7 +55,6 @@ pub struct TxJson {
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Header {
     pub height: u64,
-    pub seed: String,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
@@ -67,4 +66,15 @@ pub struct Block {
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Blocks {
     pub blocks: Vec<Block>,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct Block2 {
+    pub header: Header,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct QueryResult {
+    pub blocks: Vec<Block2>,
+    pub transactions: Vec<Tx>,
 }
