@@ -18,7 +18,7 @@ use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
-const PASSWORD: &str = "hyundai23!";
+const PASSWORD: &str = "password";
 const GAS_LIMIT: u64 = 500_000_000;
 const GAS_PRICE: u64 = 1;
 

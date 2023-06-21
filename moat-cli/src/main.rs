@@ -58,7 +58,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .await?;
 
     #[rustfmt::skip]
-    // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --password hyundai23! ./moat-cli/request.json
+    // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --password password ./moat-cli/request.json
 
     Ok(())
 }

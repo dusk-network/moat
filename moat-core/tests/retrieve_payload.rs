@@ -20,7 +20,7 @@ async fn retrieve_payload() -> Result<(), Error> {
         BlockchainAccessConfig::load_path(config_path)?;
 
     const TXID: &str =
-        "1136b127bd037276499bee489c25a4bf9501e8d68f93dd666f1ab9eb39c72a04";
+        "838fc827da179a010ec92a39a15aa0c213fbd9de74241d68dbf938f24737aa04";
 
     let request: Request =
         PayloadRetriever::retrieve_tx_payload(TXID, &blockchain_access_config)
