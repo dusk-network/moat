@@ -60,12 +60,6 @@ impl WalletAccessor {
 
         assert!(wallet.is_online(), "Wallet should be online");
 
-        // todo: we might add gql here to be able to obtain
-        // confirmation that transaction has been successfully submitted
-        // let gql = GraphQL::new(cfg.graphql_address.clone(), |s| {
-        //     tracing::info!(target: "graphql", "{s}",);
-        // });
-
         info!("Sending request");
 
         let sender = wallet.default_address();
@@ -81,7 +75,6 @@ impl WalletAccessor {
         //     .await?;
         let tx_id = rusk_abi::hash(tx.to_hash_input_bytes());
         info!("TX_ID={:x}", tx_id);
-        // gql.wait_for(&tx_id).await?;
         Ok(tx_id)
     }
 }
