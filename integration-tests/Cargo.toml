@@ -20,3 +20,4 @@ bytecheck = "0.6"
 
 [features]
 integration_tests = []
+expensive_tests = []

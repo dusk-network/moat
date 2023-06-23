@@ -9,6 +9,9 @@ They can later be retrieved using the explorer API.
 To run unit tests:
 `cargo t`
 
-To run all tests including integration tests:
+To run unit tests and integration tests:
 `cargo t --features integration_tests`
+
+To run unit tests and expensive tests:
+`cargo t --features expensive_tests`
 

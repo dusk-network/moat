@@ -13,7 +13,7 @@ use zk_citadel::license::Request;
 pub struct RequestScanner;
 
 impl RequestScanner {
-    fn scan_transactions(txs: Transactions) -> Vec<Request> {
+    pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
             if let Ok(request) = RequestExtractor::extract_request_from_tx(tx) {
