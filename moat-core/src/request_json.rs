@@ -15,6 +15,7 @@ pub struct RequestJson {
     pub provider_psk: String,
 }
 
+// todo: duplication
 impl RequestJson {
     pub fn from_file<T: AsRef<Path>>(path: T) -> Result<RequestJson, Error> {
         let mut content = String::new();
