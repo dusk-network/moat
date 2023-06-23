@@ -20,8 +20,11 @@ async fn scan_requests_in_lasts_blocks() -> Result<(), Error> {
     let requests =
         RequestScanner::scan_last_blocks(SCAN_N_LAST_BLOCKS, &cfg).await?;
 
-    println!("requests={:?}", requests);
-    println!("there were {} requests found", requests.len());
+    println!(
+        "there were {} requests found in last n={} blocks",
+        requests.len(),
+        SCAN_N_LAST_BLOCKS
+    );
 
     Ok(())
 }
@@ -37,11 +40,14 @@ async fn scan_requests_in_block_range() -> Result<(), Error> {
     const HEIGHT_END: u64 = 317048;
 
     let (requests, _) =
-        RequestScanner::scan_block_range(HEIGHT_BEG, HEIGHT_END, &cfg)
-            .await?;
+        RequestScanner::scan_block_range(HEIGHT_BEG, HEIGHT_END, &cfg).await?;
 
-    println!("requests={:?}", requests);
-    println!("there were {} requests found", requests.len());
+    println!(
+        "there were {} requests found in block range from {} to {}",
+        requests.len(),
+        HEIGHT_BEG,
+        HEIGHT_END
+    );
 
     Ok(())
 }
@@ -57,10 +63,15 @@ async fn scan_all_requests() -> Result<(), Error> {
     loop {
         let height_end = height + 10000;
         let (requests, top) =
-            RequestScanner::scan_block_range(height, height_end, &cfg)
-                .await?;
+            RequestScanner::scan_block_range(height, height_end, &cfg).await?;
 
-        println!("{} requests in range ({},{}) top={}", requests.len(), height, height_end, top);
+        println!(
+            "{} requests in range ({},{}) top={}",
+            requests.len(),
+            height,
+            height_end,
+            top
+        );
 
         if top <= height_end {
             break;

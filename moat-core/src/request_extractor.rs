@@ -20,9 +20,13 @@ impl RequestExtractor {
         let payload_base64 = tx_json.call.CallData;
         let payload_ser = general_purpose::STANDARD
             .decode(payload_base64)
-            .map_err(|_| RequestNotPresent(Box::from("base64 decoding error")))?;
+            .map_err(|_| {
+                RequestNotPresent(Box::from("base64 decoding error"))
+            })?;
         let payload = check_archived_root::<Request>(payload_ser.as_slice())
-            .map_err(|_| RequestNotPresent(Box::from("rkyv deserialization error")))?;
+            .map_err(|_| {
+                RequestNotPresent(Box::from("rkyv deserialization error"))
+            })?;
         let request: Request =
             payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(request)

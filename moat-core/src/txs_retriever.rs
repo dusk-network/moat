@@ -21,7 +21,8 @@ impl TxsRetriever {
             block_height,
             block_height + 1,
         )
-        .await.map(|(txs, _)|txs)
+        .await
+        .map(|(txs, _)| txs)
     }
 
     // range retrieval seems to have a limit of 10k

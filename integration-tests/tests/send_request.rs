@@ -23,6 +23,7 @@ const GAS_LIMIT: u64 = 500_000_000;
 const GAS_PRICE: u64 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "integration_tests"), ignore)]
 async fn send_request() -> Result<(), Error> {
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
@@ -56,6 +57,7 @@ async fn send_request() -> Result<(), Error> {
     .await?;
 
     let tx_id_hex = format!("{:x}", tx_id);
+    println!("tx_id={}", tx_id_hex);
     let retrieved_request =
         get_request_from_blockchain(tx_id_hex, &bac).await?;
     assert_eq!(
@@ -73,7 +75,7 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,
     bac: &BlockchainAccessConfig,
 ) -> Result<Request, Error> {
-    const NUM_RETRIES: i32 = 20;
+    const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
         let result =
             PayloadRetriever::retrieve_tx_payload(tx_id.as_ref().clone(), &bac)

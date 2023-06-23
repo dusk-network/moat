@@ -15,8 +15,8 @@ rusk-abi = "0.8.0-alpha"
 wallet-accessor = { path = "../wallet-accessor" }
 rkyv = { version = "0.7", default-features = false }
 bytecheck = "0.6"
-gql_client = "1"
-#gql_client = { path = "../../gql-client-rs" }
+#gql_client = "1"
+gql_client = { path = "../../gql-client-rs" }
 base64 = "0.21"
 hex = "0.4"
 zk-citadel = { path="../../citadel" }
