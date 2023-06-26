@@ -11,14 +11,13 @@ use crate::args::Args;
 
 use clap::Parser;
 use dusk_wallet::WalletPath;
-use moat_core::{RequestCreator, RequestJson, RequestSender};
+use moat_core::{JsonLoader, RequestCreator, RequestJson, RequestSender};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::error::Error;
 use toml_base_config::BaseConfig;
 use tracing::Level;
 use wallet_accessor::BlockchainAccessConfig;
-use moat_core::JsonLoader;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

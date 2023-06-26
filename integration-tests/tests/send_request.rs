@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::WalletPath;
+use moat_core::JsonLoader;
 use moat_core::{
     Error, PayloadRetriever, RequestCreator, RequestJson, RequestSender,
 };
@@ -16,7 +17,6 @@ use tokio::time::sleep;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
-use moat_core::JsonLoader;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PASSWORD: &str = "password";

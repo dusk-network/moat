@@ -4,14 +4,16 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::error::Error;
+use serde::Deserialize;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use crate::error::Error;
 use std::path::Path;
-use serde::Deserialize;
 
 pub trait JsonLoader {
-    fn from_file<S: for<'a> Deserialize<'a>, T: AsRef<Path>>(path: T) -> Result<S, Error> {
+    fn from_file<S: for<'a> Deserialize<'a>, T: AsRef<Path>>(
+        path: T,
+    ) -> Result<S, Error> {
         let mut content = String::new();
         let file = File::open(path.as_ref())?;
         let mut reader = BufReader::new(file);
