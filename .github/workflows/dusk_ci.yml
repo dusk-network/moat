@@ -1,31 +1,76 @@
-on: [push]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
-name: build
+name: CI
 
 jobs:
   analyze:
-    name: Dusk analyzer
+    name: Dusk Analyzer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install latest nightly toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
-      - name: Install cargo-dusk-analyzer
-        uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1
         with:
           command: install
           args: --git https://github.com/dusk-network/cargo-dusk-analyzer
-      - name: Run `cargo dusk-analyzer`
-        uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1
         with:
           command: dusk-analyzer
 
-  test:
-    name: Test
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  test_std:
+    name: Tests std
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release
+
+  test_no_std:
+    name: Tests no_std
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release --no-default-features
+
+  fmt:
+    name: Rustfmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -34,25 +79,8 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release
-
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install latest nightly toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
       - run: rustup component add rustfmt
-      - name: Run `cargo fmt`
-        uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
@@ -62,10 +90,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Install latest stable toolchain
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
       - run: rustup component add clippy
       - name: Run `cargo clippy`
