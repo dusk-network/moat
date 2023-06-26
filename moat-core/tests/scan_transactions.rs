@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::{RequestScanner, Transactions};
+use moat_core::{JsonLoader, RequestScanner, Transactions};
 
 #[test]
 fn scan_transactions() {

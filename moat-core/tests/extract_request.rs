@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::{Error, RequestExtractor, Tx};
+use moat_core::{Error, JsonLoader, RequestExtractor, Tx};
 
 #[test]
 fn extract_request_not_present() -> Result<(), Error> {

@@ -18,6 +18,7 @@ use std::error::Error;
 use toml_base_config::BaseConfig;
 use tracing::Level;
 use wallet_accessor::BlockchainAccessConfig;
+use moat_core::JsonLoader;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -35,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
 
-    let request_json = RequestJson::from_file(json_path)?;
+    let request_json: RequestJson = RequestJson::from_file(json_path)?;
     let rng = &mut StdRng::seed_from_u64(0xcafe);
     let request = RequestCreator::create_from_hex_args(
         request_json.user_ssk,

@@ -16,6 +16,7 @@ use tokio::time::sleep;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
+use moat_core::JsonLoader;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PASSWORD: &str = "password";
@@ -30,7 +31,7 @@ async fn send_request() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
-    let request_json = RequestJson::from_file(request_path)?;
+    let request_json: RequestJson = RequestJson::from_file(request_path)?;
 
     let rng = &mut StdRng::seed_from_u64(0xcafe);
     let request = RequestCreator::create_from_hex_args(

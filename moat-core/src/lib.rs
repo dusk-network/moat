@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 mod error;
+mod json_util;
 mod payload_retriever;
 mod request_creator;
 mod request_extractor;
@@ -15,6 +16,7 @@ mod retrieval_types;
 mod txs_retriever;
 
 pub use error::Error;
+pub use json_util::JsonLoader;
 pub use payload_retriever::PayloadRetriever;
 pub use request_creator::RequestCreator;
 pub use request_extractor::RequestExtractor;

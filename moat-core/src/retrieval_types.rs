@@ -4,10 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::error::Error;
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::Path;
+use crate::JsonLoader;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct ContractInfo {
@@ -22,32 +19,14 @@ pub struct Tx {
     pub json: String,
 }
 
-// todo: duplication
-impl Tx {
-    pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Tx, Error> {
-        let mut content = String::new();
-        let file = File::open(path.as_ref())?;
-        let mut reader = BufReader::new(file);
-        reader.read_to_string(&mut content)?;
-        serde_json::from_str(&content).map_err(|e| e.into())
-    }
-}
+impl JsonLoader for Tx {}
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Transactions {
     pub transactions: Vec<Tx>,
 }
 
-// todo: duplication
-impl Transactions {
-    pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Transactions, Error> {
-        let mut content = String::new();
-        let file = File::open(path.as_ref())?;
-        let mut reader = BufReader::new(file);
-        reader.read_to_string(&mut content)?;
-        serde_json::from_str(&content).map_err(|e| e.into())
-    }
-}
+impl JsonLoader for Transactions {}
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 #[allow(non_snake_case)]
