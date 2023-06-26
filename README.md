@@ -79,6 +79,31 @@ use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 ```
 It contains the user secret spend key (user_ssk) and provider public spend key (provider_psk), both in a form of a hexadecimal string.
 
+##Scanning for Requests
+The following code illustrates how to scan for all requests in the blockchain:
+```rust
+    let mut height = 0;
+    loop {
+        let height_end = height + 10000;
+        let (requests, top) =
+            RequestScanner::scan_block_range(height, height_end, &cfg).await?;
+
+        println!(
+            "{} requests in range ({},{}) top={}",
+            requests.len(),
+            height,
+            height_end,
+            top
+        );
+
+        if top <= height_end {
+            break;
+        }
+
+        height = height_end;
+    }
+```
+
 ##Configuration
 `moat-cli` requires a configuration file with the urls which allow for blockchain access.
 An example configuration file looks as follows:
