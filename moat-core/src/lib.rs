@@ -45,9 +45,9 @@
 
 mod error;
 mod json_util;
+mod payload_extractor;
 mod payload_retriever;
 mod request_creator;
-mod request_extractor;
 mod request_json;
 mod request_scanner;
 mod request_sender;
@@ -56,9 +56,9 @@ mod tx_retriever;
 
 pub use error::Error;
 pub use json_util::JsonLoader;
+pub use payload_extractor::PayloadExtractor;
 pub use payload_retriever::PayloadRetriever;
 pub use request_creator::RequestCreator;
-pub use request_extractor::RequestExtractor;
 pub use request_json::RequestJson;
 pub use request_scanner::RequestScanner;
 pub use request_sender::RequestSender;

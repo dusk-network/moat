@@ -11,6 +11,8 @@ use thiserror::Error;
 pub enum Error {
     #[error("Request not present or incorrect: {0:?}")]
     RequestNotPresent(Box<str>),
+    #[error("Payload not present or incorrect: {0:?}")]
+    PayloadNotPresent(Box<str>),
     #[error(transparent)]
     JsonParsingError(Arc<serde_json::Error>),
     #[error(transparent)]

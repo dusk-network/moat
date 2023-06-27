@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{RequestExtractor, Transactions, TxRetriever};
+use crate::{PayloadExtractor, Transactions, TxRetriever};
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
@@ -16,7 +16,7 @@ impl RequestScanner {
     pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
-            if let Ok(request) = RequestExtractor::extract_request_from_tx(tx) {
+            if let Ok(request) = PayloadExtractor::extract_request_from_tx(tx) {
                 requests.push(request)
             }
         }

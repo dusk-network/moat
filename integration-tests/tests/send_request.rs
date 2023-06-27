@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::WalletPath;
+use gql_client::Client;
 use moat_core::JsonLoader;
 use moat_core::{
     Error, PayloadRetriever, RequestCreator, RequestJson, RequestSender,
@@ -13,7 +14,6 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
 use std::time::Duration;
-use gql_client::Client;
 use tokio::time::sleep;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -81,9 +81,11 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
 ) -> Result<Request, Error> {
     const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
-        let result =
-            PayloadRetriever::retrieve_tx_payload(tx_id.as_ref().clone(), client)
-                .await;
+        let result = PayloadRetriever::retrieve_tx_payload(
+            tx_id.as_ref().clone(),
+            client,
+        )
+        .await;
         if result.is_err() && i < (NUM_RETRIES - 1) {
             let _ = sleep(Duration::from_millis(1000));
             continue;
