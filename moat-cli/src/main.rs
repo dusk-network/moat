@@ -8,40 +8,44 @@
 //!
 //! In order to use the moat-cli utility you need to install Dusk wallet first.
 //! Typically, your Dusk wallet is installed in ~/.dusk/rusk-wallet.
-//! Path to your wallet's directory needs to be provided as `wallet-path` argument when
-//! using moat-cli.
+//! Path to your wallet's directory needs to be provided as `wallet-path`
+//! argument when using moat-cli.
 //! Before usage you need to make sure that the default address of your wallet
-//! holds some Dusk funds, otherwise the utility won't be able to submit your request,
-//! as it needs funds for gas in order to do so.
-//! The CLI will also need password to your wallet, as well as a path to configuration
-//! file containing blockchain urls. Example configuration file is provided
-//! in the moat-cli project main directory, under the name `config.toml`.
-//! The last thing you will need is an actual request. You will be able to
-//! provide it in a form of a json file. An example request file is provided in
-//! the moat-cli project's main directory as `request.json`.
+//! holds some Dusk funds, otherwise the utility won't be able to submit your
+//! request, as it needs funds for gas in order to do so.
+//! The CLI will also need password to your wallet, as well as a path to
+//! configuration file containing blockchain urls. Example configuration file is
+//! provided in the moat-cli project main directory, under the name
+//! `config.toml`. The last thing you will need is an actual request. You will
+//! be able to provide it in a form of a json file. An example request file is
+//! provided in the moat-cli project's main directory as `request.json`.
 //!
 //! Note that your wallet cannot be active when running this utility.
 //!
 //! To sum up - you'll need a wallet with some funds in its default address,
-//! a path to its location, wallet's password, blockchain access configuration file `config.toml`,
-//! and a request file.
+//! a path to its location, wallet's password, blockchain access configuration
+//! file `config.toml`, and a request file.
 //!
-//! In addition, you may also want to provide gas limit and gas price, also via command line
-//! parameters.
+//! In addition, you may also want to provide gas limit and gas price, also via
+//! command line parameters.
 //!
 //! To sum up, the exact list of command line parameters is as follows:
 //!
-//! - `wallet_path` - a path to wallet's location, e.g.: `--wallet_path ~/.dusk/rusk-wallet`
-//! - `config_path` - a path to configuratin file, e.g.: `--config_path ./moat-cli/config.toml`
+//! - `wallet_path` - a path to wallet's location, e.g.: `--wallet_path
+//!   ~/.dusk/rusk-wallet`
+//! - `config_path` - a path to configuratin file, e.g.: `--config_path
+//!   ./moat-cli/config.toml`
 //! - `password` - wallet's password, e.g: `--password password`
 //! - `gas_limit` - gas limit, e.g.: `--gas_limit 500000000`
 //! - `gas_price` - gas price, e.g.: `--gas_price 1`
-//! - a full path (with a name) of the request file, e.g.: `./moat-cli/request.json`
+//! - a full path (with a name) of the request file, e.g.:
+//!   `./moat-cli/request.json`
 //!
 //! Example full command line invocation of `moat-cli` may look as follows:
 //!
-//! `cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --password password ./moat-cli/request.json`
-//!
+//! `cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet
+//! --config-path ./moat-cli/config.toml --password password
+//! ./moat-cli/request.json`
 
 #![feature(stmt_expr_attributes)]
 mod args;

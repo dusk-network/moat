@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{RequestExtractor, Transactions, TxsRetriever};
+use crate::{RequestExtractor, Transactions, TxRetriever};
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
@@ -28,7 +28,7 @@ impl RequestScanner {
         cfg: &BlockchainAccessConfig,
     ) -> Result<Vec<Request>, Error> {
         let client = Client::new(cfg.graphql_address.clone());
-        let txs = TxsRetriever::retrieve_txs_from_last_n_blocks(
+        let txs = TxRetriever::retrieve_txs_from_last_n_blocks(
             &client,
             last_n_blocks,
         )
@@ -44,7 +44,7 @@ impl RequestScanner {
         cfg: &BlockchainAccessConfig,
     ) -> Result<(Vec<Request>, u64), Error> {
         let client = Client::new(cfg.graphql_address.clone());
-        let (txs, top) = TxsRetriever::retrieve_txs_from_block_range(
+        let (txs, top) = TxRetriever::retrieve_txs_from_block_range(
             &client, height_beg, height_end,
         )
         .await?;

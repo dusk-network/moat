@@ -4,40 +4,44 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-//! Library for submitting license requests to the Dusk blockchain, as well as for
-//! scanning the Dusk blockchain for requests.
+//! Library for submitting license requests to the Dusk blockchain, as well as
+//! for scanning the Dusk blockchain for requests.
 //!
-//! Object `RequestSender` provides methods `send` for sending requests to the blockchain.
+//! Object `RequestSender` provides methods `send` for sending requests to the
+//! blockchain.
 //!
-//! Object `RequestScanner` provides methods `scan_last_blocks` and `scan_block_range` for
-//! scanning blocks for requests. A simple, efficient loop can be programmed to scan
-//! the entire blockchain.
+//! Object `RequestScanner` provides methods `scan_last_blocks` and
+//! `scan_block_range` for scanning blocks for requests. A simple, efficient
+//! loop can be programmed to scan the entire blockchain.
 //!
 //! Other objects are provided as helpers and more generic utilities:
 //!
-//! `RequestCreator` can be used to create an license request object from scratch.
+//! `RequestCreator` can be used to create an license request object from
+//! scratch.
 //!
-//! `TxsRetriever` retrieves transactions contained within a block or a block range.
+//! `TxsRetriever` retrieves transactions contained within a block or a block
+//! range.
 //!
-//! `PayloadRetriever` allows for retrieving payload of any type from a transaction with a given
-//!  transaction id.
+//! `PayloadRetriever` allows for retrieving payload of any type from a
+//! transaction with a given  transaction id.
 //!
 //! `RequestExtractor` extracts license request from a given transaction object.
 //!
-//! `RequestJson` allows for storage of initial data from which a license request can be
-//! created.
+//! `RequestJson` allows for storage of initial data from which a license
+//! request can be created.
 //!
-//! `JsonLoader` is an utility trait which allows for seamless enrichment of any structure with
-//! an ability to be loaded from a disk file in a json format.
+//! `JsonLoader` is an utility trait which allows for seamless enrichment of any
+//! structure with an ability to be loaded from a disk file in a json format.
 //!
-//! `retrieval_types` contains a set of types used when retrieving blockchain data, from
-//! transactions and headers to blocks and contract-call-info.
+//! `retrieval_types` contains a set of types used when retrieving blockchain
+//! data, from transactions and headers to blocks and contract-call-info.
 //!
-//! The library has been architected in such a way so that it should be very easy to extend
-//! it to get support for a different type of payload or a different type or specifics of
-//! information extracted from blockchain.
+//! The library has been architected in such a way so that it should be very
+//! easy to extend it to get support for a different type of payload or a
+//! different type or specifics of information extracted from blockchain.
 //!
-//! Integration test for the library are provided in the `integration-test` subproject.
+//! Integration test for the library are provided in the `integration-test`
+//! subproject.
 
 mod error;
 mod json_util;
@@ -48,7 +52,7 @@ mod request_json;
 mod request_scanner;
 mod request_sender;
 mod retrieval_types;
-mod txs_retriever;
+mod tx_retriever;
 
 pub use error::Error;
 pub use json_util::JsonLoader;
@@ -59,4 +63,4 @@ pub use request_json::RequestJson;
 pub use request_scanner::RequestScanner;
 pub use request_sender::RequestSender;
 pub use retrieval_types::*;
-pub use txs_retriever::TxsRetriever;
+pub use tx_retriever::TxRetriever;

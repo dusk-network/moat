@@ -13,6 +13,7 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
 use std::time::Duration;
+use gql_client::Client;
 use tokio::time::sleep;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -41,7 +42,7 @@ async fn send_request() -> Result<(), Error> {
     )?;
     let request_vec = rkyv::to_bytes::<_, 8192>(&request).unwrap().to_vec();
 
-    let bac = BlockchainAccessConfig::load_path(config_path)?;
+    let config = BlockchainAccessConfig::load_path(config_path)?;
 
     let wallet_path = WalletPath::from(
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
@@ -49,7 +50,7 @@ async fn send_request() -> Result<(), Error> {
 
     let tx_id = RequestSender::send(
         request,
-        &bac,
+        &config,
         wallet_path,
         PASSWORD.to_string(),
         GAS_LIMIT,
@@ -59,8 +60,10 @@ async fn send_request() -> Result<(), Error> {
 
     let tx_id_hex = format!("{:x}", tx_id);
     println!("tx_id={}", tx_id_hex);
+    let client = Client::new(config.graphql_address.clone());
+
     let retrieved_request =
-        get_request_from_blockchain(tx_id_hex, &bac).await?;
+        get_request_from_blockchain(tx_id_hex, &client).await?;
     assert_eq!(
         request_vec,
         rkyv::to_bytes::<_, 8192>(&retrieved_request)
@@ -74,12 +77,12 @@ async fn send_request() -> Result<(), Error> {
 
 async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,
-    bac: &BlockchainAccessConfig,
+    client: &Client,
 ) -> Result<Request, Error> {
     const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
         let result =
-            PayloadRetriever::retrieve_tx_payload(tx_id.as_ref().clone(), &bac)
+            PayloadRetriever::retrieve_tx_payload(tx_id.as_ref().clone(), client)
                 .await;
         if result.is_err() && i < (NUM_RETRIES - 1) {
             let _ = sleep(Duration::from_millis(1000));

@@ -6,17 +6,18 @@
 
 use crate::error::Error;
 use crate::retrieval_types::{Blocks, Transactions};
-use crate::QueryResult;
+use crate::Error::TransactionNotFound;
+use crate::{QueryResult, Tx};
 use gql_client::Client;
 
-pub struct TxsRetriever;
+pub struct TxRetriever;
 
-impl TxsRetriever {
+impl TxRetriever {
     pub async fn retrieve_txs_from_block(
         client: &Client,
         block_height: u64,
     ) -> Result<Transactions, Error> {
-        TxsRetriever::retrieve_txs_from_block_range(
+        TxRetriever::retrieve_txs_from_block_range(
             client,
             block_height,
             block_height + 1,
@@ -78,5 +79,21 @@ impl TxsRetriever {
             }
         }
         Ok(transactions)
+    }
+
+    pub async fn retrieve_tx<S>(txid: S, client: &Client) -> Result<Tx, Error>
+    where
+        S: AsRef<str>,
+    {
+        let query =
+            "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid.as_ref());
+
+        let response = client.query::<Transactions>(&query).await?;
+        match response {
+            Some(Transactions {
+                transactions: mut txs,
+            }) if txs.len() > 0 => Ok(txs.swap_remove(0)),
+            _ => Err(TransactionNotFound),
+        }
     }
 }
