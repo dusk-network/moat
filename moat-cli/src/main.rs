@@ -54,7 +54,7 @@ use crate::args::Args;
 
 use clap::Parser;
 use dusk_wallet::WalletPath;
-use moat_core::{JsonLoader, RequestCreator, RequestJson, RequestSender};
+use moat_core::{JsonLoader, PayloadSender, RequestCreator, RequestJson};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::error::Error;
@@ -90,7 +90,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
 
-    RequestSender::send(
+    PayloadSender::send(
         request,
         &blockchain_access_config,
         wallet_path,

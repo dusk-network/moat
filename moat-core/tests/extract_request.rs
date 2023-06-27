@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use zk_citadel::license::Request;
 use moat_core::{Error, JsonLoader, PayloadExtractor, Tx};
+use zk_citadel::license::Request;
 
 #[test]
 fn extract_request_not_present() -> Result<(), Error> {

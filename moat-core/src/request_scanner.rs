@@ -13,16 +13,20 @@ use zk_citadel::license::Request;
 pub struct RequestScanner;
 
 impl RequestScanner {
+    /// Returns requests found in the given collection of transactions
     pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
-            if let Ok(request) = PayloadExtractor::extract_payload_from_tx::<Request>(tx) {
+            if let Ok(request) =
+                PayloadExtractor::extract_payload_from_tx::<Request>(tx)
+            {
                 requests.push(request)
             }
         }
         requests
     }
 
+    /// Returns collection of requests found withing n last blocks
     pub async fn scan_last_blocks(
         last_n_blocks: u32,
         cfg: &BlockchainAccessConfig,
@@ -37,7 +41,7 @@ impl RequestScanner {
         Ok(requests)
     }
 
-    /// Returns found requests and current top block height
+    /// Returns collection with found requests and the current top block-height
     pub async fn scan_block_range(
         height_beg: u64,
         height_end: u64,

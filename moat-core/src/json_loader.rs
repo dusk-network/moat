@@ -11,6 +11,7 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 
 pub trait JsonLoader {
+    /// Loads object from a json file
     fn from_file<S: for<'a> Deserialize<'a>, T: AsRef<Path>>(
         path: T,
     ) -> Result<S, Error> {

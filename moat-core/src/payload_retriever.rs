@@ -5,8 +5,8 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use bytecheck::CheckBytes;
-use rkyv::{Archive, Deserialize, Infallible};
 use rkyv::validation::validators::DefaultValidator;
+use rkyv::{Archive, Deserialize, Infallible};
 
 use crate::error::Error;
 use crate::retrieval_types::TxJson;
@@ -16,6 +16,7 @@ use gql_client::Client;
 pub struct PayloadRetriever;
 
 impl PayloadRetriever {
+    /// Retrieves payload of a transaction with a given tx id
     pub async fn retrieve_tx_payload<P, S>(
         txid: S,
         client: &Client,

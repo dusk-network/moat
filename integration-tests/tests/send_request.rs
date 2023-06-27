@@ -8,7 +8,7 @@ use dusk_wallet::WalletPath;
 use gql_client::Client;
 use moat_core::JsonLoader;
 use moat_core::{
-    Error, PayloadRetriever, RequestCreator, RequestJson, RequestSender,
+    Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -48,7 +48,7 @@ async fn send_request() -> Result<(), Error> {
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
     );
 
-    let tx_id = RequestSender::send(
+    let tx_id = PayloadSender::send(
         request,
         &config,
         wallet_path,
