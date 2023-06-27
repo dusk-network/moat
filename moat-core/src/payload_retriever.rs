@@ -17,7 +17,7 @@ pub struct PayloadRetriever;
 
 impl PayloadRetriever {
     /// Retrieves payload of a transaction with a given tx id
-    pub async fn retrieve_tx_payload<P, S>(
+    pub async fn retrieve_payload<P, S>(
         txid: S,
         client: &Client,
     ) -> Result<P, Error>
@@ -29,6 +29,6 @@ impl PayloadRetriever {
     {
         let tx = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
         let tx_json: TxJson = serde_json::from_str(tx.json.as_str())?;
-        PayloadExtractor::extract_payload_from_tx_json(&tx_json)
+        PayloadExtractor::payload_from_tx_json(&tx_json)
     }
 }

@@ -13,11 +13,11 @@ use gql_client::Client;
 pub struct TxRetriever;
 
 impl TxRetriever {
-    pub async fn retrieve_txs_from_block(
+    pub async fn txs_from_block(
         client: &Client,
         block_height: u64,
     ) -> Result<Transactions, Error> {
-        TxRetriever::retrieve_txs_from_block_range(
+        TxRetriever::txs_from_block_range(
             client,
             block_height,
             block_height + 1,
@@ -28,7 +28,7 @@ impl TxRetriever {
 
     // range retrieval seems to have a limit of 10k
     /// returns transactions in a range and the current top block
-    pub async fn retrieve_txs_from_block_range(
+    pub async fn txs_from_block_range(
         client: &Client,
         height_beg: u64,
         height_end: u64,
@@ -60,7 +60,7 @@ impl TxRetriever {
         Ok((transactions, top_block))
     }
 
-    pub async fn retrieve_txs_from_last_n_blocks(
+    pub async fn txs_from_last_n_blocks(
         client: &Client,
         n: u32,
     ) -> Result<Transactions, Error> {

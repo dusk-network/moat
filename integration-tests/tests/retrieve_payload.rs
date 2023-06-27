@@ -24,7 +24,7 @@ async fn retrieve_payload() -> Result<(), Error> {
         "5f486c6f4edc9321e15a83993aa68463e733fc482acbde979881450c83c92a0e";
 
     let request: Request =
-        PayloadRetriever::retrieve_tx_payload(TXID, &client).await?;
+        PayloadRetriever::retrieve_payload(TXID, &client).await?;
 
     println!("request={:?}", request);
 

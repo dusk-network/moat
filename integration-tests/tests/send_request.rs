@@ -81,11 +81,9 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
 ) -> Result<Request, Error> {
     const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
-        let result = PayloadRetriever::retrieve_tx_payload(
-            tx_id.as_ref().clone(),
-            client,
-        )
-        .await;
+        let result =
+            PayloadRetriever::retrieve_payload(tx_id.as_ref().clone(), client)
+                .await;
         if result.is_err() && i < (NUM_RETRIES - 1) {
             let _ = sleep(Duration::from_millis(1000));
             continue;

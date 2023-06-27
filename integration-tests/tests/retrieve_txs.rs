@@ -21,8 +21,7 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 
     const BLOCK_HEIGHT: u64 = 317042;
 
-    let txs =
-        TxRetriever::retrieve_txs_from_block(&client, BLOCK_HEIGHT).await?;
+    let txs = TxRetriever::txs_from_block(&client, BLOCK_HEIGHT).await?;
 
     println!("transactions={:?}", txs);
 
@@ -42,7 +41,7 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
     const BLOCK_HEIGHT_BEG: u64 = 97117;
     const BLOCK_HEIGHT_END: u64 = 107117;
 
-    let (txs, top_block) = TxRetriever::retrieve_txs_from_block_range(
+    let (txs, top_block) = TxRetriever::txs_from_block_range(
         &client,
         BLOCK_HEIGHT_BEG,
         BLOCK_HEIGHT_END,
@@ -68,7 +67,7 @@ async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
     let client = Client::new(cfg.graphql_address.clone());
 
     const N: u32 = 10000;
-    let txs = TxRetriever::retrieve_txs_from_last_n_blocks(&client, N).await?;
+    let txs = TxRetriever::txs_from_last_n_blocks(&client, N).await?;
 
     println!("transactions={:?}", txs);
 
