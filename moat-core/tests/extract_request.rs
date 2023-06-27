@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use zk_citadel::license::Request;
 use moat_core::{Error, JsonLoader, PayloadExtractor, Tx};
 
 #[test]
@@ -12,7 +13,7 @@ fn extract_request_not_present() -> Result<(), Error> {
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/tx_no_request.json");
     let tx = Tx::from_file(tx_path)?;
 
-    let result = PayloadExtractor::extract_request_from_tx(&tx);
+    let result = PayloadExtractor::extract_payload_from_tx::<Request>(&tx);
     println!("result={:?}", result);
     assert!(result.is_err());
     Ok(())
@@ -24,7 +25,7 @@ fn extract_request_present() -> Result<(), Error> {
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/tx_with_request.json");
     let tx = Tx::from_file(tx_path)?;
 
-    let result = PayloadExtractor::extract_request_from_tx(&tx);
+    let result = PayloadExtractor::extract_payload_from_tx::<Request>(&tx);
     assert!(result.is_ok());
     Ok(())
 }
@@ -35,7 +36,7 @@ fn extract_bad_payload() -> Result<(), Error> {
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/tx_bad_payload.json");
     let tx = Tx::from_file(tx_path)?;
 
-    let result = PayloadExtractor::extract_request_from_tx(&tx);
+    let result = PayloadExtractor::extract_payload_from_tx::<Request>(&tx);
     assert!(result.is_err());
     Ok(())
 }

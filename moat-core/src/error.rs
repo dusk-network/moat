@@ -9,8 +9,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
-    #[error("Request not present or incorrect: {0:?}")]
-    RequestNotPresent(Box<str>),
     #[error("Payload not present or incorrect: {0:?}")]
     PayloadNotPresent(Box<str>),
     #[error(transparent)]

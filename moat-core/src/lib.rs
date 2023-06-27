@@ -44,7 +44,7 @@
 //! subproject.
 
 mod error;
-mod json_util;
+mod json_loader;
 mod payload_extractor;
 mod payload_retriever;
 mod request_creator;
@@ -55,7 +55,7 @@ mod retrieval_types;
 mod tx_retriever;
 
 pub use error::Error;
-pub use json_util::JsonLoader;
+pub use json_loader::JsonLoader;
 pub use payload_extractor::PayloadExtractor;
 pub use payload_retriever::PayloadRetriever;
 pub use request_creator::RequestCreator;

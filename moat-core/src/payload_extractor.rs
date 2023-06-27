@@ -10,33 +10,25 @@ use rkyv::{
 
 use crate::error::Error;
 use crate::retrieval_types::{Tx, TxJson};
-use crate::Error::{PayloadNotPresent, RequestNotPresent};
+use crate::Error::PayloadNotPresent;
 use base64::{engine::general_purpose, Engine as _};
 use bytecheck::CheckBytes;
 use rkyv::validation::validators::DefaultValidator;
-use zk_citadel::license::Request;
 
 pub struct PayloadExtractor;
 
 impl PayloadExtractor {
-    pub fn extract_request_from_tx(tx: &Tx) -> Result<Request, Error> {
+    pub fn extract_payload_from_tx<P>(tx: &Tx) -> Result<P, Error>
+    where
+        P: Archive,
+        P::Archived: Deserialize<P, Infallible>
+        + for<'b> CheckBytes<DefaultValidator<'b>>,
+    {
         let tx_json: TxJson = serde_json::from_str(tx.json.as_str())?;
-        let payload_base64 = tx_json.call.CallData;
-        let payload_ser = general_purpose::STANDARD
-            .decode(payload_base64)
-            .map_err(|_| {
-                RequestNotPresent(Box::from("base64 decoding error"))
-            })?;
-        let payload = check_archived_root::<Request>(payload_ser.as_slice())
-            .map_err(|_| {
-                RequestNotPresent(Box::from("rkyv deserialization error"))
-            })?;
-        let request: Request =
-            payload.deserialize(&mut Infallible).expect("Infallible");
-        Ok(request)
+        Self::extract_payload_from_tx_json::<P>(&tx_json)
     }
 
-    pub fn extract_tx_payload<P>(tx_json: &TxJson) -> Result<P, Error>
+    pub fn extract_payload_from_tx_json<P>(tx_json: &TxJson) -> Result<P, Error>
     where
         P: Archive,
         P::Archived: Deserialize<P, Infallible>

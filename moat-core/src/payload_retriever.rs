@@ -28,6 +28,6 @@ impl PayloadRetriever {
     {
         let tx = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
         let tx_json: TxJson = serde_json::from_str(tx.json.as_str())?;
-        PayloadExtractor::extract_tx_payload(&tx_json)
+        PayloadExtractor::extract_payload_from_tx_json(&tx_json)
     }
 }

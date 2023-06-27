@@ -55,8 +55,7 @@ async fn scan_requests_in_block_range() -> Result<(), Error> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-// #[cfg_attr(not(feature = "expensive_tests"), ignore)]
-#[cfg_attr(not(feature = "integration_tests"), ignore)]
+#[cfg_attr(not(feature = "expensive_tests"), ignore)]
 async fn scan_all_requests() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");

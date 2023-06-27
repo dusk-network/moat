@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::json_util::JsonLoader;
+use crate::json_loader::JsonLoader;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct RequestJson {
