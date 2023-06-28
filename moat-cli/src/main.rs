@@ -14,8 +14,8 @@
 //! holds some Dusk funds, otherwise the utility won't be able to submit your
 //! request, as it needs funds for gas in order to do so.
 //! The CLI will also need password to your wallet, as well as a path to
-//! a configuration file containing blockchain urls. Example configuration file is
-//! provided in the moat-cli project main directory, under the name
+//! a configuration file containing blockchain urls. Example configuration file
+//! is provided in the moat-cli project main directory, under the name
 //! `config.toml`. The last thing you will need is an actual request. You will
 //! be able to provide it in a form of a json file. An example request file is
 //! provided in the moat-cli project's main directory as `request.json`.
@@ -36,7 +36,8 @@
 //! - `config_path` - a path to configuratin file, e.g.: `--config_path
 //!   ./moat-cli/config.toml`
 //! - `password` - wallet's password in the clear, e.g: `--password mypass2!`
-//! - `psw_hash` - wallet's password's blake3 hash, e.g: `--psw_hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb`
+//! - `psw_hash` - wallet's password's blake3 hash, e.g: `--psw_hash
+//!   7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb`
 //! - `gas_limit` - gas limit, e.g.: `--gas_limit 500000000`
 //! - `gas_price` - gas price, e.g.: `--gas_price 1`
 //! - a full path (with a name) of the request file, e.g.:
@@ -65,7 +66,9 @@ use rand::SeedableRng;
 use std::error::Error;
 use toml_base_config::BaseConfig;
 use tracing::Level;
-use wallet_accessor::BlockchainAccessConfig;
+use wallet_accessor::{
+    BlockchainAccessConfig, Password::Pwd, Password::PwdHash,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -95,13 +98,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
+    let psw = if pwd_hash.is_empty() {
+        Pwd(password)
+    } else {
+        PwdHash(pwd_hash)
+    };
 
     PayloadSender::send(
         request,
         &blockchain_access_config,
         wallet_path,
-        password,
-        pwd_hash,
+        psw,
         gas_limit,
         gas_price,
     )

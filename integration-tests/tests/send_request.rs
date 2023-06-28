@@ -16,11 +16,12 @@ use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::sleep;
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
+use wallet_accessor::{BlockchainAccessConfig, Password::PwdHash};
 use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
-const PWD_HASH: &str = "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb";
+const PWD_HASH: &str =
+    "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787";
 const GAS_LIMIT: u64 = 500_000_000;
 const GAS_PRICE: u64 = 1;
 
@@ -52,8 +53,7 @@ async fn send_request() -> Result<(), Error> {
         request,
         &config,
         wallet_path,
-        "".to_string(),
-        PWD_HASH.to_string(),
+        PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
     )

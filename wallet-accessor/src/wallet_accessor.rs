@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use crate::BlockchainAccessConfig;
 use blake3::Hash;
 use dusk_bls12_381::BlsScalar;
@@ -15,11 +16,16 @@ use rusk_abi::ModuleId;
 use std::str::FromStr;
 use tracing::info;
 
+#[derive(Debug, Clone)]
+pub enum Password {
+    Pwd(String),
+    PwdHash(String),
+}
+
 #[derive(Debug)]
 pub struct WalletAccessor {
     pub path: WalletPath,
-    pub pwd: String,
-    pub pwd_hash: String,
+    pub pwd: Password,
 }
 
 impl SecureWalletFile for WalletAccessor {
@@ -28,11 +34,11 @@ impl SecureWalletFile for WalletAccessor {
     }
 
     fn pwd(&self) -> blake3::Hash {
-        if !self.pwd_hash.is_empty() {
-            Hash::from_str(self.pwd_hash.as_str())
-                .unwrap_or(Hash::from([0u8; 32]))
-        } else {
-            blake3::hash(self.pwd.as_bytes())
+        match &self.pwd {
+            Pwd(s) => blake3::hash(s.as_bytes()),
+            PwdHash(h) => {
+                Hash::from_str(h.as_str()).unwrap_or(Hash::from([0u8; 32]))
+            }
         }
     }
 }
@@ -53,7 +59,6 @@ impl WalletAccessor {
         let wallet_accessor = WalletAccessor {
             path: self.path.clone(),
             pwd: self.pwd.clone(),
-            pwd_hash: self.pwd_hash.clone(),
         };
         let mut wallet = Wallet::from_file(wallet_accessor)?;
         let transport_tcp = TransportTCP::new(

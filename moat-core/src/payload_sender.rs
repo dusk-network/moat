@@ -9,7 +9,7 @@ use dusk_jubjub::BlsScalar;
 use dusk_wallet::WalletPath;
 use rkyv::ser::serializers::AllocSerializer;
 use rusk_abi::ModuleId;
-use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
+use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 pub struct PayloadSender;
 
@@ -29,8 +29,7 @@ impl PayloadSender {
         payload: P,
         cfg: &BlockchainAccessConfig,
         wallet_path: WalletPath,
-        password: String,
-        pwd_hash: String,
+        password: Password,
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<BlsScalar, Error>
@@ -40,7 +39,6 @@ impl PayloadSender {
         let wallet_accessor = WalletAccessor {
             path: wallet_path,
             pwd: password,
-            pwd_hash,
         };
         let tx_id = wallet_accessor
             .send(

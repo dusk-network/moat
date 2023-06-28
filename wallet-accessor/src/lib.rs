@@ -8,4 +8,4 @@ mod config;
 mod wallet_accessor;
 
 pub use crate::config::BlockchainAccessConfig;
-pub use crate::wallet_accessor::WalletAccessor;
+pub use crate::wallet_accessor::{Password, WalletAccessor};
