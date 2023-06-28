@@ -30,6 +30,7 @@ impl PayloadSender {
         cfg: &BlockchainAccessConfig,
         wallet_path: WalletPath,
         password: String,
+        pwd_hash: String,
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<BlsScalar, Error>
@@ -39,6 +40,7 @@ impl PayloadSender {
         let wallet_accessor = WalletAccessor {
             path: wallet_path,
             pwd: password,
+            pwd_hash,
         };
         let tx_id = wallet_accessor
             .send(

@@ -14,7 +14,7 @@
 //! holds some Dusk funds, otherwise the utility won't be able to submit your
 //! request, as it needs funds for gas in order to do so.
 //! The CLI will also need password to your wallet, as well as a path to
-//! configuration file containing blockchain urls. Example configuration file is
+//! a configuration file containing blockchain urls. Example configuration file is
 //! provided in the moat-cli project main directory, under the name
 //! `config.toml`. The last thing you will need is an actual request. You will
 //! be able to provide it in a form of a json file. An example request file is
@@ -35,7 +35,8 @@
 //!   ~/.dusk/rusk-wallet`
 //! - `config_path` - a path to configuratin file, e.g.: `--config_path
 //!   ./moat-cli/config.toml`
-//! - `password` - wallet's password, e.g: `--password password`
+//! - `password` - wallet's password in the clear, e.g: `--password mypass2!`
+//! - `psw_hash` - wallet's password's blake3 hash, e.g: `--psw_hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb`
 //! - `gas_limit` - gas limit, e.g.: `--gas_limit 500000000`
 //! - `gas_price` - gas price, e.g.: `--gas_price 1`
 //! - a full path (with a name) of the request file, e.g.:
@@ -44,8 +45,12 @@
 //! Example full command line invocation of `moat-cli` may look as follows:
 //!
 //! `cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet
-//! --config-path ./moat-cli/config.toml --password password
+//! --config-path ./moat-cli/config.toml
+//! --psw_hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb
 //! ./moat-cli/request.json`
+//!
+//! Note that when psw_hash argument is provided, password argument may be
+//! omitted or if given, it will be ignored.
 
 #![feature(stmt_expr_attributes)]
 mod args;
@@ -75,6 +80,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let config_path = cli.config_path.as_path();
     let wallet_path = cli.wallet_path.as_path();
     let password = cli.password;
+    let pwd_hash = cli.pwd_hash;
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
 
@@ -95,6 +101,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         &blockchain_access_config,
         wallet_path,
         password,
+        pwd_hash,
         gas_limit,
         gas_price,
     )
@@ -102,6 +109,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     #[rustfmt::skip]
     // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --password password ./moat-cli/request.json
+    // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-cli/request.json
 
     Ok(())
 }

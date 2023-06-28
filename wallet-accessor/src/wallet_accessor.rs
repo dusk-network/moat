@@ -5,18 +5,21 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::BlockchainAccessConfig;
+use blake3::Hash;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
 use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
 use dusk_wallet_core::{Transaction, MAX_CALL_SIZE};
 use rkyv::ser::serializers::AllocSerializer;
 use rusk_abi::ModuleId;
+use std::str::FromStr;
 use tracing::info;
 
 #[derive(Debug)]
 pub struct WalletAccessor {
     pub path: WalletPath,
     pub pwd: String,
+    pub pwd_hash: String,
 }
 
 impl SecureWalletFile for WalletAccessor {
@@ -25,7 +28,12 @@ impl SecureWalletFile for WalletAccessor {
     }
 
     fn pwd(&self) -> blake3::Hash {
-        blake3::hash(self.pwd.as_bytes())
+        if !self.pwd_hash.is_empty() {
+            Hash::from_str(self.pwd_hash.as_str())
+                .unwrap_or(Hash::from([0u8; 32]))
+        } else {
+            blake3::hash(self.pwd.as_bytes())
+        }
     }
 }
 
@@ -45,6 +53,7 @@ impl WalletAccessor {
         let wallet_accessor = WalletAccessor {
             path: self.path.clone(),
             pwd: self.pwd.clone(),
+            pwd_hash: self.pwd_hash.clone(),
         };
         let mut wallet = Wallet::from_file(wallet_accessor)?;
         let transport_tcp = TransportTCP::new(

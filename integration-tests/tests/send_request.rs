@@ -20,7 +20,7 @@ use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
-const PASSWORD: &str = "password";
+const PWD_HASH: &str = "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb";
 const GAS_LIMIT: u64 = 500_000_000;
 const GAS_PRICE: u64 = 1;
 
@@ -52,7 +52,8 @@ async fn send_request() -> Result<(), Error> {
         request,
         &config,
         wallet_path,
-        PASSWORD.to_string(),
+        "".to_string(),
+        PWD_HASH.to_string(),
         GAS_LIMIT,
         GAS_PRICE,
     )

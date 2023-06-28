@@ -24,8 +24,12 @@ pub struct Args {
     pub config_path: PathBuf,
 
     /// Password for the wallet
-    #[clap(long, env = "RUSK_WALLET_PWD")]
+    #[clap(long, default_value_t = String::from(""), env = "RUSK_WALLET_PWD")]
     pub password: String,
+
+    /// Hash of the password for the wallet [default: ``]
+    #[clap(short, long, default_value_t = String::from(""))]
+    pub pwd_hash: String,
 
     /// Gas limit [default: `500000000`]
     #[clap(short, long, default_value_t = 500000000)]
