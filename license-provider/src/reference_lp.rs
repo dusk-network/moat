@@ -4,18 +4,42 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_bytes::{DeserializableSlice, Serializable};
+use dusk_pki::PublicSpendKey;
+use moat_core::{Error, JsonLoader, RequestScanner};
+use std::path::Path;
 use wallet_accessor::BlockchainAccessConfig;
-use moat_core::{Error, RequestScanner};
+use zk_citadel::license::Request;
 
-pub struct ReferenceLP;
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct LPConfig {
+    pub psk: String,
+}
+impl JsonLoader for LPConfig {}
+
+pub struct ReferenceLP {
+    psk: PublicSpendKey,
+}
 
 impl ReferenceLP {
-    pub async fn run(cfg: &BlockchainAccessConfig) -> Result<(), Error> {
+    pub fn new(psk: PublicSpendKey) -> Self {
+        Self { psk }
+    }
+
+    pub fn init<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
+        let lp_config: LPConfig = LPConfig::from_file(lp_config_path)?;
+        let psk_bytes = hex::decode(lp_config.psk)?;
+        let psk = PublicSpendKey::from_slice(psk_bytes.as_slice())?;
+        Ok(Self::new(psk))
+    }
+
+    pub async fn run(&self, cfg: &BlockchainAccessConfig) -> Result<(), Error> {
         let mut height = 0;
         loop {
             let height_end = height + 10000;
             let (requests, top) =
-                RequestScanner::scan_block_range(height, height_end, &cfg).await?;
+                RequestScanner::scan_block_range(height, height_end, &cfg)
+                    .await?;
 
             println!(
                 "{} requests in range ({},{}) top={}",
@@ -25,11 +49,28 @@ impl ReferenceLP {
                 top
             );
 
+            self.process_requests(&requests)?;
+
             if top <= height_end {
-                return Ok(())
+                return Ok(());
             }
 
             height = height_end;
         }
     }
+
+    pub fn process_requests(
+        &self,
+        _requests: &Vec<Request>,
+    ) -> Result<(), Error> {
+        // for request in requests {
+        //     println!("to me={}", request_addressed_to_this_lp(&request));
+        // }
+        println!("process_requests, psk={}", hex::encode(self.psk.to_bytes()));
+        Ok(())
+    }
+
+    // pub fn request_addressed_to_this_lp(&self, ) -> bool {
+    //
+    // }
 }

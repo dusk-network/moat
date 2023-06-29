@@ -4,20 +4,25 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use license_provider::ReferenceLP;
 use moat_core::Error;
 use toml_base_config::BaseConfig;
-use license_provider::ReferenceLP;
 use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "lp"), ignore)]
 async fn run_license_provider() -> Result<(), Error> {
-    let config_path =
+    let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let lp_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp.json");
 
-    let cfg = BlockchainAccessConfig::load_path(config_path)?;
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
-    ReferenceLP::run(&cfg).await?;
+    let reference_lp = ReferenceLP::init(&lp_config_path)?;
+
+    reference_lp.run(&blockchain_config).await?;
 
     Ok(())
 }
