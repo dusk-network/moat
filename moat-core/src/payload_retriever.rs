@@ -9,7 +9,6 @@ use rkyv::validation::validators::DefaultValidator;
 use rkyv::{Archive, Deserialize, Infallible};
 
 use crate::error::Error;
-use crate::retrieval_types::TxJson;
 use crate::{PayloadExtractor, TxRetriever};
 use gql_client::Client;
 
@@ -28,7 +27,6 @@ impl PayloadRetriever {
         S: AsRef<str>,
     {
         let tx = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
-        let tx_json: TxJson = serde_json::from_str(tx.json.as_str())?;
-        PayloadExtractor::payload_from_tx_json(&tx_json)
+        PayloadExtractor::payload_from_tx(&tx)
     }
 }
