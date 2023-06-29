@@ -11,8 +11,8 @@ use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
 use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
 use dusk_wallet_core::{Transaction, MAX_CALL_SIZE};
+use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
-use rusk_abi::ModuleId;
 use std::str::FromStr;
 use tracing::info;
 
@@ -87,7 +87,7 @@ impl WalletAccessor {
         // let tx: Transaction = wallet
         //     .transfer(sender, rcvr, Dusk::from(8), gas)
         //     .await?;
-        let tx_id = rusk_abi::hash(tx.to_hash_input_bytes());
+        let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
         info!("TX_ID={:x}", tx_id);
         Ok(tx_id)
     }

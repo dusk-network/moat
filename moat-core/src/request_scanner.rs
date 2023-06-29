@@ -28,7 +28,7 @@ impl RequestScanner {
 
     /// Returns collection of requests found withing n last blocks
     pub async fn scan_last_blocks(
-        last_n_blocks: u32,
+        last_n_blocks: usize,
         cfg: &BlockchainAccessConfig,
     ) -> Result<Vec<Request>, Error> {
         let client = Client::new(cfg.graphql_address.clone());

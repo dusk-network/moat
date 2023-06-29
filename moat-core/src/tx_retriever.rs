@@ -44,7 +44,6 @@ impl TxRetriever {
             .map_err(|e| e.into());
         match result {
             e @ Err(_) => {
-                println!("error={:?}", e);
                 return e.map(|_| (Transactions::default(), top_block));
             }
             Ok(None) => (),
@@ -62,7 +61,7 @@ impl TxRetriever {
 
     pub async fn txs_from_last_n_blocks(
         client: &Client,
-        n: u32,
+        n: usize,
     ) -> Result<Transactions, Error> {
         let mut transactions = Transactions::default();
         let n_str = format!("{}", n);
@@ -92,7 +91,7 @@ impl TxRetriever {
         match response {
             Some(Transactions {
                 transactions: mut txs,
-            }) if txs.len() > 0 => Ok(txs.swap_remove(0)),
+            }) if !txs.is_empty() => Ok(txs.swap_remove(0)),
             _ => Err(TransactionNotFound),
         }
     }

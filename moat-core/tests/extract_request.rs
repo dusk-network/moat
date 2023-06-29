@@ -14,7 +14,6 @@ fn extract_request_not_present() -> Result<(), Error> {
     let tx = Tx::from_file(tx_path)?;
 
     let result = PayloadExtractor::payload_from_tx::<Request>(&tx);
-    println!("result={:?}", result);
     assert!(result.is_err());
     Ok(())
 }

@@ -7,16 +7,16 @@
 use crate::error::Error;
 use dusk_jubjub::BlsScalar;
 use dusk_wallet::WalletPath;
+use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
-use rusk_abi::ModuleId;
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 pub struct PayloadSender;
 
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
-    bytes[0] = 0x01; // 0xf8; todo: - temporarily we make it the TRANSFER contract
-    ModuleId::from_bytes(bytes)
+    bytes[0] = 0x01; // todo: - temporarily it is transfer contract (01), it should be License contract (03)
+    bytes
 };
 
 const METHOD_NAME: &str = "root"; // todo: - temporarily we make it root, it should be License contract's noop
@@ -28,8 +28,8 @@ impl PayloadSender {
     pub async fn send<P>(
         payload: P,
         cfg: &BlockchainAccessConfig,
-        wallet_path: WalletPath,
-        password: Password,
+        wallet_path: &WalletPath,
+        password: &Password,
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<BlsScalar, Error>
@@ -37,8 +37,8 @@ impl PayloadSender {
         P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
         let wallet_accessor = WalletAccessor {
-            path: wallet_path,
-            pwd: password,
+            path: wallet_path.clone(),
+            pwd: password.clone(),
         };
         let tx_id = wallet_accessor
             .send(

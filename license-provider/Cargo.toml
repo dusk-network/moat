@@ -1,13 +1,13 @@
 [package]
-name = "moat-core"
+name = "license-provider"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 dusk-wallet = { version = "0.16", git = "https://github.com/dusk-network/wallet-cli", tag = "0.16.0-rc.1" }
-wallet-accessor = { path = "../wallet-accessor" }
 zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
-phoenix-core = { version = "0.18", features = ["alloc"] }
+moat-core={ path = "../moat-core" }
+wallet-accessor = { path = "../wallet-accessor" }
 dusk-poseidon = { version = "0.30", default-features = false, features = ["rkyv-impl", "alloc"] }
 dusk-jubjub = { version = "0.12", default-features = false }
 dusk-pki = { version = "0.12", default-features = false, features = ["rkyv-impl"] }
@@ -23,6 +23,7 @@ base64 = "0.21"
 hex = "0.4"
 rand = "0.8"
 dusk-bytes = "0.1"
+blake3 = "1.3"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
