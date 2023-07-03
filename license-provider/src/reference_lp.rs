@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_bytes::{DeserializableSlice, Serializable};
-use dusk_pki::PublicSpendKey;
+use dusk_bytes::DeserializableSlice;
+use dusk_pki::{SecretSpendKey, ViewKey};
 use moat_core::{Error, JsonLoader, RequestScanner};
 use std::path::Path;
 use wallet_accessor::BlockchainAccessConfig;
@@ -13,26 +13,27 @@ use zk_citadel::license::Request;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct LPConfig {
-    pub psk: String,
+    pub ssk_lp: String,
 }
 impl JsonLoader for LPConfig {}
 
 pub struct ReferenceLP {
-    psk: PublicSpendKey,
+    vk_lp: ViewKey,
 }
 
 impl ReferenceLP {
-    pub fn new(psk: PublicSpendKey) -> Self {
-        Self { psk }
+    pub fn new(ssk: SecretSpendKey) -> Self {
+        Self { vk_lp: ssk.view_key() }
     }
 
     pub fn init<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
         let lp_config: LPConfig = LPConfig::from_file(lp_config_path)?;
-        let psk_bytes = hex::decode(lp_config.psk)?;
-        let psk = PublicSpendKey::from_slice(psk_bytes.as_slice())?;
-        Ok(Self::new(psk))
+        let ssk_bytes = hex::decode(lp_config.ssk_lp)?;
+        let ask = SecretSpendKey::from_slice(ssk_bytes.as_slice())?;
+        Ok(Self::new(ask))
     }
 
+    /// scans the entire blockchain for relevant requests
     pub async fn run(&self, cfg: &BlockchainAccessConfig) -> Result<(), Error> {
         let mut height = 0;
         loop {
@@ -49,7 +50,8 @@ impl ReferenceLP {
                 top
             );
 
-            self.process_requests(&requests)?;
+            self.relevant_requests(&requests)?;
+            // todo: hook up further processing of relevant requests here
 
             if top <= height_end {
                 return Ok(());
@@ -59,18 +61,25 @@ impl ReferenceLP {
         }
     }
 
-    pub fn process_requests(
+    /// Given a collection of requests, returns a new collection
+    /// containing only requests relevant to `this` license provider
+    pub fn relevant_requests(
         &self,
-        _requests: &Vec<Request>,
-    ) -> Result<(), Error> {
-        // for request in requests {
-        //     println!("to me={}", request_addressed_to_this_lp(&request));
-        // }
-        println!("process_requests, psk={}", hex::encode(self.psk.to_bytes()));
-        Ok(())
+        requests: &Vec<Request>,
+    ) -> Result<Vec<Request>, Error> {
+        let mut relevant_requests: Vec<Request> = Vec::new();
+        for request in requests.iter() {
+            if self.is_relevant_request(&request) {
+                let r = Request {
+                    ..*request
+                };
+                relevant_requests.push(r);
+            }
+        }
+        Ok(relevant_requests)
     }
 
-    // pub fn request_addressed_to_this_lp(&self, ) -> bool {
-    //
-    // }
+    pub fn is_relevant_request(&self, request: &Request) -> bool {
+        self.vk_lp.owns(&request.rsa)
+    }
 }
