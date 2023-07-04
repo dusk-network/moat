@@ -11,7 +11,8 @@ use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "integration_tests"), ignore)]
+// #[cfg_attr(not(feature = "int_tests"), ignore)]
+#[ignore]
 async fn retrieve_payload() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");

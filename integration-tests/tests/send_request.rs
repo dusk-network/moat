@@ -26,7 +26,7 @@ const GAS_LIMIT: u64 = 500_000_000;
 const GAS_PRICE: u64 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "integration_tests"), ignore)]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn send_request() -> Result<(), Error> {
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");

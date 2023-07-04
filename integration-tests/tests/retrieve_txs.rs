@@ -10,7 +10,7 @@ use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "integration_tests"), ignore)]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn retrieve_txs_from_block() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
@@ -29,7 +29,7 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "integration_tests"), ignore)]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn retrieve_txs_from_block_range() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
@@ -57,7 +57,7 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "integration_tests"), ignore)]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");

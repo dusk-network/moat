@@ -19,5 +19,5 @@ rkyv = { version = "0.7", default-features = false }
 bytecheck = "0.6"
 
 [features]
-integration_tests = []
+int_tests = []
 expensive_tests = []

@@ -7,12 +7,12 @@
 use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use crate::BlockchainAccessConfig;
 use blake3::Hash;
+use phoenix_core::transaction::ModuleId;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
 use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
 use dusk_wallet_core::{Transaction, MAX_CALL_SIZE};
 use rkyv::ser::serializers::AllocSerializer;
-use rusk_abi::ModuleId;
 use std::str::FromStr;
 use tracing::info;
 

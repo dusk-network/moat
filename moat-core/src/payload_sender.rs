@@ -7,8 +7,8 @@
 use crate::error::Error;
 use dusk_jubjub::BlsScalar;
 use dusk_wallet::WalletPath;
+use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
-use rusk_abi::ModuleId;
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 pub struct PayloadSender;
@@ -16,7 +16,7 @@ pub struct PayloadSender;
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
     bytes[0] = 0x01; // 0xf8; todo: - temporarily we make it the TRANSFER contract
-    ModuleId::from_bytes(bytes)
+    bytes
 };
 
 const METHOD_NAME: &str = "root"; // todo: - temporarily we make it root, it should be License contract's noop
