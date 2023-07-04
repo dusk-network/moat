@@ -42,15 +42,16 @@ impl ReferenceLP {
                 RequestScanner::scan_block_range(height, height_end, &cfg)
                     .await?;
 
+            let relevant_requests = self.relevant_requests(&requests)?;
+
             println!(
-                "{} requests in range ({},{}) top={}",
+                "found {} requests in block range ({},{}), relevant: {}",
                 requests.len(),
                 height,
                 height_end,
-                top
+                relevant_requests.len()
             );
 
-            self.relevant_requests(&requests)?;
             // todo: hook up further processing of relevant requests here
 
             if top <= height_end {

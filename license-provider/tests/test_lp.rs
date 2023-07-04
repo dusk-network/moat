@@ -43,6 +43,8 @@ fn lp_filter_requests() -> Result<(), Error>  {
 
     let relevant_requests = reference_lp.relevant_requests(&requests)?;
 
+    println!("filtered {} relevant requests out of total {}", relevant_requests.len(), requests.len());
+
     assert_eq!(requests.len(), 9);
     assert_eq!(relevant_requests.len(), 9);
     // todo: prepare data so that there exist not relevant requests
