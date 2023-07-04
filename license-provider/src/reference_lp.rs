@@ -38,13 +38,16 @@ impl ReferenceLP {
     }
 
     /// scans the entire blockchain for requests to process
-    pub async fn scan(&mut self, cfg: &BlockchainAccessConfig) -> Result<(), Error> {
+    /// returns total number of requests found
+    pub async fn scan(&mut self, cfg: &BlockchainAccessConfig) -> Result<usize, Error> {
         let mut height = 0;
+        let mut total = 0usize;
         loop {
             let height_end = height + 10000;
             let (requests, top) =
                 RequestScanner::scan_block_range(height, height_end, &cfg)
                     .await?;
+            total += requests.len();
 
             let owned_requests = self.filter_owned_requests(&requests)?;
 
@@ -57,9 +60,9 @@ impl ReferenceLP {
             );
 
             self.requests_to_process.extend(owned_requests);
-            
+
             if top <= height_end {
-                return Ok(());
+                return Ok(total);
             }
 
             height = height_end;

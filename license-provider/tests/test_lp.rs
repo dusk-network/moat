@@ -29,6 +29,33 @@ async fn lp_run() -> Result<(), Error> {
     Ok(())
 }
 
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "lp"), ignore)]
+async fn lp_run_2_lps() -> Result<(), Error> {
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let lp1_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp.json");
+    let lp2_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
+
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
+
+    let mut reference_lp1 = ReferenceLP::init(&lp1_config_path)?;
+    let mut reference_lp2 = ReferenceLP::init(&lp2_config_path)?;
+    let _ = reference_lp1.scan(&blockchain_config).await?;
+    let total = reference_lp2.scan(&blockchain_config).await?;
+
+    let lp1_count = reference_lp1.requests_to_process.len();
+    let lp2_count = reference_lp2.requests_to_process.len();
+    assert!( lp1_count > 0);
+    assert!( lp2_count > 0);
+    assert!( (lp1_count + lp2_count) <= total);
+
+    Ok(())
+}
+
 #[test]
 fn lp_filter_requests() -> Result<(), Error>  {
     let lp_config_path =
