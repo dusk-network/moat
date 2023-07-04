@@ -45,9 +45,8 @@ fn lp_filter_requests() -> Result<(), Error>  {
 
     println!("filtered {} relevant requests out of total {}", relevant_requests.len(), requests.len());
 
-    assert_eq!(requests.len(), 9);
+    assert_eq!(requests.len(), 11);
     assert_eq!(relevant_requests.len(), 9);
-    // todo: prepare data so that there exist not relevant requests
 
     Ok(())
 }
