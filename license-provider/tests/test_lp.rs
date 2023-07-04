@@ -20,9 +20,11 @@ async fn lp_run() -> Result<(), Error> {
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
-    let reference_lp = ReferenceLP::init(&lp_config_path)?;
+    let mut reference_lp = ReferenceLP::init(&lp_config_path)?;
 
-    reference_lp.run(&blockchain_config).await?;
+    reference_lp.scan(&blockchain_config).await?;
+
+    assert!(reference_lp.requests_to_process.len() > 0);
 
     Ok(())
 }
@@ -41,9 +43,7 @@ fn lp_filter_requests() -> Result<(), Error>  {
 
     let requests = RequestScanner::scan_transactions(txs);
 
-    let relevant_requests = reference_lp.relevant_requests(&requests)?;
-
-    println!("filtered {} relevant requests out of total {}", relevant_requests.len(), requests.len());
+    let relevant_requests = reference_lp.filter_owned_requests(&requests)?;
 
     assert_eq!(requests.len(), 11);
     assert_eq!(relevant_requests.len(), 9);

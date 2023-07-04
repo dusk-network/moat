@@ -18,12 +18,16 @@ pub struct LPConfig {
 impl JsonLoader for LPConfig {}
 
 pub struct ReferenceLP {
-    vk_lp: ViewKey,
+    pub vk_lp: ViewKey,
+    pub requests_to_process: Vec<Request>,
 }
 
 impl ReferenceLP {
-    pub fn new(ssk: SecretSpendKey) -> Self {
-        Self { vk_lp: ssk.view_key() }
+    fn new(ssk: SecretSpendKey) -> Self {
+        Self {
+            vk_lp: ssk.view_key(),
+            requests_to_process: Vec::new(),
+        }
     }
 
     pub fn init<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
@@ -33,8 +37,8 @@ impl ReferenceLP {
         Ok(Self::new(ask))
     }
 
-    /// scans the entire blockchain for relevant requests
-    pub async fn run(&self, cfg: &BlockchainAccessConfig) -> Result<(), Error> {
+    /// scans the entire blockchain for requests to process
+    pub async fn scan(&mut self, cfg: &BlockchainAccessConfig) -> Result<(), Error> {
         let mut height = 0;
         loop {
             let height_end = height + 10000;
@@ -42,18 +46,18 @@ impl ReferenceLP {
                 RequestScanner::scan_block_range(height, height_end, &cfg)
                     .await?;
 
-            let relevant_requests = self.relevant_requests(&requests)?;
+            let owned_requests = self.filter_owned_requests(&requests)?;
 
             println!(
-                "found {} requests in block range ({},{}), relevant: {}",
+                "found {} requests in block range ({},{}), owned: {}",
                 requests.len(),
                 height,
                 height_end,
-                relevant_requests.len()
+                owned_requests.len()
             );
 
-            // todo: hook up further processing of relevant requests here
-
+            self.requests_to_process.extend(owned_requests);
+            
             if top <= height_end {
                 return Ok(());
             }
@@ -64,13 +68,13 @@ impl ReferenceLP {
 
     /// Given a collection of requests, returns a new collection
     /// containing only requests relevant to `this` license provider
-    pub fn relevant_requests(
+    pub fn filter_owned_requests(
         &self,
         requests: &Vec<Request>,
     ) -> Result<Vec<Request>, Error> {
         let mut relevant_requests: Vec<Request> = Vec::new();
         for request in requests.iter() {
-            if self.is_relevant_request(&request) {
+            if self.is_owned_request(&request) {
                 let r = Request {
                     ..*request
                 };
@@ -80,7 +84,7 @@ impl ReferenceLP {
         Ok(relevant_requests)
     }
 
-    pub fn is_relevant_request(&self, request: &Request) -> bool {
+    fn is_owned_request(&self, request: &Request) -> bool {
         self.vk_lp.owns(&request.rsa)
     }
 }
