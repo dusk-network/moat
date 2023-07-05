@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", branch = "rkyv" }
-zk-citadel = { git = "https://github.com/dusk-network/citadel.git", branch = "main" }
+dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", rev="1f994b1c" }
+zk-citadel = { git = "https://github.com/dusk-network/citadel.git", rev="64844967" }
 moat-core={ path = "../moat-core" }
 wallet-accessor = { path = "../wallet-accessor" }
 dusk-poseidon = { version = "0.30", default-features = false, features = ["rkyv-impl", "alloc"] }
