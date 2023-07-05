@@ -8,14 +8,14 @@ moat-core={ path = "../moat-core" }
 license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
-zk-citadel = { path="../../citadel" }
-wallet-accessor = { path = "../wallet-accessor" }
 dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", branch = "rkyv" }
+zk-citadel = { git = "https://github.com/dusk-network/citadel.git", branch = "main" }
+wallet-accessor = { path = "../wallet-accessor" }
+rkyv = { version = "0.7", default-features = false }
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
 toml-base-config = "0.1"
 gql_client = "1"
 rand = "0.8"
-rkyv = { version = "0.7", default-features = false }
 bytecheck = "0.6"
 
 [features]
