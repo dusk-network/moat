@@ -7,9 +7,7 @@ edition = "2021"
 toml-base-config = "0.1"
 clap = { version = "4.0", features = ["derive", "env"] }
 tokio = { version = "1.21", features = ["full"] }
-#dusk-wallet = "0.14"
-#dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", branch = "rkyv" }
-dusk-wallet = { path = "../../wallet-cli" }
+dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", branch = "rkyv" }
 moat-core = { path = "../moat-core" }
 wallet-accessor = { path = "../wallet-accessor" }
 tracing = "0.1"

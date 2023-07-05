@@ -10,7 +10,7 @@ license-provider = { path = "../license-provider" }
 [dev-dependencies]
 zk-citadel = { path="../../citadel" }
 wallet-accessor = { path = "../wallet-accessor" }
-dusk-wallet = { path = "../../wallet-cli" }
+dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", branch = "rkyv" }
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
 toml-base-config = "0.1"
 gql_client = "1"
