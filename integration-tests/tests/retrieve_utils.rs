@@ -11,23 +11,16 @@ use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
 #[tokio::test(flavor = "multi_thread")]
-// #[cfg_attr(not(feature = "int_tests"), ignore)]
 #[ignore]
 async fn retrieve_payload() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-
-    let config = BlockchainAccessConfig::load_path(config_path)?;
-
-    let client = Client::new(config.graphql_address.clone());
-
     const TXID: &str =
         "5f486c6f4edc9321e15a83993aa68463e733fc482acbde979881450c83c92a0e";
-
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+    let client = Client::new(config.graphql_address.clone());
     let request: Request =
         PayloadRetriever::retrieve_payload(TXID, &client).await?;
-
     println!("request={:?}", request);
-
     Ok(())
 }

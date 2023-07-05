@@ -44,7 +44,6 @@ impl TxRetriever {
             .map_err(|e| e.into());
         match result {
             e @ Err(_) => {
-                println!("error={:?}", e);
                 return e.map(|_| (Transactions::default(), top_block));
             }
             Ok(None) => (),
