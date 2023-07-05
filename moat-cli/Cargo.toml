@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", rev="1f994b1c" }
+dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli", branch="rkyv" }
 wallet-accessor = { path = "../wallet-accessor" }
 moat-core = { path = "../moat-core" }
 toml-base-config = "0.1"

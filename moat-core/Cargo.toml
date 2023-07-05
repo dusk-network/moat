@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", rev="1f994b1c" }
+dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli", branch="rkyv" }
 wallet-accessor = { path = "../wallet-accessor" }
-zk-citadel = { git = "https://github.com/dusk-network/citadel.git", rev="64844967" }
+zk-citadel = { git = "https://github.com/dusk-network/citadel", branch="main" }
 phoenix-core = { version = "0.18", features = ["alloc"] }
 dusk-poseidon = { version = "0.30", default-features = false, features = ["rkyv-impl", "alloc"] }
 dusk-jubjub = { version = "0.12", default-features = false }

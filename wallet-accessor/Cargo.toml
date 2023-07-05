@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli.git", rev="1f994b1c" }
+dusk-wallet = { git = "https://github.com/dusk-network/wallet-cli", branch="rkyv" }
 dusk-wallet-core = "0.17.1-piecrust.0.5"
 phoenix-core = { version = "0.18", features = ["alloc"] }
 dusk-bls12_381 = "0.11"
