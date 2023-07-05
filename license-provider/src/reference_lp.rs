@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_bytes::DeserializableSlice;
-use dusk_pki::{SecretSpendKey, ViewKey};
+use dusk_pki::ViewKey;
 use moat_core::{Error, JsonLoader, RequestScanner};
 use std::path::Path;
 use wallet_accessor::BlockchainAccessConfig;
@@ -13,7 +13,7 @@ use zk_citadel::license::Request;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct LPConfig {
-    pub ssk_lp: String,
+    pub vk_lp: String,
 }
 impl JsonLoader for LPConfig {}
 
@@ -23,18 +23,18 @@ pub struct ReferenceLP {
 }
 
 impl ReferenceLP {
-    fn new(ssk: SecretSpendKey) -> Self {
+    fn new(vk_lp: ViewKey) -> Self {
         Self {
-            vk_lp: ssk.view_key(),
+            vk_lp,
             requests_to_process: Vec::new(),
         }
     }
 
     pub fn init<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
         let lp_config: LPConfig = LPConfig::from_file(lp_config_path)?;
-        let ssk_bytes = hex::decode(lp_config.ssk_lp)?;
-        let ask = SecretSpendKey::from_slice(ssk_bytes.as_slice())?;
-        Ok(Self::new(ask))
+        let vk_bytes = hex::decode(lp_config.vk_lp)?;
+        let vk = ViewKey::from_slice(vk_bytes.as_slice())?;
+        Ok(Self::new(vk))
     }
 
     /// scans the entire blockchain for requests to process
