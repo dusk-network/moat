@@ -4,9 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use blake3::OUT_LEN;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::ViewKey;
 use moat_core::{Error, JsonLoader, RequestScanner};
+use std::collections::BTreeSet;
 use std::path::Path;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
@@ -17,9 +19,12 @@ pub struct LPConfig {
 }
 impl JsonLoader for LPConfig {}
 
+const BLOCKS_RANGE_LEN: u64 = 10000;
+
 pub struct ReferenceLP {
     pub vk_lp: ViewKey,
     pub requests_to_process: Vec<Request>,
+    pub requests_hashes: BTreeSet<[u8; OUT_LEN]>,
 }
 
 impl ReferenceLP {
@@ -27,6 +32,7 @@ impl ReferenceLP {
         Self {
             vk_lp,
             requests_to_process: Vec::new(),
+            requests_hashes: BTreeSet::new(),
         }
     }
 
@@ -37,13 +43,18 @@ impl ReferenceLP {
         Ok(Self::new(vk))
     }
 
-    /// scans the entire blockchain for requests to process
+    /// scans the entire blockchain for the requests to process
     /// returns total number of requests found
-    pub async fn scan(&mut self, cfg: &BlockchainAccessConfig) -> Result<usize, Error> {
+    /// and number of requests addressed to this LP
+    pub async fn scan(
+        &mut self,
+        cfg: &BlockchainAccessConfig,
+    ) -> Result<(usize, usize), Error> {
         let mut height = 0;
         let mut total = 0usize;
+        let mut total_owned = 0usize;
         loop {
-            let height_end = height + 10000;
+            let height_end = height + BLOCKS_RANGE_LEN;
             let (requests, top) =
                 RequestScanner::scan_block_range(height, height_end, &cfg)
                     .await?;
@@ -52,21 +63,45 @@ impl ReferenceLP {
             let owned_requests = self.filter_owned_requests(&requests)?;
 
             println!(
-                "found {} requests in block range ({},{}), owned: {}",
+                "found {} requests in block range ({},{}), owned: {}, top: {}",
                 requests.len(),
                 height,
                 height_end,
-                owned_requests.len()
+                owned_requests.len(),
+                top
             );
 
-            self.requests_to_process.extend(owned_requests);
+            total_owned += owned_requests.len();
+            for owned_request in owned_requests {
+                self.insert_request(owned_request);
+            }
 
             if top <= height_end {
-                return Ok(total);
+                return Ok((total, total_owned));
             }
 
             height = height_end;
         }
+    }
+
+    /// scans the last n blocks for the requests to process
+    /// returns total number of requests found
+    /// and number of requests addressed to this LP
+    pub async fn scan_last_blocks(
+        &mut self,
+        n: usize,
+        cfg: &BlockchainAccessConfig,
+    ) -> Result<(usize, usize), Error> {
+        let mut total = 0usize;
+        let mut total_owned = 0usize;
+        let requests = RequestScanner::scan_last_blocks(n, &cfg).await?;
+        total += requests.len();
+        let owned_requests = self.filter_owned_requests(&requests)?;
+        total_owned += owned_requests.len();
+        for owned_request in owned_requests {
+            self.insert_request(owned_request);
+        }
+        Ok((total, total_owned))
     }
 
     /// Given a collection of requests, returns a new collection
@@ -78,9 +113,7 @@ impl ReferenceLP {
         let mut relevant_requests: Vec<Request> = Vec::new();
         for request in requests.iter() {
             if self.is_owned_request(&request) {
-                let r = Request {
-                    ..*request
-                };
+                let r = Request { ..*request };
                 relevant_requests.push(r);
             }
         }
@@ -89,5 +122,29 @@ impl ReferenceLP {
 
     fn is_owned_request(&self, request: &Request) -> bool {
         self.vk_lp.owns(&request.rsa)
+    }
+
+    fn insert_request(&mut self, request: Request) {
+        let hash = Self::hash_request(&request);
+        if self.requests_hashes.insert(hash) {
+            self.requests_to_process.push(request);
+        }
+    }
+
+    #[allow(dead_code)]
+    fn take_request(&mut self) -> Option<Request> {
+        self.requests_to_process.pop().map(|request| {
+            self.requests_hashes.remove(&Self::hash_request(&request));
+            request
+        })
+    }
+
+    fn hash_request(request: &Request) -> [u8; OUT_LEN] {
+        *blake3::hash(
+            rkyv::to_bytes::<_, 4096>(request)
+                .expect("Request should serialize correctly")
+                .as_slice(),
+        )
+        .as_bytes()
     }
 }

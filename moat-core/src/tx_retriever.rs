@@ -62,7 +62,7 @@ impl TxRetriever {
 
     pub async fn txs_from_last_n_blocks(
         client: &Client,
-        n: u32,
+        n: usize,
     ) -> Result<Transactions, Error> {
         let mut transactions = Transactions::default();
         let n_str = format!("{}", n);

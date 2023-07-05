@@ -16,15 +16,15 @@ async fn scan_requests_in_lasts_blocks() -> Result<(), Error> {
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
-    const SCAN_N_LAST_BLOCKS: u32 = 10000;
+    const LAST_BLOCKS: usize = 10000;
 
     let requests =
-        RequestScanner::scan_last_blocks(SCAN_N_LAST_BLOCKS, &cfg).await?;
+        RequestScanner::scan_last_blocks(LAST_BLOCKS, &cfg).await?;
 
     println!(
         "there were {} requests found in last n={} blocks",
         requests.len(),
-        SCAN_N_LAST_BLOCKS
+        LAST_BLOCKS
     );
 
     Ok(())
@@ -55,7 +55,7 @@ async fn scan_requests_in_block_range() -> Result<(), Error> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "expensive_tests"), ignore)]
+#[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn scan_all_requests() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");

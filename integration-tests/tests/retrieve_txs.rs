@@ -66,7 +66,7 @@ async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
 
     let client = Client::new(cfg.graphql_address.clone());
 
-    const N: u32 = 10000;
+    const N: usize = 10000;
     let txs = TxRetriever::txs_from_last_n_blocks(&client, N).await?;
 
     println!("transactions={:?}", txs);

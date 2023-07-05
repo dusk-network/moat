@@ -20,4 +20,4 @@ bytecheck = "0.6"
 
 [features]
 int_tests = []
-expensive_tests = []
+exp_tests = []

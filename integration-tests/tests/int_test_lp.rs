@@ -10,8 +10,8 @@ use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "expensive_tests"), ignore)]
-async fn lp_run() -> Result<(), Error> {
+#[cfg_attr(not(feature = "exp_tests"), ignore)]
+async fn lp_scan() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
     let lp_config_path =
@@ -30,8 +30,42 @@ async fn lp_run() -> Result<(), Error> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "expensive_tests"), ignore)]
-async fn lp_run_2_lps() -> Result<(), Error> {
+#[cfg_attr(not(feature = "exp_tests"), ignore)]
+async fn lp_scan_last_blocks() -> Result<(), Error> {
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let lp_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
+
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
+
+    let mut reference_lp = ReferenceLP::init(&lp_config_path)?;
+
+    let (total, owned) = reference_lp
+        .scan_last_blocks(10000, &blockchain_config)
+        .await?;
+    println!(
+        "total={}, owned={}, requests_to_process={}",
+        total,
+        owned,
+        reference_lp.requests_to_process.len()
+    );
+    let (total, owned) = reference_lp
+        .scan_last_blocks(10000, &blockchain_config)
+        .await?;
+    println!(
+        "total={}, owned={}, requests_to_process={}",
+        total,
+        owned,
+        reference_lp.requests_to_process.len()
+    );
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "exp_tests"), ignore)]
+async fn lp_scan_2_lps() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
     let lp1_config_path =
@@ -44,14 +78,12 @@ async fn lp_run_2_lps() -> Result<(), Error> {
 
     let mut reference_lp1 = ReferenceLP::init(&lp1_config_path)?;
     let mut reference_lp2 = ReferenceLP::init(&lp2_config_path)?;
-    let _ = reference_lp1.scan(&blockchain_config).await?;
-    let total = reference_lp2.scan(&blockchain_config).await?;
+    let (_, lp1_count) = reference_lp1.scan(&blockchain_config).await?;
+    let (total, lp2_count) = reference_lp2.scan(&blockchain_config).await?;
 
-    let lp1_count = reference_lp1.requests_to_process.len();
-    let lp2_count = reference_lp2.requests_to_process.len();
-    assert!( lp1_count > 0);
-    assert!( lp2_count > 0);
-    assert!( (lp1_count + lp2_count) <= total);
+    assert!(lp1_count > 0);
+    assert!(lp2_count > 0);
+    assert!((lp1_count + lp2_count) <= total);
 
     Ok(())
 }

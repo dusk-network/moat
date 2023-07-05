@@ -8,7 +8,7 @@ use license_provider::ReferenceLP;
 use moat_core::{Error, JsonLoader, RequestScanner, Transactions};
 
 #[test]
-fn lp_filter_requests() -> Result<(), Error>  {
+fn lp_filter_requests() -> Result<(), Error> {
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp.json");
     let reference_lp = ReferenceLP::init(&lp_config_path)?;
