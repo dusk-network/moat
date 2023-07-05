@@ -59,27 +59,14 @@ impl ReferenceLP {
                 RequestScanner::scan_block_range(height, height_end, &cfg)
                     .await?;
             total += requests.len();
-
             let owned_requests = self.filter_owned_requests(&requests)?;
-
-            println!(
-                "found {} requests in block range ({},{}), owned: {}, top: {}",
-                requests.len(),
-                height,
-                height_end,
-                owned_requests.len(),
-                top
-            );
-
             total_owned += owned_requests.len();
             for owned_request in owned_requests {
                 self.insert_request(owned_request);
             }
-
             if top <= height_end {
                 return Ok((total, total_owned));
             }
-
             height = height_end;
         }
     }
