@@ -91,7 +91,7 @@ impl TxRetriever {
         match response {
             Some(Transactions {
                 transactions: mut txs,
-            }) if txs.len() > 0 => Ok(txs.swap_remove(0)),
+            }) if !txs.is_empty() => Ok(txs.swap_remove(0)),
             _ => Err(TransactionNotFound),
         }
     }

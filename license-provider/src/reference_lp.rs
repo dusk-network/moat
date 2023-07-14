@@ -56,7 +56,7 @@ impl ReferenceLP {
         loop {
             let height_end = height + BLOCKS_RANGE_LEN;
             let (requests, top) =
-                RequestScanner::scan_block_range(height, height_end, &cfg)
+                RequestScanner::scan_block_range(height, height_end, cfg)
                     .await?;
             total += requests.len();
             let owned_requests = self.filter_owned_requests(&requests)?;
@@ -81,7 +81,7 @@ impl ReferenceLP {
     ) -> Result<(usize, usize), Error> {
         let mut total = 0usize;
         let mut total_owned = 0usize;
-        let requests = RequestScanner::scan_last_blocks(n, &cfg).await?;
+        let requests = RequestScanner::scan_last_blocks(n, cfg).await?;
         total += requests.len();
         let owned_requests = self.filter_owned_requests(&requests)?;
         total_owned += owned_requests.len();
@@ -95,11 +95,11 @@ impl ReferenceLP {
     /// containing only requests relevant to `this` license provider
     pub fn filter_owned_requests(
         &self,
-        requests: &Vec<Request>,
+        requests: &[Request],
     ) -> Result<Vec<Request>, Error> {
         let mut relevant_requests: Vec<Request> = Vec::new();
         for request in requests.iter() {
-            if self.is_owned_request(&request) {
+            if self.is_owned_request(request) {
                 let r = Request { ..*request };
                 relevant_requests.push(r);
             }
