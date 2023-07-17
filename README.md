@@ -4,11 +4,13 @@
 ![Build Status](https://github.com/dusk-network/moat/workflows/build/badge.svg)
 [![Documentation](https://img.shields.io/badge/docs-moat-blue?logo=rust)](https://docs.rs/moat/)
 
-`moat` is a Rust workspace containing the following crates: `moat-cli`, `moat-core` and `wallet-accessor`.
+`moat` is a Rust workspace containing the following crates: `moat-cli`, `moat-core`, `wallet-accessor`, `integration-tests` and `license-provider`.
 
 - `moat-cli`: Command line interface (CLI) for submitting license requests to the Dusk blockchain.
 - `moat-core`: Library for submitting and scanning license requests in the Dusk blockchain.
-- `wallet-accessor`: Library for submitting contract-call transactions to the Dusk blockchain. 
+- `wallet-accessor`: Library for submitting contract-call transactions to the Dusk blockchain.
+- `integration-tests`: Moat library integration tests (test which require access to Dusk Wallet and a live Dusk cluser).
+- `license-prvider`: A reference implementation of a license provider.
 
 Example usage of the moat-cli utility:
 ```sh
@@ -18,7 +20,7 @@ where:
 - `wallet-path`: path to your installed wallet directory
 - `config-path`: path to your blockchain access configuration (refer to the configuration section)
 - `password`: password for your wallet
-- `...request.json`: path to your request json file (refer to the request section)
+- `...request.json`: path to your request json file (as explained in the request section)
 
 Example usage of the moat-core library:
 ```rust
@@ -47,6 +49,10 @@ use wallet_accessor::BlockchainAccessConfig;
     .await?;
 //...
 ```
+In the above example, the user is expected to have a request json file prepared and available
+at some filesystem path. The code loads contents of the file, extracts request arguments from it and 
+instantiates a request object. Subsequently, request is being sent to blockchain via
+a provided wallet (utilizing wallet path and password, as well as a blockchain access configuration file).
 
 Example usage of the wallet-accessor library:
 ```rust
@@ -68,6 +74,9 @@ use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
             .await?;
 //...
 ```
+In the above example, the code issues a contract call with request as an argument. The contract is identified by a given contract id,
+while contract's method is identified by method's name. Note that request sent as argument of the contract
+call is generic, so it can be any type declared by the user of the library, as long as it is rkyv-serializable.
 
 ##Request
 `moat-cli` requires a path to a json request file. An example request json file looks as follows:
@@ -103,6 +112,8 @@ The following code illustrates how to scan for all requests in the blockchain:
         height = height_end;
     }
 ```
+In the above example, calls scanning the blockchain are executed in a loop, in effect, scanning the entire blockchain. The user may also want 
+to arrange the calls differently. User may also scan only the last n blocks - an appropriate API for that is also available.
 
 ##Configuration
 `moat-cli` requires a configuration file with the urls which allow for blockchain access.
@@ -112,7 +123,7 @@ rusk_address = "https://devnet.nodes.dusk.network:8585"
 prover_address = "https://devnet.provers.dusk.network:8686"
 graphql_address = "http://devnet.nodes.dusk.network:9500/graphql"
 ```
-The file is also used by the `moat-core` and `wallet-accessor` libraries.
+The file is also used by the `moat-core` library.
 
 ##Testing
 To build and run unit tests:
