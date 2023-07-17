@@ -107,8 +107,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     PayloadSender::send(
         request,
         &blockchain_access_config,
-        wallet_path,
-        psw,
+        &wallet_path,
+        &psw,
         gas_limit,
         gas_price,
     )

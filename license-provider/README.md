@@ -21,10 +21,10 @@ cd license-provider
 cargo t --release
 ```
 
-to run an integration test against a life blockchain do:
+to run integration test against a life blockchain do:
 
 ```sh
 cd integration-tests
 cargo t lp --release --features exp_tests
 ```
-Make sure blockchain access data in `config.toml` in integration-tests/tests/config is up to date.
+Make sure blockchain access data in `config.toml` in integration-tests/tests/config is up-to-date.

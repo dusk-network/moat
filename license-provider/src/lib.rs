@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+mod license_issuer;
 mod reference_lp;
 
 pub use reference_lp::ReferenceLP;

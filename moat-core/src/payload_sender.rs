@@ -15,11 +15,11 @@ pub struct PayloadSender;
 
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
-    bytes[0] = 0x01; // 0xf8; todo: - temporarily we make it the TRANSFER contract
+    bytes[0] = 0x03;
     bytes
 };
 
-const METHOD_NAME: &str = "root"; // todo: - temporarily we make it root, it should be License contract's noop
+const METHOD_NAME: &str = "noop"; // todo: - temporarily we make it root, it should be License contract's noop
 
 const MAX_CALL_SIZE: usize = 65536;
 
@@ -28,8 +28,8 @@ impl PayloadSender {
     pub async fn send<P>(
         payload: P,
         cfg: &BlockchainAccessConfig,
-        wallet_path: WalletPath,
-        password: Password,
+        wallet_path: &WalletPath,
+        password: &Password,
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<BlsScalar, Error>
@@ -37,8 +37,8 @@ impl PayloadSender {
         P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
         let wallet_accessor = WalletAccessor {
-            path: wallet_path,
-            pwd: password,
+            path: wallet_path.clone(),
+            pwd: password.clone(),
         };
         let tx_id = wallet_accessor
             .send(

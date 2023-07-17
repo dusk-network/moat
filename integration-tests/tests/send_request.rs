@@ -52,8 +52,8 @@ async fn send_request() -> Result<(), Error> {
     let tx_id = PayloadSender::send(
         request,
         &config,
-        wallet_path,
-        PwdHash(PWD_HASH.to_string()),
+        &wallet_path,
+        &PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
     )
