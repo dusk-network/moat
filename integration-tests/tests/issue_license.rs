@@ -29,7 +29,7 @@ async fn issue_license() -> Result<(), Error> {
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let lp_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp.json");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
 
     let reference_lp = ReferenceLP::init(&lp_config_path)?;
 
