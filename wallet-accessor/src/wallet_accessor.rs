@@ -10,7 +10,7 @@ use blake3::Hash;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
 use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
-use dusk_wallet_core::{Transaction, MAX_CALL_SIZE};
+use dusk_wallet_core::MAX_CALL_SIZE;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
 use std::str::FromStr;
@@ -81,7 +81,7 @@ impl WalletAccessor {
         let mut gas = Gas::new(gas_limit);
         gas.set_price(gas_price);
 
-        let tx: Transaction = wallet
+        let tx = wallet
             .execute(sender, contract_id, call_name, data, gas)
             .await?;
         // let tx: Transaction = wallet
