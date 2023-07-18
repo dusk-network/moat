@@ -8,7 +8,7 @@ moat-core={ path = "../moat-core" }
 license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
-dusk-wallet = { version = "0.16", git = "https://github.com/dusk-network/wallet-cli", tag = "0.16.0-rc.1" }
+dusk-wallet = { version = "0.16", git = "https://github.com/dusk-network/wallet-cli", tag = "0.16.0-rc.1a" }
 zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
 wallet-accessor = { path = "../wallet-accessor" }
 rkyv = { version = "=0.7.39" }
