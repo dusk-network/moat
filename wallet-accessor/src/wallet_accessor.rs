@@ -87,7 +87,7 @@ impl WalletAccessor {
         // let tx: Transaction = wallet
         //     .transfer(sender, rcvr, Dusk::from(8), gas)
         //     .await?;
-        let tx_id = rusk_abi::hash(tx.to_hash_input_bytes());
+        let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
         info!("TX_ID={:x}", tx_id);
         Ok(tx_id)
     }

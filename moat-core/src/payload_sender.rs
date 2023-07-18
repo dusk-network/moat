@@ -15,11 +15,11 @@ pub struct PayloadSender;
 
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
-    bytes[0] = 0x03;
+    bytes[0] = 0x01; // todo: - temporarily it is transfer contract (01), it should be License contract (03)
     bytes
 };
 
-const METHOD_NAME: &str = "noop"; // todo: - temporarily we make it root, it should be License contract's noop
+const METHOD_NAME: &str = "root"; // todo: - temporarily we make it root, it should be License contract's noop
 
 const MAX_CALL_SIZE: usize = 65536;
 
