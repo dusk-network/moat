@@ -4,8 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
-use crate::{PayloadExtractor, Transactions, TxRetriever};
+use crate::{Transactions, TxRetriever};
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;

@@ -27,6 +27,12 @@ pub enum Error {
     TransactionNotFound,
     #[error("A base64 decode error occurred: {0:?}")]
     Base64DecodeError(Arc<base64::DecodeError>),
+    #[error(transparent)]
+    WebSocketError(Arc<tokio_tungstenite::tungstenite::Error>),
+    #[error("WebSocketStreamClosed")]
+    WebSocketStreamClosed,
+    #[error("Invalid query response: {0:?}")]
+    InvalidQueryResponse(Box<str>),
 }
 
 impl From<serde_json::Error> for Error {
@@ -68,5 +74,11 @@ impl From<gql_client::GraphQLError> for Error {
 impl From<base64::DecodeError> for Error {
     fn from(e: base64::DecodeError) -> Self {
         Error::Base64DecodeError(Arc::from(e))
+    }
+}
+
+impl From<tokio_tungstenite::tungstenite::Error> for Error {
+    fn from(e: tokio_tungstenite::tungstenite::Error) -> Self {
+        Error::WebSocketError(Arc::from(e))
     }
 }

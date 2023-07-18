@@ -4,8 +4,4 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-mod license_issuer;
-mod reference_lp;
-
-pub use license_issuer::LicenseIssuer;
-pub use reference_lp::ReferenceLP;
+mod websocket;

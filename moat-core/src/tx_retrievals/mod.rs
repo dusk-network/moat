@@ -4,12 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::json_loader::JsonLoader;
+mod tx_retriever;
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct RequestJson {
-    pub user_ssk: String,
-    pub provider_psk: String,
-}
-
-impl JsonLoader for RequestJson {}
+pub use tx_retriever::TxRetriever;

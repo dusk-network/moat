@@ -4,8 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-mod license_issuer;
-mod reference_lp;
+pub mod ws_client;
+pub mod ws_common;
+pub mod ws_server;
+pub mod ws_test;
 
-pub use license_issuer::LicenseIssuer;
-pub use reference_lp::ReferenceLP;
+pub use ws_client::send_request_to_ws_server;
+pub use ws_common::*;
+pub use ws_server::ws_license_contract_mock_server;

@@ -7,7 +7,7 @@
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 
 use crate::error::Error;
-use crate::retrieval_types::{Tx, TxJson};
+use crate::types::{Tx, TxJson};
 use crate::Error::PayloadNotPresent;
 use base64::{engine::general_purpose, Engine as _};
 use bytecheck::CheckBytes;

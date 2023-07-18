@@ -6,7 +6,7 @@
 
 use blake3::OUT_LEN;
 use dusk_bytes::DeserializableSlice;
-use dusk_pki::ViewKey;
+use dusk_pki::{PublicSpendKey, SecretSpendKey, ViewKey};
 use moat_core::{Error, JsonLoader, RequestScanner};
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -15,21 +15,30 @@ use zk_citadel::license::Request;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct LPConfig {
-    pub vk_lp: String,
+    pub psk_lp: String,
+    pub ssk_lp: String,
 }
 impl JsonLoader for LPConfig {}
 
 const BLOCKS_RANGE_LEN: u64 = 10000;
 
 pub struct ReferenceLP {
+    pub psk_lp: PublicSpendKey,
+    pub ssk_lp: SecretSpendKey,
     pub vk_lp: ViewKey,
     pub requests_to_process: Vec<Request>,
     pub requests_hashes: BTreeSet<[u8; OUT_LEN]>,
 }
 
 impl ReferenceLP {
-    fn new(vk_lp: ViewKey) -> Self {
+    fn new(
+        psk_lp: PublicSpendKey,
+        ssk_lp: SecretSpendKey,
+        vk_lp: ViewKey,
+    ) -> Self {
         Self {
+            psk_lp,
+            ssk_lp,
             vk_lp,
             requests_to_process: Vec::new(),
             requests_hashes: BTreeSet::new(),
@@ -38,9 +47,12 @@ impl ReferenceLP {
 
     pub fn init<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
         let lp_config: LPConfig = LPConfig::from_file(lp_config_path)?;
-        let vk_bytes = hex::decode(lp_config.vk_lp)?;
-        let vk = ViewKey::from_slice(vk_bytes.as_slice())?;
-        Ok(Self::new(vk))
+        let psk_bytes = hex::decode(lp_config.psk_lp)?;
+        let ssk_bytes = hex::decode(lp_config.ssk_lp)?;
+        let psk_lp = PublicSpendKey::from_slice(psk_bytes.as_slice())?;
+        let ssk_lp = SecretSpendKey::from_slice(ssk_bytes.as_slice())?;
+        let vk_lp = ssk_lp.view_key();
+        Ok(Self::new(psk_lp, ssk_lp, vk_lp))
     }
 
     /// scans the entire blockchain for the requests to process
