@@ -12,7 +12,7 @@ use rand::{CryptoRng, RngCore};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, Request};
 
-struct LicenseIssuer {
+pub struct LicenseIssuer {
     config: BlockchainAccessConfig,
     wallet_path: WalletPath,
     password: Password,
@@ -20,11 +20,28 @@ struct LicenseIssuer {
     gas_price: u64,
 }
 
-// todo: explain how are user attributes going to be passed in here from the user
+// todo: explain how are user attributes going to be passed in here from the
+// user
 const USER_ATTRIBUTES: u64 = 0x9b308734u64;
 
 #[allow(dead_code)]
 impl LicenseIssuer {
+    pub fn new(
+        config: BlockchainAccessConfig,
+        wallet_path: WalletPath,
+        password: Password,
+        gas_limit: u64,
+        gas_price: u64,
+    ) -> Self {
+        Self {
+            config,
+            wallet_path,
+            password,
+            gas_limit,
+            gas_price,
+        }
+    }
+
     pub async fn issue_license<R: RngCore + CryptoRng>(
         &self,
         rng: &mut R,
