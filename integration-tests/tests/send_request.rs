@@ -49,7 +49,7 @@ async fn send_request() -> Result<(), Error> {
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
     );
 
-    let tx_id = PayloadSender::send(
+    let tx_id = PayloadSender::send_noop(
         request,
         &config,
         &wallet_path,

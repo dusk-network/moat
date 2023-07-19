@@ -104,7 +104,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         PwdHash(pwd_hash)
     };
 
-    PayloadSender::send(
+    PayloadSender::send_noop(
         request,
         &blockchain_access_config,
         &wallet_path,

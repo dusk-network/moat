@@ -15,18 +15,18 @@ pub struct PayloadSender;
 
 const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
-    bytes[0] = 0x01; // todo: - temporarily it is transfer contract (01), it should be License
-                     // contract (03)
+    bytes[0] = 0x03;
     bytes
 };
 
-const METHOD_NAME: &str = "root"; // todo: - temporarily we make it root, it should be License contract's noop
+const NOOP_METHOD_NAME: &str = "noop";
+const ISSUE_LICENSE_METHOD_NAME: &str = "issue_license";
 
 const MAX_CALL_SIZE: usize = 65536;
 
 impl PayloadSender {
-    /// Sends a given payload to blockchain
-    pub async fn send<P>(
+    /// Sends a given payload to the noop method
+    pub async fn send_noop<P>(
         payload: P,
         cfg: &BlockchainAccessConfig,
         wallet_path: &WalletPath,
@@ -37,15 +37,66 @@ impl PayloadSender {
     where
         P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
+        Self::send_to_method(
+            payload,
+            cfg,
+            wallet_path,
+            password,
+            gas_limit,
+            gas_price,
+            NOOP_METHOD_NAME,
+        )
+        .await
+    }
+
+    /// Sends a given payload to the issue license method
+    pub async fn send_issue_license<P>(
+        payload: P,
+        cfg: &BlockchainAccessConfig,
+        wallet_path: &WalletPath,
+        password: &Password,
+        gas_limit: u64,
+        gas_price: u64,
+    ) -> Result<BlsScalar, Error>
+    where
+        P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
+    {
+        Self::send_to_method(
+            payload,
+            cfg,
+            wallet_path,
+            password,
+            gas_limit,
+            gas_price,
+            ISSUE_LICENSE_METHOD_NAME,
+        )
+        .await
+    }
+
+    /// Sends payload to a given method
+    pub async fn send_to_method<P, M>(
+        payload: P,
+        cfg: &BlockchainAccessConfig,
+        wallet_path: &WalletPath,
+        password: &Password,
+        gas_limit: u64,
+        gas_price: u64,
+        method: M,
+    ) -> Result<BlsScalar, Error>
+    where
+        P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
+        M: AsRef<str>,
+    {
         let wallet_accessor = WalletAccessor {
             path: wallet_path.clone(),
             pwd: password.clone(),
         };
+        println!("calling {}", ISSUE_LICENSE_METHOD_NAME);
         let tx_id = wallet_accessor
             .send(
-                payload,
+                (payload, 1u64, BlsScalar::one()),
                 LICENSE_CONTRACT_ID,
-                METHOD_NAME.to_string(),
+                method.as_ref().to_string(),
                 cfg,
                 gas_limit,
                 gas_price,

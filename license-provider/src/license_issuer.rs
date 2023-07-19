@@ -22,7 +22,7 @@ pub struct LicenseIssuer {
 
 // todo: explain how are user attributes going to be passed in here from the
 // user
-const USER_ATTRIBUTES: u64 = 0x9b308734u64;
+const USER_ATTRIBUTES: u64 = 1 << 17; //0x9b308734u64;
 
 #[allow(dead_code)]
 impl LicenseIssuer {
@@ -50,7 +50,7 @@ impl LicenseIssuer {
     ) -> Result<(), Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
-        PayloadSender::send(
+        PayloadSender::send_issue_license(
             license,
             &self.config,
             &self.wallet_path,
