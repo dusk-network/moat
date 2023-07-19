@@ -4,8 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::JubJubScalar;
+use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
+use dusk_poseidon::sponge;
 use dusk_wallet::WalletPath;
 use moat_core::{Error, PayloadSender};
 use rand::{CryptoRng, RngCore};
@@ -50,8 +51,15 @@ impl LicenseIssuer {
     ) -> Result<(), Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
+        let license_pos = 1u64;// todo
+        let license_blob = rkyv::to_bytes::<_, 8192>(&license)
+            .expect("Request should serialize correctly")
+            .to_vec();
+        let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
+        let license_hash = sponge::hash(&[lpk.get_x(), lpk.get_y()]);
+        let tuple = (license_blob, license_pos, license_hash);
         PayloadSender::send_issue_license(
-            license,
+            tuple,
             &self.config,
             &self.wallet_path,
             &self.password,
