@@ -51,7 +51,7 @@ impl LicenseIssuer {
     ) -> Result<(), Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
-        let license_pos = 1u64;// todo
+        let license_pos = 1u64; // todo
         let license_blob = rkyv::to_bytes::<_, 8192>(&license)
             .expect("Request should serialize correctly")
             .to_vec();
