@@ -24,16 +24,17 @@ pub async fn send_request_to_ws_server() {
     println!("client - websocket handshake has been successfully completed");
 
     let id = 93;
-    let fn_args = Vec::from(&b"I am call data 0"[..]);
+    let fn_name = "get_licenses".to_string();
+    let fn_args = Vec::from(&b"argument for get_licenses"[..]);
     let request = serde_json::to_string(&ExecutionRequest {
         request_id: Some(id as i32),
         contract: [03; 32], // todo - we need Citadel Contract Id here
-        fn_name: "test_function".to_string(),
+        fn_name: fn_name.clone(),
         fn_args,
     })
     .expect("Serializing request should succeed");
 
-    println!("client - sending request={:?}", id);
+    println!("client - sending request id={:?} fn_name={}", id, fn_name);
     ws_stream
         .send(Message::Text(request))
         .await

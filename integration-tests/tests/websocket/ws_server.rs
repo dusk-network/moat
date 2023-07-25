@@ -56,7 +56,7 @@ async fn accept_connection(stream: TcpStream) {
     let request: ExecutionRequest = serde_json::from_str(&msg)
         .expect("Request should deserialize successfully");
 
-    println!("server - obtained request={:?}", request.request_id);
+    println!("server - obtained request={:?} fn_name={}", request.request_id, request.fn_name);
 
     let response_id = request.request_id;
     let response = serde_json::to_string(&ExecutionResponse {
