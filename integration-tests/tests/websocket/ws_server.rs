@@ -4,14 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::websocket::ws_common::*;
 use futures_util::{SinkExt, StreamExt};
 use moat_core::Error;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::Message;
-use crate::websocket::ws_common::*;
 
-
-pub async fn ws_license_contract_mock_server(seconds: u64) -> Result<(), Error> {
+pub async fn ws_license_contract_mock_server(
+    seconds: u64,
+) -> Result<(), Error> {
     let addr = "127.0.0.1:9127".to_string();
 
     let try_socket = TcpListener::bind(&addr).await;
@@ -63,7 +64,7 @@ async fn accept_connection(stream: TcpStream) {
         data: Vec::new(), // todo
         error: None,
     })
-        .expect("Serializing response should succeed");
+    .expect("Serializing response should succeed");
 
     println!("server - sending response ={:?}", response_id);
     ws_stream
