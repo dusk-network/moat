@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 mod contract_inquirer;
+mod citadel_inquirer;
 mod ws_types;
 
 pub use contract_inquirer::ContractInquirer;
