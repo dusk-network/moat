@@ -70,7 +70,11 @@ impl ContractInquirer {
         if let Some(sent_id) = id {
             match response.request_id {
                 Some(received_id) if sent_id == received_id => (),
-                _ => return Err(InvalidQueryResponse(Box::from("received wrong request id")))
+                _ => {
+                    return Err(InvalidQueryResponse(Box::from(
+                        "received wrong request id",
+                    )))
+                }
             }
         }
         let response_data = check_archived_root::<R>(response.data.as_slice())

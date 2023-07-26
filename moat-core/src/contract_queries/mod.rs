@@ -6,3 +6,5 @@
 
 mod contract_inquirer;
 mod ws_types;
+
+pub use contract_inquirer::ContractInquirer;

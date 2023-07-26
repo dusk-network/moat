@@ -6,11 +6,13 @@
 
 use crate::websocket::ws_common::*;
 use futures_util::{SinkExt, StreamExt};
+use moat_core::ContractInquirer;
 use tokio::net::TcpStream;
 use tokio_tungstenite::client_async;
 use tokio_tungstenite::tungstenite::Message;
 
-pub async fn send_request_to_ws_server() {
+#[allow(dead_code)]
+pub async fn send_request_to_ws_server_2() {
     let url = "127.0.0.1:9127";
 
     println!("client - connecting");
@@ -55,4 +57,16 @@ pub async fn send_request_to_ws_server() {
         .expect("Response should deserialize successfully");
     println!("client - obtained response={:?}", response.request_id);
     assert_eq!(response.request_id, Some(93));
+}
+
+pub async fn send_request_to_ws_server() {
+    let _result: () = ContractInquirer::query_contract(
+        "127.0.0.1:9127",
+        None,
+        (),
+        [03; 32],
+        "some_method",
+    )
+    .await
+    .expect("Contract query should succeed");
 }
