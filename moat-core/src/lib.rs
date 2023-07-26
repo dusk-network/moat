@@ -44,6 +44,7 @@
 //! subproject.
 
 mod blockchain_requests;
+mod contract_queries;
 mod error;
 mod json_loader;
 mod tx_retrievals;
