@@ -6,7 +6,7 @@
 
 use crate::contract_queries::ws_types::{ExecutionRequest, ExecutionResponse};
 use crate::error::Error;
-use crate::Error::{PayloadNotPresent, WebSocketStreamClosed};
+use crate::Error::{InvalidQueryResponse, WebSocketStreamClosed};
 use bytecheck::CheckBytes;
 use futures_util::{SinkExt, StreamExt};
 use phoenix_core::transaction::ModuleId;
@@ -40,14 +40,15 @@ impl ContractInquirer {
     {
         let stream = TcpStream::connect(url.as_ref()).await?;
 
-        let (mut ws_stream, _) = client_async("ws://localhost", stream) // todo use url here
-            .await?;
+        let url = format!("ws://{}", url.as_ref()); // todo: find a more elegant way
+
+        let (mut ws_stream, _) = client_async(url, stream).await?;
 
         let fn_args = rkyv::to_bytes::<_, MAX_CALL_SIZE>(&args)
             .expect("Request should serialize correctly")
             .to_vec();
         let request = serde_json::to_string(&ExecutionRequest {
-            request_id: id,
+            request_id: id.clone(),
             contract: contract_id,
             fn_name: method.as_ref().to_string(),
             fn_args,
@@ -63,11 +64,18 @@ impl ContractInquirer {
         };
 
         let response: ExecutionResponse = serde_json::from_str(&msg)?;
-        // todo check request id
-        // todo check if not error
+        if let Some(response_error) = response.error {
+            return Err(InvalidQueryResponse(Box::from(response_error)));
+        }
+        if let Some(sent_id) = id {
+            match response.request_id {
+                Some(received_id) if sent_id == received_id => (),
+                _ => return Err(InvalidQueryResponse(Box::from("received wrong request id")))
+            }
+        }
         let response_data = check_archived_root::<R>(response.data.as_slice())
             .map_err(|_| {
-                PayloadNotPresent(Box::from("rkyv deserialization error")) // todo change error type
+                InvalidQueryResponse(Box::from("rkyv deserialization error"))
             })?;
         let r: R = response_data
             .deserialize(&mut Infallible)

@@ -31,6 +31,8 @@ pub enum Error {
     WebSocketError(Arc<tokio_tungstenite::tungstenite::Error>),
     #[error("WebSocketStreamClosed")]
     WebSocketStreamClosed,
+    #[error("Invalid query response: {0:?}")]
+    InvalidQueryResponse(Box<str>),
 }
 
 impl From<serde_json::Error> for Error {
