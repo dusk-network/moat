@@ -5,10 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
+use crate::types::*;
 use crate::Error::TransactionNotFound;
 use crate::{QueryResult, Tx};
 use gql_client::Client;
-use crate::types::*;
 
 pub struct TxRetriever;
 

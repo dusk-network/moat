@@ -7,6 +7,14 @@
 use crate::JsonLoader;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct RequestJson {
+    pub user_ssk: String,
+    pub provider_psk: String,
+}
+
+impl JsonLoader for RequestJson {}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct ContractInfo {
     pub method: String,
     pub contract: String,
