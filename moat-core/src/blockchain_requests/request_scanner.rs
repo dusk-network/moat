@@ -7,7 +7,7 @@
 use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
 use crate::{Transactions, TxRetriever};
-use gql_client::Client;
+use dusk_wallet::RuskHttpClient;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
@@ -18,6 +18,7 @@ impl RequestScanner {
     pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
+            println!("tx={:?}", tx);
             if let Ok(request) =
                 PayloadExtractor::payload_from_tx::<Request>(tx)
             {
@@ -32,7 +33,7 @@ impl RequestScanner {
         last_n_blocks: usize,
         cfg: &BlockchainAccessConfig,
     ) -> Result<Vec<Request>, Error> {
-        let client = Client::new(cfg.graphql_address.clone());
+        let client = RuskHttpClient::new(cfg.rusk_address.clone());
         let txs =
             TxRetriever::txs_from_last_n_blocks(&client, last_n_blocks).await?;
         let requests = RequestScanner::scan_transactions(txs);
@@ -45,7 +46,8 @@ impl RequestScanner {
         height_end: u64,
         cfg: &BlockchainAccessConfig,
     ) -> Result<(Vec<Request>, u64), Error> {
-        let client = Client::new(cfg.graphql_address.clone());
+        // let client = Client::new(cfg.graphql_address.clone());
+        let client = RuskHttpClient::new(cfg.rusk_address.clone());
         let (txs, top) =
             TxRetriever::txs_from_block_range(&client, height_beg, height_end)
                 .await?;

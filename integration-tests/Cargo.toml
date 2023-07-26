@@ -8,8 +8,9 @@ moat-core={ path = "../moat-core" }
 license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
-dusk-wallet = { version = "0.16", git = "https://github.com/dusk-network/wallet-cli", tag = "0.16.0-rc.1a" }
+dusk-wallet = "0.18"
 zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
+dusk-jubjub = { version = "0.12", default-features = false }
 wallet-accessor = { path = "../wallet-accessor" }
 rkyv = { version = "=0.7.39" }
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
@@ -23,7 +24,9 @@ toml-base-config = "0.1"
 gql_client = "1"
 rand = "0.8"
 bytecheck = "0.6"
+hex = "0.4"
 
 [features]
 int_tests = []
 exp_tests = []
+vol_tests = []

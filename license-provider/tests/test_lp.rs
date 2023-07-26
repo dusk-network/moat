@@ -23,8 +23,8 @@ fn lp_filter_requests() -> Result<(), Error> {
 
     let relevant_requests = reference_lp.filter_owned_requests(&requests)?;
 
-    assert_eq!(requests.len(), 11);
-    assert_eq!(relevant_requests.len(), 9);
+    assert_eq!(requests.len(), 9);
+    assert_eq!(relevant_requests.len(), 2);
 
     Ok(())
 }

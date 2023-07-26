@@ -1,9 +1,10 @@
 {
-  "txid": "f6c7aa4e42fd55fe10a66a5c19bbd51bbcc58914305ef1a868253fec6ada2c0d",
-  "contractinfo":
+  "id": "f6c7aa4e42fd55fe10a66a5c19bbd51bbcc58914305ef1a868253fec6ada2c0d",
+  "call_data":
   {
-    "method": "61",
-    "contract": "0100000000000000000000000000000000000000000000000000000000000000"
+    "fn_name": "61",
+    "contract_id": "0100000000000000000000000000000000000000000000000000000000000000",
+    "data": ""
   },
-  "json":"{\"anchor\":\"EPMcey4H2yhMSJvJwCWH3v3LVxaKKS9k7yiV1kxl/S8=\",\"nullifier\":[\"JdQ2RzJjIQIMU5ARc8KkUTDkTAeFlFG/+ME4VZY5cgw=\",\"O9ahXF0IQCid7yov8MSkpDgaEhRPGE9d3PlX8oDR+3E=\"],\"crossover\":null,\"notes\":[{\"note_type\":1,\"value_commitment\":\"PdATIqWmcQY7VdTJz7bYtauAo8z2Z039ym5/zTKbaLc=\",\"nonce\":\"PZmIItyG0Yc3qojO4LVCdv2zejeNKcru8G/fJg2GoDQ=\",\"stealth_address\":\"VJqXBQ6pUrF81IlxnCXb8LXDOQuXntZLd6lns/ZBPm3eOp8NElGUnG5evmJKNZFR5dXuPEbp6CArSgLXPf8YAQ==\",\"pos\":18446744073709551615,\"encrypted_data\":\"+l6+sGInOWSqC1HoNZmaXxQaWqSRGMSB2BvtwFjKShtjE8qamfqmrVdDw7r/yJXbM7Mb+WfjSBzSSDjCrbp7IpYL23cV4fsJBOaVV4XSjBHqso7IkvCoBpgShdamxrEK\"}],\"fee\":{\"gas_limit\":500000000,\"gas_price\":1,\"stealth_addr\":\"Vytv4O9O8UtkykvK5upV5HJPYGbMXayTZ3v+bFMQQIjpouG6s2+Ih8ySikAH5swSgDvp6MadQaEr1ALCmJiJ7w==\"},\"spend_proof\":\"i6+duso+rof8FfFT52d4DkM8sB/aMQ4dhlIARlPjF/IQn5qsu2ZrUKj4wg4n5vBQk+H25P9+cNy+qMKMeyvxTT2X5nWbtypAUEpXqI/ybe6Dsiw7dNLJyA5SDcIoWtIYqUzLT5P/TD3W2eQSgNJ27Wc9ubL5nLQw0CDFi2oIuofksAUJyGOlO13ye8ytXinMsIKS8EWfpnbUWgWG7eeCKYrqm16p2i9f01X693zSL9vfWsbzpvZQ2rdu16z4EM66o2NeVjUudSutobvLa8asujlBtOXd2SYaVLmgkyrmQqJJXXjaq349VtO06gQ+XE+DtSonE9fT0M7ko3Q29Lr37UV63Q/QGByjePlUMd7EyopiGkFwZf5S55igq4fd/bqZiAGsX6zDhXDNdKAs4gFw6xVxCo0FMH/Pab7yh6nkerpGV1854oG+2OjP6gSQPSmmls1HCiurw3XnJzaqWfZc9ZrF3Ug5YWc+Xx1XbmuKVTahSxHAxrhr2G2c+5N9xnbCq5qpzwus16GUf17UHBshjNNQtOc//sJbMI4GZTx/htM4OC/qvA413IQMh1BsjmyzjikSkeK8VX8W85hPylm51LPYJW7ll3bm0ypFn8LUsU2eg+dJ7cCsbZ28dZlFcM4NoaO9vvCOYhHiHU1SV9/PpJK8P0VaJTPwGWMwMmVLE7g/hdrSj1SsaPAExebHvh8jgbGdvyy6PVr8gFzBBmX5myfRrHglZGIgZoPGbWwLOD4syw3Tu81AQ+fADvKdgkZPspEYwk7bJg4tJogFsem8SlahHmdhStYJID6EV9zfWhApLVab05gk3yXKKLsLzn0zY5SDgnvHHOc33POR2YC2ShDJMy9PqpE5QU7u6nGfWBu3ChpQ26TjX/HNNpAObYOnd6m21pNV4zmIsHTDo4c3CWxS7AkrqWN09LIuPHFXOnPXobL0T/MsqyQciISR8ywuVNaSt1hOBbZII8ia/T+nCttMzQte1lCcKaU29PT5uVTNShjsiU+L6hfyA2uBf5UWyAncBd2d6st9ImwfBQLuS8SJNV7B+JvC6EJhAIOhP2O2q+i7IA7Fvr9NwHBG2EBzl9xuiibK0K6M7oppYslRFyBrlzPEp1NBTVGe+Gwcs1y8TTywSNkELB18VVfhVjLVDY0p8xdV02H1gC6SEg5NKm0/UqJYSK5k+Kv2hR6JAnnmLpJjZT2uWZGFMBrPsrIOps2mgtuTQM7+gqDHuvmu2N9AyHmQG9vMsde/x9+oBiVZLMWVyFJmoMYs3f3VWQXB3catX2uqgyv0rdXZ28/0Ke49CPtR1EIFSroESkH46RGBJbOxkrGo+SkCen9AWH0QrbXXNrEZ4W0xTmHhyCPvBIKcCIbSGsey/a3SM0FIT1k=\",\"call\":{\"ContractID\":\"AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\",\"FnName\":\"cm9vdA==\",\"CallData\":\"YWJjAAAAAANhYmMAAAAAA2NhZmUAAAAE6P///xgAAAA=\"}}"
+  "raw":""
 }

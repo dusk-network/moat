@@ -65,12 +65,6 @@ impl From<hex::FromHexError> for Error {
     }
 }
 
-impl From<gql_client::GraphQLError> for Error {
-    fn from(e: gql_client::GraphQLError) -> Self {
-        Error::GQLError(Box::from(e.message()))
-    }
-}
-
 impl From<base64::DecodeError> for Error {
     fn from(e: base64::DecodeError) -> Self {
         Error::Base64DecodeError(Arc::from(e))

@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use gql_client::Client;
+use dusk_wallet::RuskHttpClient;
 use moat_core::{Error, TxRetriever};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -17,13 +17,13 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
-    let client = Client::new(cfg.graphql_address.clone());
+    let client = RuskHttpClient::new(cfg.rusk_address);
 
-    const BLOCK_HEIGHT: u64 = 317042;
+    const BLOCK_HEIGHT: u64 = 110;
 
     let txs = TxRetriever::txs_from_block(&client, BLOCK_HEIGHT).await?;
 
-    println!("transactions={:?}", txs);
+    println!("transactions retrieved={}", txs.transactions.len());
 
     Ok(())
 }
@@ -36,10 +36,10 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
-    let client = Client::new(cfg.graphql_address.clone());
+    let client = RuskHttpClient::new(cfg.rusk_address);
 
-    const BLOCK_HEIGHT_BEG: u64 = 97117;
-    const BLOCK_HEIGHT_END: u64 = 107117;
+    const BLOCK_HEIGHT_BEG: u64 = 1;
+    const BLOCK_HEIGHT_END: u64 = 1000;
 
     let (txs, top_block) = TxRetriever::txs_from_block_range(
         &client,
@@ -50,7 +50,7 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 
     assert!(top_block > 0);
 
-    println!("transactions={:?}", txs);
+    println!("transactions retrieved={}", txs.transactions.len());
     println!("current top block={}", top_block);
 
     Ok(())
@@ -64,12 +64,34 @@ async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
-    let client = Client::new(cfg.graphql_address.clone());
+    let client = RuskHttpClient::new(cfg.rusk_address);
 
     const N: usize = 10000;
     let txs = TxRetriever::txs_from_last_n_blocks(&client, N).await?;
 
-    println!("transactions={:?}", txs);
+    println!("transactions={}", txs.transactions.len());
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "vol_tests"), ignore)]
+async fn retrieve_tx_by_id() -> Result<(), Error> {
+    const TXID: &str =
+        "44fe2c6407fc400a2dee6e30c62a02b82f3980da18d3b6306e80f9f83730520d";
+
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = RuskHttpClient::new(config.rusk_address);
+
+    let result = TxRetriever::retrieve_tx(TXID, &client).await;
+
+    println!("res={:?}", result);
+
+    assert!(result.is_ok());
 
     Ok(())
 }

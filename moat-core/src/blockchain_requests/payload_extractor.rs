@@ -7,9 +7,8 @@
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 
 use crate::error::Error;
-use crate::types::{Tx, TxJson};
+use crate::types::Tx;
 use crate::Error::PayloadNotPresent;
-use base64::{engine::general_purpose, Engine as _};
 use bytecheck::CheckBytes;
 use rkyv::validation::validators::DefaultValidator;
 
@@ -22,23 +21,27 @@ impl PayloadExtractor {
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
-        let tx_json: TxJson = serde_json::from_str(tx.json.as_str())?;
-        Self::payload_from_tx_json::<P>(&tx_json)
+        let r = tx
+            .call_data
+            .as_ref()
+            .ok_or(PayloadNotPresent(Box::from("missing call data")))?
+            .data
+            .as_str();
+        Self::payload_from_call_data::<P, _>(r)
     }
 
-    pub fn payload_from_tx_json<P>(tx_json: &TxJson) -> Result<P, Error>
+    fn payload_from_call_data<P, S>(payload_ser: S) -> Result<P, Error>
     where
         P: Archive,
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
+        S: AsRef<str>,
     {
-        let payload_base64 = &tx_json.call.CallData;
-        let payload_ser = general_purpose::STANDARD.decode(payload_base64)?;
+        let payload_ser = hex::decode(payload_ser.as_ref())?;
 
-        let payload = check_archived_root::<P>(payload_ser.as_slice())
-            .map_err(|_| {
-                PayloadNotPresent(Box::from("rkyv deserialization error"))
-            })?;
+        let payload = check_archived_root::<P>(&payload_ser).map_err(|_| {
+            PayloadNotPresent(Box::from("deserialization error"))
+        })?;
         let p: P = payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(p)
     }

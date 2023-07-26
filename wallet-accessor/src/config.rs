@@ -11,7 +11,6 @@ use toml_base_config::BaseConfig;
 pub struct BlockchainAccessConfig {
     pub rusk_address: String,
     pub prover_address: String,
-    pub graphql_address: String,
 }
 
 impl BaseConfig for BlockchainAccessConfig {

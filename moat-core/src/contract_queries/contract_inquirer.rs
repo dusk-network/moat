@@ -48,7 +48,7 @@ impl ContractInquirer {
             .expect("Request should serialize correctly")
             .to_vec();
         let request = serde_json::to_string(&ExecutionRequest {
-            request_id: id.clone(),
+            request_id: id,
             contract: contract_id,
             fn_name: method.as_ref().to_string(),
             fn_args,

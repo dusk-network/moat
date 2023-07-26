@@ -22,9 +22,10 @@ pub struct ContractInfo {
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Tx {
-    pub txid: String,
-    pub contractinfo: ContractInfo,
-    pub json: String,
+    pub id: String,
+    #[serde(alias = "callData", default)]
+    pub call_data: Option<CallInfoJson>,
+    pub raw: String,
 }
 
 impl JsonLoader for Tx {}
@@ -37,11 +38,12 @@ pub struct Transactions {
 impl JsonLoader for Transactions {}
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-#[allow(non_snake_case)]
 pub struct CallInfoJson {
-    pub ContractID: String,
-    pub FnName: String,
-    pub CallData: String,
+    #[serde(alias = "contractId", default)]
+    pub contract_id: String,
+    #[serde(alias = "fnName", default)]
+    pub fn_name: String,
+    pub data: String,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
@@ -56,23 +58,31 @@ pub struct Header {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct BlockWithTxs {
-    pub header: Header,
-    pub transactions: Vec<Tx>,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct Blocks {
-    pub blocks: Vec<BlockWithTxs>,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Block {
     pub header: Header,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct QueryResult {
-    pub blocks: Vec<Block>,
-    pub transactions: Vec<Tx>,
+    #[serde(alias = "blockTxs", default)]
+    pub block_txs: Vec<Tx>,
+}
+
+// {"block":{"header":{"height":77065}}}
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct QueryResult2 {
+    pub block: Block,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct SpentTx {
+    pub txerror: Option<String>,
+    #[serde(alias = "gasSpent", default)]
+    pub gas_spent: f64,
+    pub tx: Tx,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct SpentTxResponse {
+    pub tx: Option<SpentTx>,
 }

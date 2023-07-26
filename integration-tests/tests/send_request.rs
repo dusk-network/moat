@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::WalletPath;
-use gql_client::Client;
+use dusk_jubjub::BlsScalar;
+use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::JsonLoader;
 use moat_core::{
     Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
@@ -61,9 +61,9 @@ async fn send_request() -> Result<(), Error> {
 
     let tx_id_hex = format!("{:x}", tx_id);
     println!("tx_id={}", tx_id_hex);
-    let client = Client::new(config.graphql_address.clone());
+    let client = RuskHttpClient::new(config.rusk_address);
 
-    let retrieved_request =
+    let (retrieved_request, _, _) =
         get_request_from_blockchain(tx_id_hex, &client).await?;
     assert_eq!(
         request_vec,
@@ -78,17 +78,19 @@ async fn send_request() -> Result<(), Error> {
 
 async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,
-    client: &Client,
-) -> Result<Request, Error> {
+    client: &RuskHttpClient,
+) -> Result<(Request, u64, BlsScalar), Error> {
     const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
         let result =
             PayloadRetriever::retrieve_payload(tx_id.as_ref().clone(), client)
                 .await;
         if result.is_err() && i < (NUM_RETRIES - 1) {
-            let _ = sleep(Duration::from_millis(1000));
+            println!("{}", i);
+            let _ = sleep(Duration::from_millis(1000)).await;
             continue;
         }
+        println!("returning from loop at i={}, res={:?}", i, result);
         return result;
     }
     unreachable!()
