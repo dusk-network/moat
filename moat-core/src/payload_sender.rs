@@ -37,13 +37,14 @@ impl PayloadSender {
     where
         P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
-        Self::send_to_method(
+        Self::send_to_contract_method(
             payload,
             cfg,
             wallet_path,
             password,
             gas_limit,
             gas_price,
+            LICENSE_CONTRACT_ID,
             NOOP_METHOD_NAME,
         )
         .await
@@ -61,26 +62,28 @@ impl PayloadSender {
     where
         P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
-        Self::send_to_method(
+        Self::send_to_contract_method(
             payload,
             cfg,
             wallet_path,
             password,
             gas_limit,
             gas_price,
+            LICENSE_CONTRACT_ID,
             ISSUE_LICENSE_METHOD_NAME,
         )
         .await
     }
 
     /// Sends payload to a given method
-    pub async fn send_to_method<P, M>(
+    pub async fn send_to_contract_method<P, M>(
         payload: P,
         cfg: &BlockchainAccessConfig,
         wallet_path: &WalletPath,
         password: &Password,
         gas_limit: u64,
         gas_price: u64,
+        contract_id: ModuleId,
         method: M,
     ) -> Result<BlsScalar, Error>
     where
@@ -91,11 +94,10 @@ impl PayloadSender {
             path: wallet_path.clone(),
             pwd: password.clone(),
         };
-        println!("calling {}", ISSUE_LICENSE_METHOD_NAME);
         let tx_id = wallet_accessor
             .send(
                 (payload, 1u64, BlsScalar::one()),
-                LICENSE_CONTRACT_ID,
+                contract_id,
                 method.as_ref().to_string(),
                 cfg,
                 gas_limit,

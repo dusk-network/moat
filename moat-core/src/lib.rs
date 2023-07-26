@@ -51,8 +51,8 @@ mod payload_sender;
 mod request_creator;
 mod request_json;
 mod request_scanner;
-mod retrieval_types;
-mod tx_retriever;
+mod types;
+mod tx_retrievals;
 
 pub use error::Error;
 pub use json_loader::JsonLoader;
@@ -62,5 +62,5 @@ pub use payload_sender::PayloadSender;
 pub use request_creator::RequestCreator;
 pub use request_json::RequestJson;
 pub use request_scanner::RequestScanner;
-pub use retrieval_types::*;
-pub use tx_retriever::TxRetriever;
+pub use tx_retrievals::TxRetriever;
+pub use types::*;
