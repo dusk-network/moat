@@ -12,8 +12,9 @@ use tokio_tungstenite::tungstenite::Message;
 
 pub async fn ws_license_contract_mock_server(
     seconds: u64,
+    port: u32,
 ) -> Result<(), Error> {
-    let addr = "127.0.0.1:9127".to_string();
+    let addr = format!("127.0.0.1:{}", port);
 
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
@@ -62,9 +63,14 @@ async fn accept_connection(stream: TcpStream) {
     );
 
     let response_id = request.request_id;
+    let response_data = vec![vec![1u8], vec![2u8]];
+    let data = rkyv::to_bytes::<_, 8192>(&response_data)
+        .expect("Data should serialize correctly")
+        .to_vec();
+
     let response = serde_json::to_string(&ExecutionResponse {
         request_id: response_id,
-        data: Vec::new(), // todo
+        data,
         error: None,
     })
     .expect("Serializing response should succeed");

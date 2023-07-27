@@ -4,10 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use std::ops::Range;
-use phoenix_core::transaction::ModuleId;
-use crate::ContractInquirer;
 use crate::error::Error;
+use crate::ContractInquirer;
+use phoenix_core::transaction::ModuleId;
+use std::ops::Range;
 
 // todo: refactor such consts to some common location
 const LICENSE_CONTRACT_ID: ModuleId = {
@@ -21,13 +21,18 @@ const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
 pub struct CitadelInquirer {}
 
 impl CitadelInquirer {
-    pub async fn get_licenses(url: impl AsRef<str>, id: Option<i32>, block_heights: Range<u64>) -> Result<Vec<Vec<u8>>, Error> {
+    pub async fn get_licenses(
+        url: impl AsRef<str>,
+        id: Option<i32>,
+        block_heights: Range<u64>,
+    ) -> Result<Vec<Vec<u8>>, Error> {
         ContractInquirer::query_contract(
             url,
             id,
             block_heights,
             LICENSE_CONTRACT_ID,
-            GET_LICENSES_METHOD_NAME
-        ).await
+            GET_LICENSES_METHOD_NAME,
+        )
+        .await
     }
 }
