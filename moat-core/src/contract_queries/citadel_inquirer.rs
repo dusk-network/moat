@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::ContractInquirer;
+use crate::{ContractInquirer, LicenseSession, LicenseSessionId};
 use phoenix_core::transaction::ModuleId;
 use std::ops::Range;
 
@@ -17,6 +17,7 @@ const LICENSE_CONTRACT_ID: ModuleId = {
 };
 
 const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
+const GET_SESSION_METHOD_NAME: &str = "get_session";
 
 pub struct CitadelInquirer {}
 
@@ -32,6 +33,21 @@ impl CitadelInquirer {
             block_heights,
             LICENSE_CONTRACT_ID,
             GET_LICENSES_METHOD_NAME,
+        )
+        .await
+    }
+
+    pub async fn get_session(
+        url: impl AsRef<str>,
+        id: Option<i32>,
+        session_id: LicenseSessionId,
+    ) -> Result<Option<LicenseSession>, Error> {
+        ContractInquirer::query_contract(
+            url,
+            id,
+            session_id,
+            LICENSE_CONTRACT_ID,
+            GET_SESSION_METHOD_NAME,
         )
         .await
     }

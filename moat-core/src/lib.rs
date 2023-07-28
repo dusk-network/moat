@@ -22,7 +22,9 @@ pub use blockchain_requests::{
     PayloadExtractor, PayloadRetriever, PayloadSender, RequestCreator,
     RequestScanner,
 };
-pub use contract_queries::{CitadelInquirer, ContractInquirer};
+pub use contract_queries::{
+    CitadelInquirer, ContractInquirer, LicenseSession, LicenseSessionId,
+};
 pub use error::Error;
 pub use json_loader::JsonLoader;
 pub use tx_retrievals::TxRetriever;

@@ -10,7 +10,7 @@ use crate::websocket::{
 use moat_core::Error;
 
 const TEST_DURATION_SECONDS: u64 = 4;
-const PORT: u32 = 9127;
+const PORT: u32 = 9125;
 
 #[tokio::test]
 #[cfg_attr(not(feature = "int_tests"), ignore)]

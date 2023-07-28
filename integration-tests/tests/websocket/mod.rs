@@ -11,4 +11,4 @@ pub mod ws_test;
 
 pub use ws_client::send_request_to_ws_server;
 pub use ws_common::*;
-pub use ws_server::ws_license_contract_mock_server;
+pub use ws_server::{ws_license_contract_mock_server, ws_license_contract_mock_multi_server};

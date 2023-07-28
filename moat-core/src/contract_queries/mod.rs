@@ -5,8 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 mod citadel_inquirer;
+mod citadel_types;
 mod contract_inquirer;
 mod ws_types;
 
 pub use citadel_inquirer::CitadelInquirer;
+pub use citadel_types::{LicenseSession, LicenseSessionId};
 pub use contract_inquirer::ContractInquirer;
