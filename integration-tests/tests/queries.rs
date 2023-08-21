@@ -16,7 +16,11 @@ const PORT: u32 = 9126;
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn contract_queries() -> Result<(), Error> {
     const NUM_TESTS: u32 = 2;
-    tokio::spawn(ws_license_contract_mock_multi_server(TEST_DURATION_SECONDS, PORT, NUM_TESTS));
+    tokio::spawn(ws_license_contract_mock_multi_server(
+        TEST_DURATION_SECONDS,
+        PORT,
+        NUM_TESTS,
+    ));
     query_licenses().await?;
     query_session().await?;
     Ok(())

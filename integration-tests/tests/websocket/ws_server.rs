@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::BlsScalar;
 use crate::websocket::ws_common::*;
+use dusk_jubjub::BlsScalar;
 use futures_util::{SinkExt, StreamExt};
 use moat_core::{Error, LicenseSession};
 use tokio::net::{TcpListener, TcpStream};
@@ -37,7 +37,7 @@ pub async fn ws_license_contract_mock_server(
 pub async fn ws_license_contract_mock_multi_server(
     seconds: u64,
     port: u32,
-    limit: u32
+    limit: u32,
 ) -> Result<(), Error> {
     let addr = format!("127.0.0.1:{}", port);
 
@@ -96,18 +96,20 @@ async fn accept_connection(stream: TcpStream) {
 
     let data: Vec<u8> = match request.fn_name.as_str() {
         "get_session" => {
-            let response_data: Option<LicenseSession> = Some(LicenseSession{public_inputs: vec![BlsScalar::zero()]});
+            let response_data: Option<LicenseSession> = Some(LicenseSession {
+                public_inputs: vec![BlsScalar::zero()],
+            });
             rkyv::to_bytes::<_, 8192>(&response_data)
                 .expect("Data should serialize correctly")
                 .to_vec()
-        },
+        }
         "get_licenses" => {
             let response_data = vec![vec![1u8], vec![2u8]];
             rkyv::to_bytes::<_, 8192>(&response_data)
                 .expect("Data should serialize correctly")
                 .to_vec()
         }
-        _ => vec![]
+        _ => vec![],
     };
 
     let response = serde_json::to_string(&ExecutionResponse {
