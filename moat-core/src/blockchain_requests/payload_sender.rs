@@ -90,10 +90,8 @@ impl PayloadSender {
         P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
         M: AsRef<str>,
     {
-        let wallet_accessor = WalletAccessor {
-            path: wallet_path.clone(),
-            pwd: password.clone(),
-        };
+        let wallet_accessor =
+            WalletAccessor::new(wallet_path.clone(), password.clone());
         let tx_id = wallet_accessor
             .send(
                 (payload, 1u64, BlsScalar::one()),

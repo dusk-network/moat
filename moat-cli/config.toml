@@ -1,3 +1,2 @@
 rusk_address = "https://nodes.dusk.network:8585"
 prover_address = "https://provers.dusk.network:8686"
-graphql_address = "http://nodes.dusk.network:9500/graphql"

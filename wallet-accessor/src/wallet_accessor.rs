@@ -6,14 +6,13 @@
 
 use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use crate::BlockchainAccessConfig;
-use blake3::Hash;
+use sha2::{Digest, Sha256};
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
-use dusk_wallet::{SecureWalletFile, TransportTCP, Wallet, WalletPath};
+use dusk_wallet::{SecureWalletFile, Wallet, WalletPath};
 use dusk_wallet_core::MAX_CALL_SIZE;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
-use std::str::FromStr;
 use tracing::info;
 
 #[derive(Debug, Clone)]
@@ -26,6 +25,7 @@ pub enum Password {
 pub struct WalletAccessor {
     pub path: WalletPath,
     pub pwd: Password,
+    pub pwd_bytes: Vec<u8>,
 }
 
 impl SecureWalletFile for WalletAccessor {
@@ -33,17 +33,30 @@ impl SecureWalletFile for WalletAccessor {
         &self.path
     }
 
-    fn pwd(&self) -> blake3::Hash {
-        match &self.pwd {
-            Pwd(s) => blake3::hash(s.as_bytes()),
-            PwdHash(h) => {
-                Hash::from_str(h.as_str()).unwrap_or(Hash::from([0u8; 32]))
-            }
-        }
+    fn pwd(&self) -> &[u8] {
+        self.pwd_bytes.as_slice()
     }
 }
 
 impl WalletAccessor {
+    pub fn new(path: WalletPath, pwd: Password) -> Self {
+        Self {
+            path,
+            pwd: pwd.clone(),
+            pwd_bytes: {
+                match &pwd {
+                    Pwd(s) => {
+                        let mut hasher = Sha256::new();
+                        hasher.update(s.as_bytes());
+                        hasher.finalize().to_vec()
+                    },
+                    PwdHash(h) => hex::decode(h.as_str())
+                        .unwrap_or([0u8; 32].to_vec()) // todo - how do we react to invalid hex of the hash
+                }
+            },
+        }
+    }
+
     pub async fn send<C>(
         &self,
         data: C,
@@ -56,20 +69,17 @@ impl WalletAccessor {
     where
         C: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
-        let wallet_accessor = WalletAccessor {
-            path: self.path.clone(),
-            pwd: self.pwd.clone(),
-        };
+        let wallet_accessor =
+            WalletAccessor::new(self.path.clone(), self.pwd.clone());
         let mut wallet = Wallet::from_file(wallet_accessor)?;
-        let transport_tcp = TransportTCP::new(
-            cfg.rusk_address.clone(),
-            cfg.prover_address.clone(),
-        );
-
         wallet
-            .connect_with_status(transport_tcp, |s| {
-                info!(target: "wallet", "{s}",);
-            })
+            .connect_with_status(
+                cfg.rusk_address.clone(),
+                cfg.prover_address.clone(),
+                |s| {
+                    info!(target: "wallet", "{s}",);
+                },
+            )
             .await?;
 
         assert!(wallet.is_online(), "Wallet should be online");
