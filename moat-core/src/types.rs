@@ -87,5 +87,4 @@ pub struct Tx2 {
 pub struct QueryResult2 {
     #[serde(alias = "blockTxs", default)]
     pub block_txs: Vec<Tx2>,
-    pub call_data:
 }
