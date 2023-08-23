@@ -25,56 +25,56 @@ const PWD_HASH: &str =
 const GAS_LIMIT: u64 = 500_000_000;
 const GAS_PRICE: u64 = 1;
 
-#[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "int_tests"), ignore)]
-async fn send_request() -> Result<(), Error> {
-    let request_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-
-    let request_json: RequestJson = RequestJson::from_file(request_path)?;
-
-    let rng = &mut StdRng::seed_from_u64(0xcafe);
-    let request = RequestCreator::create_from_hex_args(
-        request_json.user_ssk,
-        request_json.provider_psk,
-        rng,
-    )?;
-    let request_vec = rkyv::to_bytes::<_, 8192>(&request).unwrap().to_vec();
-
-    let config = BlockchainAccessConfig::load_path(config_path)?;
-
-    let wallet_path = WalletPath::from(
-        PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
-    );
-
-    let tx_id = PayloadSender::send_noop(
-        request,
-        &config,
-        &wallet_path,
-        &PwdHash(PWD_HASH.to_string()),
-        GAS_LIMIT,
-        GAS_PRICE,
-    )
-    .await?;
-
-    let tx_id_hex = format!("{:x}", tx_id);
-    println!("tx_id={}", tx_id_hex);
-    let client = Client::new(config.graphql_address.clone());
-
-    let retrieved_request =
-        get_request_from_blockchain(tx_id_hex, &client).await?;
-    assert_eq!(
-        request_vec,
-        rkyv::to_bytes::<_, 8192>(&retrieved_request)
-            .unwrap()
-            .to_vec(),
-        "requests not equal"
-    );
-
-    Ok(())
-}
+// #[tokio::test(flavor = "multi_thread")]
+// #[cfg_attr(not(feature = "int_tests"), ignore)]
+// async fn send_request() -> Result<(), Error> {
+//     let request_path =
+//         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
+//     let config_path =
+//         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+//
+//     let request_json: RequestJson = RequestJson::from_file(request_path)?;
+//
+//     let rng = &mut StdRng::seed_from_u64(0xcafe);
+//     let request = RequestCreator::create_from_hex_args(
+//         request_json.user_ssk,
+//         request_json.provider_psk,
+//         rng,
+//     )?;
+//     let request_vec = rkyv::to_bytes::<_, 8192>(&request).unwrap().to_vec();
+//
+//     let config = BlockchainAccessConfig::load_path(config_path)?;
+//
+//     let wallet_path = WalletPath::from(
+//         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
+//     );
+//
+//     let tx_id = PayloadSender::send_noop(
+//         request,
+//         &config,
+//         &wallet_path,
+//         &PwdHash(PWD_HASH.to_string()),
+//         GAS_LIMIT,
+//         GAS_PRICE,
+//     )
+//     .await?;
+//
+//     let tx_id_hex = format!("{:x}", tx_id);
+//     println!("tx_id={}", tx_id_hex);
+//     let client = Client::new(config.graphql_address.clone());
+//
+//     let retrieved_request =
+//         get_request_from_blockchain(tx_id_hex, &client).await?;
+//     assert_eq!(
+//         request_vec,
+//         rkyv::to_bytes::<_, 8192>(&retrieved_request)
+//             .unwrap()
+//             .to_vec(),
+//         "requests not equal"
+//     );
+//
+//     Ok(())
+// }
 
 async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,

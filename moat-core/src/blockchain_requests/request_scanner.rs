@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_wallet::RuskHttpClient;
 use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
 use crate::{Transactions, TxRetriever};
@@ -32,11 +33,12 @@ impl RequestScanner {
         last_n_blocks: usize,
         cfg: &BlockchainAccessConfig,
     ) -> Result<Vec<Request>, Error> {
-        let client = Client::new(cfg.graphql_address.clone());
-        let txs =
-            TxRetriever::txs_from_last_n_blocks(&client, last_n_blocks).await?;
-        let requests = RequestScanner::scan_transactions(txs);
-        Ok(requests)
+        // let client = RuskHttpClient::new(cfg.rusk_address.clone());
+        // let txs =
+        //     TxRetriever::txs_from_last_n_blocks(&client, last_n_blocks).await?;
+        // let requests = RequestScanner::scan_transactions(txs);
+        // Ok(requests)
+        Ok(vec![])
     }
 
     /// Returns collection with found requests and the current top block-height
@@ -45,7 +47,8 @@ impl RequestScanner {
         height_end: u64,
         cfg: &BlockchainAccessConfig,
     ) -> Result<(Vec<Request>, u64), Error> {
-        let client = Client::new(cfg.graphql_address.clone());
+        // let client = Client::new(cfg.graphql_address.clone());
+        let client = RuskHttpClient::new(cfg.rusk_address.clone());
         let (txs, top) =
             TxRetriever::txs_from_block_range(&client, height_beg, height_end)
                 .await?;

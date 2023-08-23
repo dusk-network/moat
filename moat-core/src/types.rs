@@ -76,3 +76,16 @@ pub struct QueryResult {
     pub blocks: Vec<Block>,
     pub transactions: Vec<Tx>,
 }
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct Tx2 {
+    pub id: String,
+    pub raw: String,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct QueryResult2 {
+    #[serde(alias = "blockTxs", default)]
+    pub block_txs: Vec<Tx2>,
+    pub call_data:
+}
