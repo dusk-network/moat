@@ -50,7 +50,7 @@ impl TxRetriever {
         let range_str = format!("{},{}", height_beg, height_end);
         // let query =
         //     "{blocks(height:-1){header{height}}, transactions(blocksrange: [####]){txid, contractinfo{method, contract}, json}}".replace("####", range_str.as_str());
-        let query = "query { blockTxs(range: [288,22271] ) { id, raw, callData {fnName}}}".to_string(); //.replace("####", range_str.as_str());
+        let query = "query { blockTxs(range: [288,22271] ) { id, raw, callData {contractId, fnName, data}}}".to_string(); //.replace("####", range_str.as_str());
         // let result = client
         //     .query::<QueryResult>(&query)
         //     .await

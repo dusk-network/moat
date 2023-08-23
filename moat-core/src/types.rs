@@ -78,9 +78,20 @@ pub struct QueryResult {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct CallData2 {
+    #[serde(alias = "contractId", default)]
+    pub contract_id: String,
+    #[serde(alias = "fnName", default)]
+    pub fn_name: String,
+    pub data: String,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Tx2 {
     pub id: String,
     pub raw: String,
+    #[serde(alias = "callData", default)]
+    pub call_data: CallData2,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
