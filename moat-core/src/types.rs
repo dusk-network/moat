@@ -33,7 +33,7 @@ impl JsonLoader for Tx {}
 pub struct Tx2 {
     pub id: String,
     #[serde(alias = "callData", default)]
-    pub call_data: CallInfoJson2,
+    pub call_data: Option<CallInfoJson2>,
     pub raw: String,
 }
 

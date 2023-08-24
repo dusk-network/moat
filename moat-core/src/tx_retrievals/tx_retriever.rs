@@ -49,7 +49,9 @@ impl TxRetriever {
         let range_str = format!("{},{}", height_beg, height_end);
         let tx_query = "query { blockTxs(range: [####] ) { id, raw, callData {contractId, fnName, data}}}".replace("####", range_str.as_str());
         let tx_response = gql_query(client, tx_query.as_str()).await?;
+        println!("tx_response.len()={}", tx_response.len());
         let tx_result = serde_json::from_slice::<QueryResult2>(&tx_response)?;
+        println!("tx_result={:?}", tx_result);
 
         let top_block_query = "query { block(height: -1) { header { height} }}".to_string();
         let top_block_response = gql_query(client, top_block_query.as_str()).await?;
