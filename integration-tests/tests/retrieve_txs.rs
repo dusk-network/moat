@@ -38,8 +38,8 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 
     let client = RuskHttpClient::new(cfg.rusk_address);
 
-    const BLOCK_HEIGHT_BEG: u64 = 97117;
-    const BLOCK_HEIGHT_END: u64 = 107117;
+    const BLOCK_HEIGHT_BEG: u64 = 288;
+    const BLOCK_HEIGHT_END: u64 = 22271;
 
     let (txs, top_block) = TxRetriever::txs_from_block_range(
         &client,
@@ -50,7 +50,7 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 
     assert!(top_block > 0);
 
-    println!("transactions={:?}", txs);
+    println!("transactions retrieved={}", txs.transactions.len());
     println!("current top block={}", top_block);
 
     Ok(())

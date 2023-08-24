@@ -7,7 +7,7 @@
 use dusk_wallet::RuskHttpClient;
 use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
-use crate::{Transactions, TxRetriever};
+use crate::{Transactions, Transactions2, TxRetriever};
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
@@ -16,7 +16,7 @@ pub struct RequestScanner;
 
 impl RequestScanner {
     /// Returns requests found in the given collection of transactions
-    pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
+    pub fn scan_transactions(txs: Transactions2) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
             if let Ok(request) =

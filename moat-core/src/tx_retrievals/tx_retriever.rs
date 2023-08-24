@@ -28,7 +28,7 @@ impl TxRetriever {
     pub async fn txs_from_block(
         client: &RuskHttpClient,
         block_height: u64,
-    ) -> Result<Transactions, Error> {
+    ) -> Result<Transactions2, Error> {
         TxRetriever::txs_from_block_range(
             client,
             block_height,
@@ -44,34 +44,25 @@ impl TxRetriever {
         client: &RuskHttpClient,
         height_beg: u64,
         height_end: u64,
-    ) -> Result<(Transactions, u64), Error> {
-        let mut transactions = Transactions::default();
+    ) -> Result<(Transactions2, u64), Error> {
+        let mut transactions = Transactions2::default();
         let mut top_block: u64 = 0;
         let range_str = format!("{},{}", height_beg, height_end);
-        // let query =
-        //     "{blocks(height:-1){header{height}}, transactions(blocksrange: [####]){txid, contractinfo{method, contract}, json}}".replace("####", range_str.as_str());
-        let query = "query { blockTxs(range: [288,22271] ) { id, raw, callData {contractId, fnName, data}}}".to_string(); //.replace("####", range_str.as_str());
-        // let result = client
-        //     .query::<QueryResult>(&query)
-        //     .await
-        //     .map_err(|e| e.into());
-        let response = gql_query(client, query.as_str()).await.map_err(|e| DuskWalletError(Arc::new(e)))?; // todo: move error conv to Error
-        let result = serde_json::from_slice::<QueryResult2>(&response).map_err(|e| e.into());
+        let tx_query = "query { blockTxs(range: [####] ) { id, raw, callData {contractId, fnName, data}}}".replace("####", range_str.as_str());
+        let tx_response = gql_query(client, tx_query.as_str()).await.map_err(|e| DuskWalletError(Arc::new(e)))?; // todo: move error conv to Error
+        let tx_result = serde_json::from_slice::<QueryResult2>(&tx_response).map_err(|e| e.into());
 
-        match result {
+        let top_block_query = "query { block(height: -1) { header { height} }}".to_string();
+        let top_block_response = gql_query(client, top_block_query.as_str()).await.map_err(|e| DuskWalletError(Arc::new(e)))?; // todo: move error conv to Error
+        let top_block_result: Result<QueryResult3, Error> = serde_json::from_slice::<QueryResult3>(&top_block_response).map_err(|e| e.into());
+
+        match tx_result {
             e @ Err(_) => {
-                return e.map(|_| (Transactions::default(), top_block));
+                return e.map(|_| (Transactions2::default(), top_block));
             }
-            // Ok(None) => (),
-            // Ok(Some(query_result)) => {
             Ok(query_result) => {
-                println!("{:?}", query_result);
-                // transactions.transactions.extend(query_result.transactions);
-                // top_block = query_result
-                //     .blocks
-                //     .get(0)
-                //     .map(|a| a.header.height)
-                //     .unwrap_or(0u64);
+                transactions.transactions.extend(query_result.block_txs);
+                top_block = top_block_result.map(|a|a.block.header.height).unwrap_or(0u64);
             }
         }
         Ok((transactions, top_block))
@@ -98,16 +89,16 @@ impl TxRetriever {
         Ok(transactions)
     }
 
-    pub async fn retrieve_tx<S>(txid: S, client: &Client) -> Result<Tx, Error>
+    pub async fn retrieve_tx<S>(txid: S, client: &Client) -> Result<Tx2, Error>
     where
         S: AsRef<str>,
     {
         let query =
             "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid.as_ref());
 
-        let response = client.query::<Transactions>(&query).await?;
+        let response = client.query::<Transactions2>(&query).await?;
         match response {
-            Some(Transactions {
+            Some(Transactions2 {
                 transactions: mut txs,
             }) if !txs.is_empty() => Ok(txs.swap_remove(0)),
             _ => Err(TransactionNotFound),
