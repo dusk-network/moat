@@ -4,9 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::WalletPath;
+use dusk_wallet::{RuskHttpClient, WalletPath};
 use gql_client::Client;
-use moat_core::JsonLoader;
+use moat_core::{JsonLoader, TxRetriever};
 use moat_core::{
     Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
 };
@@ -59,9 +59,9 @@ const GAS_PRICE: u64 = 1;
 //     )
 //     .await?;
 //
-//     let tx_id_hex = format!("{:x}", tx_id);
+//     let tx_id_hex = format!("{}", hex::encode(tx_id.to_bytes()));
 //     println!("tx_id={}", tx_id_hex);
-//     let client = Client::new(config.graphql_address.clone());
+//     let client = RuskHttpClient::new(config.rusk_address);
 //
 //     let retrieved_request =
 //         get_request_from_blockchain(tx_id_hex, &client).await?;
@@ -78,7 +78,7 @@ const GAS_PRICE: u64 = 1;
 
 async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,
-    client: &Client,
+    client: &RuskHttpClient,
 ) -> Result<Request, Error> {
     const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
@@ -92,4 +92,25 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
         return result;
     }
     unreachable!()
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
+async fn retrieve_tx() -> Result<(), Error> {
+    const TXID: &str = "708015f1d42ff0440b2a8c7bb742d079d7c07f99c96914a74ba1f9ecdf63330a";
+
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = RuskHttpClient::new(config.rusk_address);
+
+    let result = TxRetriever::retrieve_tx(TXID, &client).await;
+
+    println!("res={:?}", result);
+
+    assert!(result.is_ok());
+
+    Ok(())
 }

@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use bytecheck::CheckBytes;
+use dusk_wallet::RuskHttpClient;
 use rkyv::validation::validators::DefaultValidator;
 use rkyv::{Archive, Deserialize, Infallible};
 
@@ -19,7 +20,7 @@ impl PayloadRetriever {
     /// Retrieves payload of a transaction with a given tx id
     pub async fn retrieve_payload<P, S>(
         txid: S,
-        client: &Client,
+        client: &RuskHttpClient,
     ) -> Result<P, Error>
     where
         P: Archive,

@@ -24,6 +24,7 @@ toml-base-config = "0.1"
 gql_client = "1"
 rand = "0.8"
 bytecheck = "0.6"
+hex = "0.4"
 
 [features]
 int_tests = []

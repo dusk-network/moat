@@ -120,3 +120,15 @@ pub struct QueryResult2 {
 pub struct QueryResult3 {
     pub block: Block,
 }
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+struct SpentTx {
+    pub txerror: Option<String>,
+    #[serde(alias = "gasSpent", default)]
+    pub gas_spent: f64,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct SpentTxResponse {
+    pub tx: Option<SpentTx>,
+}

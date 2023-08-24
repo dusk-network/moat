@@ -72,18 +72,18 @@ impl TxRetriever {
         Ok(transactions)
     }
 
-    pub async fn retrieve_tx<S>(txid: S, client: &Client) -> Result<Tx2, Error>
+    pub async fn retrieve_tx<S>(txid: S, client: &RuskHttpClient) -> Result<Tx2, Error>
     where
         S: AsRef<str>,
     {
-        let query =
-            "{transactions(txid:\"####\"){ txid, contractinfo{method, contract}, json}}".replace("####", txid.as_ref());
-        let response = client.query::<Transactions2>(&query).await?;
-        match response {
-            Some(Transactions2 {
-                transactions: mut txs,
-            }) if !txs.is_empty() => Ok(txs.swap_remove(0)),
-            _ => Err(TransactionNotFound),
+        let query = "query { tx(hash:\"####\") { gasSpent }}".replace("####", txid.as_ref());
+        println!("query={}", query);
+        let response = gql_query(client, query.as_str()).await?;
+        let mut result = serde_json::from_slice::<SpentTxResponse>(&response)?;
+        if result.tx.is_none() {
+            Err(TransactionNotFound)
+        } else {
+            Ok(result.tx.unwrap())
         }
     }
 }
