@@ -23,7 +23,7 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 
     let txs = TxRetriever::txs_from_block(&client, BLOCK_HEIGHT).await?;
 
-    println!("transactions={:?}", txs);
+    println!("transactions retrieved={}", txs.transactions.len());
 
     Ok(())
 }
@@ -50,26 +50,26 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 
     assert!(top_block > 0);
 
-    println!("transactions retrieved={:?}", txs.transactions);
+    println!("transactions retrieved={}", txs.transactions.len());
     println!("current top block={}", top_block);
 
     Ok(())
 }
 
-// #[tokio::test(flavor = "multi_thread")]
-// #[cfg_attr(not(feature = "int_tests"), ignore)]
-// async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
-//     let config_path =
-//         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-//
-//     let cfg = BlockchainAccessConfig::load_path(config_path)?;
-//
-//     let client = Client::new(cfg.graphql_address.clone());
-//
-//     const N: usize = 10000;
-//     let txs = TxRetriever::txs_from_last_n_blocks(&client, N).await?;
-//
-//     println!("transactions={:?}", txs);
-//
-//     Ok(())
-// }
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
+async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+
+    let cfg = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = RuskHttpClient::new(cfg.rusk_address);
+
+    const N: usize = 10000;
+    let txs = TxRetriever::txs_from_last_n_blocks(&client, N).await?;
+
+    println!("transactions={}", txs.transactions.len());
+
+    Ok(())
+}

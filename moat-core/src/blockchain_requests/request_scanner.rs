@@ -4,10 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::RuskHttpClient;
 use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
 use crate::{Transactions, Transactions2, TxRetriever};
+use dusk_wallet::RuskHttpClient;
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
@@ -35,9 +35,9 @@ impl RequestScanner {
     ) -> Result<Vec<Request>, Error> {
         // let client = RuskHttpClient::new(cfg.rusk_address.clone());
         // let txs =
-        //     TxRetriever::txs_from_last_n_blocks(&client, last_n_blocks).await?;
-        // let requests = RequestScanner::scan_transactions(txs);
-        // Ok(requests)
+        //     TxRetriever::txs_from_last_n_blocks(&client,
+        // last_n_blocks).await?; let requests =
+        // RequestScanner::scan_transactions(txs); Ok(requests)
         Ok(vec![])
     }
 

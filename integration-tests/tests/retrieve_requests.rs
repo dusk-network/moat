@@ -38,8 +38,8 @@ use zk_citadel::license::Request;
 //     loop {
 //         let height_end = height + 10000;
 //         let (requests, top) =
-//             RequestScanner::scan_block_range(height, height_end, &cfg).await?;
-//         println!(
+//             RequestScanner::scan_block_range(height, height_end,
+// &cfg).await?;         println!(
 //             "{} requests in range ({},{}) top={}",
 //             requests.len(),
 //             height,
@@ -64,8 +64,8 @@ use zk_citadel::license::Request;
 //
 //     const LAST_BLOCKS: usize = 10000;
 //
-//     let requests = RequestScanner::scan_last_blocks(LAST_BLOCKS, &cfg).await?;
-//     println!(
+//     let requests = RequestScanner::scan_last_blocks(LAST_BLOCKS,
+// &cfg).await?;     println!(
 //         "there were {} requests found in last n={} blocks",
 //         requests.len(),
 //         LAST_BLOCKS
@@ -85,8 +85,8 @@ use zk_citadel::license::Request;
 //     const HEIGHT_END: u64 = 317048;
 //
 //     let (requests, _) =
-//         RequestScanner::scan_block_range(HEIGHT_BEG, HEIGHT_END, &cfg).await?;
-//     println!(
+//         RequestScanner::scan_block_range(HEIGHT_BEG, HEIGHT_END,
+// &cfg).await?;     println!(
 //         "there were {} requests found in block range from {} to {}",
 //         requests.len(),
 //         HEIGHT_BEG,

@@ -6,13 +6,13 @@
 
 use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use crate::BlockchainAccessConfig;
-use sha2::{Digest, Sha256};
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
 use dusk_wallet::{SecureWalletFile, Wallet, WalletPath};
 use dusk_wallet_core::MAX_CALL_SIZE;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
+use sha2::{Digest, Sha256};
 use tracing::info;
 
 #[derive(Debug, Clone)]
@@ -49,9 +49,10 @@ impl WalletAccessor {
                         let mut hasher = Sha256::new();
                         hasher.update(s.as_bytes());
                         hasher.finalize().to_vec()
-                    },
-                    PwdHash(h) => hex::decode(h.as_str())
-                        .unwrap_or([0u8; 32].to_vec()) // todo - how do we react to invalid hex of the hash
+                    }
+                    PwdHash(h) => {
+                        hex::decode(h.as_str()).unwrap_or([0u8; 32].to_vec())
+                    } // todo - how do we react to invalid hex of the hash
                 }
             },
         }
