@@ -14,6 +14,8 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
 use std::time::Duration;
+use dusk_jubjub::BlsScalar;
+use rkyv::ser::serializers::AllocSerializer;
 use tokio::time::sleep;
 use toml_base_config::BaseConfig;
 use wallet_accessor::{BlockchainAccessConfig, Password::PwdHash};
@@ -63,17 +65,8 @@ async fn send_request() -> Result<(), Error> {
     println!("tx_id={}", tx_id_hex);
     let client = RuskHttpClient::new(config.rusk_address);
 
-    let retrieved_request =
+    let (retrieved_request, _, _) =
         get_request_from_blockchain(tx_id_hex, &client).await?;
-    let l1 = request_vec.len();
-    let rcvd_vec= rkyv::to_bytes::<_, 8192>(&retrieved_request)
-        .unwrap()
-        .to_vec();
-    let l2 = rcvd_vec.len();
-
-    println!("got request l1={} l2={}", l1, l2);
-    println!("sent request={}", hex::encode(request_vec.clone()));
-    println!("rcvd request={}", hex::encode(rcvd_vec));
     assert_eq!(
         request_vec,
         rkyv::to_bytes::<_, 8192>(&retrieved_request)
@@ -88,7 +81,7 @@ async fn send_request() -> Result<(), Error> {
 async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,
     client: &RuskHttpClient,
-) -> Result<Request, Error> {
+) -> Result<(Request, u64, BlsScalar), Error> {
     const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
         let result =
