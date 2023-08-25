@@ -122,10 +122,11 @@ pub struct QueryResult3 {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-struct SpentTx {
+pub struct SpentTx {
     pub txerror: Option<String>,
     #[serde(alias = "gasSpent", default)]
     pub gas_spent: f64,
+    pub tx: Tx2,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]

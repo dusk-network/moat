@@ -73,3 +73,24 @@ async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
 
     Ok(())
 }
+
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "vol_tests"), ignore)]
+async fn retrieve_tx_by_id() -> Result<(), Error> {
+    const TXID: &str = "e5dcc9cd84fc00ae04a969d07fdf90c667eee3e9e7b388f885534ecb482b7700";
+
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = RuskHttpClient::new(config.rusk_address);
+
+    let result = TxRetriever::retrieve_tx(TXID, &client).await;
+
+    println!("res={:?}", result);
+
+    assert!(result.is_ok());
+
+    Ok(())
+}

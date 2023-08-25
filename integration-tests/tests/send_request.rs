@@ -94,23 +94,3 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
     unreachable!()
 }
 
-#[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "int_tests"), ignore)]
-async fn retrieve_tx() -> Result<(), Error> {
-    const TXID: &str = "708015f1d42ff0440b2a8c7bb742d079d7c07f99c96914a74ba1f9ecdf63330a";
-
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-
-    let config = BlockchainAccessConfig::load_path(config_path)?;
-
-    let client = RuskHttpClient::new(config.rusk_address);
-
-    let result = TxRetriever::retrieve_tx(TXID, &client).await;
-
-    println!("res={:?}", result);
-
-    assert!(result.is_ok());
-
-    Ok(())
-}

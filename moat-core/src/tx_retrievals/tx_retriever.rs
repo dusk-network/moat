@@ -76,14 +76,14 @@ impl TxRetriever {
     where
         S: AsRef<str>,
     {
-        let query = "query { tx(hash:\"####\") { gasSpent }}".replace("####", txid.as_ref());
+        let query = "query { tx(hash:\"####\") { tx {id, raw, callData {contractId, fnName, data}}}}".replace("####", txid.as_ref());
         println!("query={}", query);
         let response = gql_query(client, query.as_str()).await?;
         let mut result = serde_json::from_slice::<SpentTxResponse>(&response)?;
         if result.tx.is_none() {
             Err(TransactionNotFound)
         } else {
-            Ok(result.tx.unwrap())
+            Ok(result.tx.unwrap().tx)
         }
     }
 }
