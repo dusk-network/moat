@@ -23,7 +23,7 @@ impl PayloadExtractor {
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
-        let r = tx.call_data.as_ref().unwrap().data.as_str();// todo: take care of unwrap
+        let r = tx.call_data.as_ref().unwrap().data.as_str(); // todo: take care of unwrap
         Self::payload_from_tx_json::<P, _>(r)
     }
 
@@ -32,15 +32,14 @@ impl PayloadExtractor {
         P: Archive,
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
-        S: AsRef<str>
+        S: AsRef<str>,
     {
-        let mut payload_ser = hex::decode(payload_ser.as_ref()).unwrap();// todo: unwrap
+        let mut payload_ser = hex::decode(payload_ser.as_ref()).unwrap(); // todo: unwrap
         println!("ser={}", hex::encode(payload_ser.clone()));
 
-        let payload = check_archived_root::<P>(&payload_ser)
-            .map_err(|_| {
-                PayloadNotPresent(Box::from("rkyv deserialization error"))
-            })?;
+        let payload = check_archived_root::<P>(&payload_ser).map_err(|_| {
+            PayloadNotPresent(Box::from("rkyv deserialization error"))
+        })?;
         let p: P = payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(p)
     }

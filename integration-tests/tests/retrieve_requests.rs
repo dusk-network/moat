@@ -54,24 +54,24 @@ use zk_citadel::license::Request;
 //     Ok(())
 // }
 
-// #[tokio::test(flavor = "multi_thread")]
-// #[cfg_attr(not(feature = "int_tests"), ignore)]
-// async fn scan_requests_in_lasts_blocks() -> Result<(), Error> {
-//     let config_path =
-//         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-//
-//     let cfg = BlockchainAccessConfig::load_path(config_path)?;
-//
-//     const LAST_BLOCKS: usize = 10000;
-//
-//     let requests = RequestScanner::scan_last_blocks(LAST_BLOCKS,
-// &cfg).await?;     println!(
-//         "there were {} requests found in last n={} blocks",
-//         requests.len(),
-//         LAST_BLOCKS
-//     );
-//     Ok(())
-// }
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
+async fn scan_requests_in_lasts_blocks() -> Result<(), Error> {
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+
+    let cfg = BlockchainAccessConfig::load_path(config_path)?;
+
+    const LAST_BLOCKS: usize = 10000;
+
+    let requests = RequestScanner::scan_last_blocks(LAST_BLOCKS, &cfg).await?;
+    println!(
+        "there were {} requests found in last n={} blocks",
+        requests.len(),
+        LAST_BLOCKS
+    );
+    Ok(())
+}
 
 // #[tokio::test(flavor = "multi_thread")]
 // #[cfg_attr(not(feature = "int_tests"), ignore)]

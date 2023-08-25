@@ -33,12 +33,12 @@ impl RequestScanner {
         last_n_blocks: usize,
         cfg: &BlockchainAccessConfig,
     ) -> Result<Vec<Request>, Error> {
-        // let client = RuskHttpClient::new(cfg.rusk_address.clone());
-        // let txs =
-        //     TxRetriever::txs_from_last_n_blocks(&client,
-        // last_n_blocks).await?; let requests =
-        // RequestScanner::scan_transactions(txs); Ok(requests)
-        Ok(vec![])
+        let client = RuskHttpClient::new(cfg.rusk_address.clone());
+        let txs =
+            TxRetriever::txs_from_last_n_blocks(&client,
+        last_n_blocks).await?; let requests =
+        RequestScanner::scan_transactions(txs);
+        Ok(requests)
     }
 
     /// Returns collection with found requests and the current top block-height

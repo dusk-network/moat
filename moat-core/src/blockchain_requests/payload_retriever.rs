@@ -34,7 +34,10 @@ impl PayloadRetriever {
         let tx = r?;
         println!("3 retrieved tx");
         let r = PayloadExtractor::payload_from_tx(&tx);
-        println!("4 returning from retrieve_payload with r.is_err()={:?}", r.is_err());
+        println!(
+            "4 returning from retrieve_payload with r.is_err()={:?}",
+            r.is_err()
+        );
         r
     }
 }

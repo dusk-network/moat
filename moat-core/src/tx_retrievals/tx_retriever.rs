@@ -72,7 +72,10 @@ impl TxRetriever {
         Ok(transactions)
     }
 
-    pub async fn retrieve_tx<S>(txid: S, client: &RuskHttpClient) -> Result<Tx2, Error>
+    pub async fn retrieve_tx<S>(
+        txid: S,
+        client: &RuskHttpClient,
+    ) -> Result<Tx2, Error>
     where
         S: AsRef<str>,
     {
