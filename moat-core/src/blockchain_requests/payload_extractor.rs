@@ -22,20 +22,25 @@ impl PayloadExtractor {
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
-        let tx_json: TxJson2 = serde_json::from_str(tx.raw.as_str())?;
-        Self::payload_from_tx_json::<P>(&tx_json)
+        println!("tx.raw={}", tx.raw.as_str());
+        let r = tx.call_data.as_ref().unwrap().data.as_str();// todo: take care of unwrap
+        println!("payload_from_tx - r={:?}", r);
+        Self::payload_from_tx_json::<P, _>(r)
     }
 
-    pub fn payload_from_tx_json<P>(tx_json: &TxJson2) -> Result<P, Error>
+    pub fn payload_from_tx_json<P, S>(payload_ser: S) -> Result<P, Error>
     where
         P: Archive,
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
+        S: AsRef<str>
     {
-        let payload_base64 = &tx_json.call.data;
-        let payload_ser = general_purpose::STANDARD.decode(payload_base64)?;
+        // let payload_base64 = &tx_json.call.data;
+        // let payload_ser = general_purpose::STANDARD.decode(payload_base64)?;
+        let mut payload_ser = hex::decode(payload_ser.as_ref()).unwrap();// todo: unwrap
+        println!("ser={}", hex::encode(payload_ser.clone()));
 
-        let payload = check_archived_root::<P>(payload_ser.as_slice())
+        let payload = check_archived_root::<P>(&payload_ser[0..704])// todo: why is 'data' 744 bytes and not 704 bytes and why do I need to cut it off here
             .map_err(|_| {
                 PayloadNotPresent(Box::from("rkyv deserialization error"))
             })?;

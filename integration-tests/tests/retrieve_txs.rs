@@ -77,7 +77,7 @@ async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "vol_tests"), ignore)]
 async fn retrieve_tx_by_id() -> Result<(), Error> {
-    const TXID: &str = "e5dcc9cd84fc00ae04a969d07fdf90c667eee3e9e7b388f885534ecb482b7700";
+    const TXID: &str = "b71919ccaf9cd15592d19edd5c3bd164ccd95ab33e92b7e06cb4d6065142e401";
 
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");

@@ -86,6 +86,7 @@ impl WalletAccessor {
         assert!(wallet.is_online(), "Wallet should be online");
 
         info!("Sending request");
+        println!("Sending request");
 
         let sender = wallet.default_address();
         // let rcvr = wallet.addresses().get(1).expect("address exists");
@@ -100,6 +101,7 @@ impl WalletAccessor {
         //     .await?;
         let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
         info!("TX_ID={:x}", tx_id);
+        println!("TX_ID={:x}", tx_id);
         Ok(tx_id)
     }
 }

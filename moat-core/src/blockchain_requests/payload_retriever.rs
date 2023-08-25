@@ -28,7 +28,13 @@ impl PayloadRetriever {
             + for<'b> CheckBytes<DefaultValidator<'b>>,
         S: AsRef<str>,
     {
-        let tx = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
-        PayloadExtractor::payload_from_tx(&tx)
+        println!("1 about to retrieve tx {}", txid.as_ref());
+        let r = TxRetriever::retrieve_tx(txid.as_ref(), client).await;
+        println!("3 r.is_err()={}", r.is_err());
+        let tx = r?;
+        println!("3 retrieved tx");
+        let r = PayloadExtractor::payload_from_tx(&tx);
+        println!("4 returning from retrieve_payload with r.is_err()={:?}", r.is_err());
+        r
     }
 }
