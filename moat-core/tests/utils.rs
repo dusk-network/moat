@@ -6,7 +6,9 @@
 
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_pki::SecretSpendKey;
-use moat_core::Error;
+use moat_core::{Error, RequestCreator};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 
 #[test]
 #[ignore]
@@ -16,5 +18,21 @@ fn ssk_to_vk() -> Result<(), Error> {
     let ssk = SecretSpendKey::from_slice(ssk_bytes.as_slice())?;
     let vk = ssk.view_key();
     println!("vk={}", hex::encode(vk.to_bytes()));
+    Ok(())
+}
+
+#[test]
+// #[ignore]
+fn create_serialized_request() -> Result<(), Error> {
+    let rng = &mut StdRng::seed_from_u64(0xcafe);
+    let request = RequestCreator::create_from_hex_args(
+        "c6afd78c8b3902b474d4c0972b62888e4b880dccf8da68e86266fefa45ee7505926f06ab82ac200995f1239d518fdb74903f225f4460d8db62f2449f6d4dc402",
+        "29c4336ef24e585f4506e32e269c5363a71f7dcd74586b210c56e569ad2644e832c785f102dd3c985c705008ec188be819bac85b65c9f70decb9adcf4a72cc43",
+        rng,
+    )?;
+    let v = rkyv::to_bytes::<_, 8192>(&request)
+        .expect("Infallible")
+        .to_vec();
+    println!("request={}", hex::encode(v));
     Ok(())
 }
