@@ -5,7 +5,6 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::RuskHttpClient;
-use gql_client::Client;
 use moat_core::{Error, PayloadRetriever, RequestScanner};
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;

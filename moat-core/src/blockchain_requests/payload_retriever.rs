@@ -12,7 +12,6 @@ use rkyv::{Archive, Deserialize, Infallible};
 use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
 use crate::TxRetriever;
-use gql_client::Client;
 
 pub struct PayloadRetriever;
 

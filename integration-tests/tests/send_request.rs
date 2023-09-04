@@ -6,14 +6,12 @@
 
 use dusk_jubjub::BlsScalar;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use gql_client::Client;
+use moat_core::JsonLoader;
 use moat_core::{
     Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
 };
-use moat_core::{JsonLoader, TxRetriever};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use rkyv::ser::serializers::AllocSerializer;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::sleep;

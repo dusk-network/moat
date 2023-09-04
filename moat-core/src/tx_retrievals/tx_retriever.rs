@@ -6,11 +6,9 @@
 
 use crate::error::Error;
 use crate::types::*;
-use crate::Error::{DuskWalletError, TransactionNotFound};
+use crate::Error::TransactionNotFound;
 use crate::QueryResult;
 use dusk_wallet::{RuskHttpClient, RuskRequest};
-use gql_client::Client;
-use std::sync::Arc;
 
 pub struct TxRetriever;
 
@@ -80,13 +78,11 @@ impl TxRetriever {
         S: AsRef<str>,
     {
         let query = "query { tx(hash:\"####\") { tx {id, raw, callData {contractId, fnName, data}}}}".replace("####", txid.as_ref());
-        println!("query={}", query);
         let response = gql_query(client, query.as_str()).await?;
-        let mut result = serde_json::from_slice::<SpentTxResponse>(&response)?;
-        if result.tx.is_none() {
-            Err(TransactionNotFound)
-        } else {
-            Ok(result.tx.unwrap().tx)
-        }
+        let result = serde_json::from_slice::<SpentTxResponse>(&response)?;
+        result
+            .tx
+            .map(|spent_tx| spent_tx.tx)
+            .ok_or(TransactionNotFound)
     }
 }

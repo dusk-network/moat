@@ -7,11 +7,9 @@
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 
 use crate::error::Error;
-use crate::types::{Tx, TxJson};
+use crate::types::Tx;
 use crate::Error::PayloadNotPresent;
-use base64::{engine::general_purpose, Engine as _};
 use bytecheck::CheckBytes;
-use phoenix_core::Transaction;
 use rkyv::validation::validators::DefaultValidator;
 
 pub struct PayloadExtractor;
@@ -39,7 +37,7 @@ impl PayloadExtractor {
             + for<'b> CheckBytes<DefaultValidator<'b>>,
         S: AsRef<str>,
     {
-        let mut payload_ser = hex::decode(payload_ser.as_ref())?;
+        let payload_ser = hex::decode(payload_ser.as_ref())?;
 
         let payload = check_archived_root::<P>(&payload_ser).map_err(|_| {
             PayloadNotPresent(Box::from("deserialization error"))

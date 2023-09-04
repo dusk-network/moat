@@ -8,7 +8,6 @@ use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
 use crate::{Transactions, TxRetriever};
 use dusk_wallet::RuskHttpClient;
-use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
