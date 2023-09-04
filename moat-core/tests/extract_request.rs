@@ -19,6 +19,17 @@ fn extract_request_not_present() -> Result<(), Error> {
 }
 
 #[test]
+fn extract_call_data_not_present() -> Result<(), Error> {
+    let tx_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/tx_no_call_data.json");
+    let tx = Tx::from_file(tx_path)?;
+
+    let result = PayloadExtractor::payload_from_tx::<Request>(&tx);
+    assert!(result.is_err());
+    Ok(())
+}
+
+#[test]
 fn extract_request_present() -> Result<(), Error> {
     let tx_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/tx_with_request.json");

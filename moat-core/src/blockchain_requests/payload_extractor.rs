@@ -23,7 +23,12 @@ impl PayloadExtractor {
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
-        let r = tx.call_data.as_ref().unwrap().data.as_str(); // todo: take care of unwrap
+        let r = tx
+            .call_data
+            .as_ref()
+            .ok_or(PayloadNotPresent(Box::from("missing call data")))?
+            .data
+            .as_str();
         Self::payload_from_call_data::<P, _>(r)
     }
 
@@ -35,10 +40,9 @@ impl PayloadExtractor {
         S: AsRef<str>,
     {
         let mut payload_ser = hex::decode(payload_ser.as_ref())?;
-        println!("ser={}", hex::encode(payload_ser.clone()));
 
         let payload = check_archived_root::<P>(&payload_ser).map_err(|_| {
-            PayloadNotPresent(Box::from("rkyv deserialization error"))
+            PayloadNotPresent(Box::from("deserialization error"))
         })?;
         let p: P = payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(p)
