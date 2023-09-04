@@ -6,7 +6,7 @@
 
 use crate::blockchain_requests::PayloadExtractor;
 use crate::error::Error;
-use crate::{Transactions, Transactions2, TxRetriever};
+use crate::{Transactions, TxRetriever};
 use dusk_wallet::RuskHttpClient;
 use gql_client::Client;
 use wallet_accessor::BlockchainAccessConfig;
@@ -16,7 +16,7 @@ pub struct RequestScanner;
 
 impl RequestScanner {
     /// Returns requests found in the given collection of transactions
-    pub fn scan_transactions(txs: Transactions2) -> Vec<Request> {
+    pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
             println!("tx={:?}", tx);

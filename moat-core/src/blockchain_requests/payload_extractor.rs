@@ -7,7 +7,7 @@
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 
 use crate::error::Error;
-use crate::types::{Tx, Tx2, TxJson, TxJson2};
+use crate::types::{Tx, TxJson};
 use crate::Error::PayloadNotPresent;
 use base64::{engine::general_purpose, Engine as _};
 use bytecheck::CheckBytes;
@@ -17,7 +17,7 @@ use rkyv::validation::validators::DefaultValidator;
 pub struct PayloadExtractor;
 
 impl PayloadExtractor {
-    pub fn payload_from_tx<P>(tx: &Tx2) -> Result<P, Error>
+    pub fn payload_from_tx<P>(tx: &Tx) -> Result<P, Error>
     where
         P: Archive,
         P::Archived: Deserialize<P, Infallible>

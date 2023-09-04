@@ -7,7 +7,7 @@
 use crate::error::Error;
 use crate::types::*;
 use crate::Error::{DuskWalletError, TransactionNotFound};
-use crate::{QueryResult, Tx};
+use crate::QueryResult;
 use dusk_wallet::{RuskHttpClient, RuskRequest};
 use gql_client::Client;
 use std::sync::Arc;
@@ -26,7 +26,7 @@ impl TxRetriever {
     pub async fn txs_from_block(
         client: &RuskHttpClient,
         block_height: u64,
-    ) -> Result<Transactions2, Error> {
+    ) -> Result<Transactions, Error> {
         TxRetriever::txs_from_block_range(
             client,
             block_height,
@@ -42,18 +42,18 @@ impl TxRetriever {
         client: &RuskHttpClient,
         height_beg: u64,
         height_end: u64,
-    ) -> Result<(Transactions2, u64), Error> {
-        let mut transactions = Transactions2::default();
+    ) -> Result<(Transactions, u64), Error> {
+        let mut transactions = Transactions::default();
         let range_str = format!("{},{}", height_beg, height_end);
         let tx_query = "query { blockTxs(range: [####] ) { id, raw, callData {contractId, fnName, data}}}".replace("####", range_str.as_str());
         let tx_response = gql_query(client, tx_query.as_str()).await?;
-        let tx_result = serde_json::from_slice::<QueryResult2>(&tx_response)?;
+        let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
         let top_block_query =
             "query { block(height: -1) { header { height} }}".to_string();
         let top_block_response =
             gql_query(client, top_block_query.as_str()).await?;
         let top_block_result =
-            serde_json::from_slice::<QueryResult3>(&top_block_response)?;
+            serde_json::from_slice::<QueryResult2>(&top_block_response)?;
 
         transactions.transactions.extend(tx_result.block_txs);
         Ok((transactions, top_block_result.block.header.height))
@@ -62,12 +62,12 @@ impl TxRetriever {
     pub async fn txs_from_last_n_blocks(
         client: &RuskHttpClient,
         n: usize,
-    ) -> Result<Transactions2, Error> {
-        let mut transactions = Transactions2::default();
+    ) -> Result<Transactions, Error> {
+        let mut transactions = Transactions::default();
         let n_str = format!("{}", n);
         let tx_query = "query { blockTxs(last:####) { id, raw, callData {contractId, fnName, data}}}".replace("####", n_str.as_str());
         let tx_response = gql_query(client, tx_query.as_str()).await?;
-        let tx_result = serde_json::from_slice::<QueryResult2>(&tx_response)?;
+        let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
         transactions.transactions.extend(tx_result.block_txs);
         Ok(transactions)
     }
@@ -75,7 +75,7 @@ impl TxRetriever {
     pub async fn retrieve_tx<S>(
         txid: S,
         client: &RuskHttpClient,
-    ) -> Result<Tx2, Error>
+    ) -> Result<Tx, Error>
     where
         S: AsRef<str>,
     {

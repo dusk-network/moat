@@ -22,22 +22,13 @@ pub struct ContractInfo {
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Tx {
-    pub txid: String,
-    pub contractinfo: ContractInfo,
-    pub json: String,
-}
-
-impl JsonLoader for Tx {}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct Tx2 {
     pub id: String,
     #[serde(alias = "callData", default)]
-    pub call_data: Option<CallInfoJson2>,
+    pub call_data: Option<CallInfoJson>,
     pub raw: String,
 }
 
-impl JsonLoader for Tx2 {}
+impl JsonLoader for Tx {}
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Transactions {
@@ -47,22 +38,7 @@ pub struct Transactions {
 impl JsonLoader for Transactions {}
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct Transactions2 {
-    pub transactions: Vec<Tx2>,
-}
-
-impl JsonLoader for Transactions2 {}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-#[allow(non_snake_case)]
 pub struct CallInfoJson {
-    pub ContractID: String,
-    pub FnName: String,
-    pub CallData: String,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct CallInfoJson2 {
     #[serde(alias = "contractId", default)]
     pub contract_id: String,
     #[serde(alias = "fnName", default)]
@@ -77,25 +53,8 @@ pub struct TxJson {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct TxJson2 {
-    pub anchor: String,
-    pub call: CallInfoJson2,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Header {
     pub height: u64,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct BlockWithTxs {
-    pub header: Header,
-    pub transactions: Vec<Tx>,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct Blocks {
-    pub blocks: Vec<BlockWithTxs>,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
@@ -105,19 +64,13 @@ pub struct Block {
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct QueryResult {
-    pub blocks: Vec<Block>,
-    pub transactions: Vec<Tx>,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct QueryResult2 {
     #[serde(alias = "blockTxs", default)]
-    pub block_txs: Vec<Tx2>,
+    pub block_txs: Vec<Tx>,
 }
 
 // {"block":{"header":{"height":77065}}}
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct QueryResult3 {
+pub struct QueryResult2 {
     pub block: Block,
 }
 
@@ -126,7 +79,7 @@ pub struct SpentTx {
     pub txerror: Option<String>,
     #[serde(alias = "gasSpent", default)]
     pub gas_spent: f64,
-    pub tx: Tx2,
+    pub tx: Tx,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
