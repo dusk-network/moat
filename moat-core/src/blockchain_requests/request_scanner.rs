@@ -19,6 +19,7 @@ impl RequestScanner {
     pub fn scan_transactions(txs: Transactions2) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
+            println!("tx={:?}", tx);
             if let Ok(request) =
                 PayloadExtractor::payload_from_tx::<Request>(tx)
             {
@@ -35,9 +36,8 @@ impl RequestScanner {
     ) -> Result<Vec<Request>, Error> {
         let client = RuskHttpClient::new(cfg.rusk_address.clone());
         let txs =
-            TxRetriever::txs_from_last_n_blocks(&client,
-        last_n_blocks).await?; let requests =
-        RequestScanner::scan_transactions(txs);
+            TxRetriever::txs_from_last_n_blocks(&client, last_n_blocks).await?;
+        let requests = RequestScanner::scan_transactions(txs);
         Ok(requests)
     }
 

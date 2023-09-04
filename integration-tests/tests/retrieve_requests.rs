@@ -56,7 +56,7 @@ use zk_citadel::license::Request;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
-async fn scan_requests_in_lasts_blocks() -> Result<(), Error> {
+async fn scan_requests_in_last_blocks() -> Result<(), Error> {
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 

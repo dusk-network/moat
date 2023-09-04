@@ -78,7 +78,7 @@ async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
 #[cfg_attr(not(feature = "vol_tests"), ignore)]
 async fn retrieve_tx_by_id() -> Result<(), Error> {
     const TXID: &str =
-        "b71919ccaf9cd15592d19edd5c3bd164ccd95ab33e92b7e06cb4d6065142e401";
+        "44fe2c6407fc400a2dee6e30c62a02b82f3980da18d3b6306e80f9f83730520d";
 
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");

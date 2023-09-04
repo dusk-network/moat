@@ -24,17 +24,17 @@ impl PayloadExtractor {
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
         let r = tx.call_data.as_ref().unwrap().data.as_str(); // todo: take care of unwrap
-        Self::payload_from_tx_json::<P, _>(r)
+        Self::payload_from_call_data::<P, _>(r)
     }
 
-    pub fn payload_from_tx_json<P, S>(payload_ser: S) -> Result<P, Error>
+    fn payload_from_call_data<P, S>(payload_ser: S) -> Result<P, Error>
     where
         P: Archive,
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
         S: AsRef<str>,
     {
-        let mut payload_ser = hex::decode(payload_ser.as_ref()).unwrap(); // todo: unwrap
+        let mut payload_ser = hex::decode(payload_ser.as_ref())?;
         println!("ser={}", hex::encode(payload_ser.clone()));
 
         let payload = check_archived_root::<P>(&payload_ser).map_err(|_| {
