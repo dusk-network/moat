@@ -4,18 +4,13 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::contract_queries::ws_types::{ExecutionRequest, ExecutionResponse};
 use crate::error::Error;
-use crate::Error::{InvalidQueryResponse, WebSocketStreamClosed};
+use crate::Error::InvalidQueryResponse;
 use bytecheck::CheckBytes;
-use futures_util::{SinkExt, StreamExt};
+use dusk_wallet::RuskHttpClient;
 use phoenix_core::transaction::ModuleId;
-use rkyv::ser::serializers::AllocSerializer;
 use rkyv::validation::validators::DefaultValidator;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
-use tokio::net::TcpStream;
-use tokio_tungstenite::client_async;
-use tokio_tungstenite::tungstenite::Message;
 
 #[allow(dead_code)]
 pub struct ContractInquirer {}
@@ -26,62 +21,37 @@ const MAX_CALL_SIZE: usize = 65536;
 #[allow(dead_code)]
 impl ContractInquirer {
     pub async fn query_contract<A, R>(
-        url: impl AsRef<str>,
-        id: Option<i32>,
+        client: &RuskHttpClient,
         args: A,
         contract_id: ModuleId,
         method: impl AsRef<str>,
     ) -> Result<R, Error>
     where
-        A: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
+        A: Archive,
+        A: rkyv::Serialize<
+            rkyv::ser::serializers::AllocSerializer<MAX_CALL_SIZE>,
+        >,
         R: Archive,
         R::Archived: Deserialize<R, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
-        let stream = TcpStream::connect(url.as_ref()).await?;
+        let contract_id = hex::encode(contract_id.as_slice());
+        println!("contract_id={}", contract_id);
+        let response = client
+            .contract_query::<A, MAX_CALL_SIZE>(
+                contract_id.as_ref(),
+                method.as_ref(),
+                &args,
+            )
+            .await?;
 
-        let url = format!("ws://{}", url.as_ref()); // todo: find a more elegant way
+        println!("response len={}", response.len());
 
-        let (mut ws_stream, _) = client_async(url, stream).await?;
-
-        let fn_args = rkyv::to_bytes::<_, MAX_CALL_SIZE>(&args)
-            .expect("Request should serialize correctly")
-            .to_vec();
-        let request = serde_json::to_string(&ExecutionRequest {
-            request_id: id,
-            contract: contract_id,
-            fn_name: method.as_ref().to_string(),
-            fn_args,
-        })?;
-
-        ws_stream.send(Message::Text(request)).await?;
-
-        let msg = ws_stream.next().await.ok_or(WebSocketStreamClosed)??;
-
-        let msg = match msg {
-            Message::Text(msg) => msg,
-            _ => panic!("Shouldn't receive anything but text"),
-        };
-
-        let response: ExecutionResponse = serde_json::from_str(&msg)?;
-        if let Some(response_error) = response.error {
-            return Err(InvalidQueryResponse(Box::from(response_error)));
-        }
-        if let Some(sent_id) = id {
-            match response.request_id {
-                Some(received_id) if sent_id == received_id => (),
-                _ => {
-                    return Err(InvalidQueryResponse(Box::from(
-                        "received wrong request id",
-                    )))
-                }
-            }
-        }
-        let response_data = check_archived_root::<R>(response.data.as_slice())
+        let response_data = check_archived_root::<R>(response.as_slice())
             .map_err(|_| {
                 InvalidQueryResponse(Box::from("rkyv deserialization error"))
             })?;
-        let r: R = response_data
+        let r = response_data
             .deserialize(&mut Infallible)
             .expect("Infallible");
         Ok(r)

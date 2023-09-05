@@ -85,8 +85,11 @@ impl WalletAccessor {
 
         assert!(wallet.is_online(), "Wallet should be online");
 
-        info!("Sending request");
-        println!("Sending request");
+        println!(
+            "Sending tx with a call to method '{}' of contract='{}'",
+            call_name.clone(),
+            hex::encode(contract_id)
+        );
 
         let sender = wallet.default_address();
         // let rcvr = wallet.addresses().get(1).expect("address exists");
@@ -94,13 +97,9 @@ impl WalletAccessor {
         gas.set_price(gas_price);
 
         let tx = wallet
-            .execute(sender, contract_id, call_name, data, gas)
+            .execute(sender, contract_id, call_name.clone(), data, gas)
             .await?;
-        // let tx: Transaction = wallet
-        //     .transfer(sender, rcvr, Dusk::from(8), gas)
-        //     .await?;
         let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
-        info!("TX_ID={:x}", tx_id);
         println!("TX_ID={:x}", tx_id);
         Ok(tx_id)
     }

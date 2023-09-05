@@ -23,9 +23,10 @@ pub use blockchain_requests::{
     RequestScanner,
 };
 pub use contract_queries::{
-    CitadelInquirer, ContractInquirer, LicenseSession, LicenseSessionId,
+    CitadelInquirer, CitadelInquirerWs, ContractInquirer, ContractInquirerWs,
+    LicenseSession, LicenseSessionId,
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;
-pub use tx_retrievals::TxRetriever;
+pub use tx_retrievals::{TxAwaiter, TxRetriever};
 pub use types::*;

@@ -13,7 +13,9 @@ wallet-accessor = { path = "../wallet-accessor" }
 zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
 phoenix-core = { version = "0.20.0-rc.0", features = ["alloc"] }
 dusk-poseidon = { version = "0.30", default-features = false, features = ["rkyv-impl", "alloc"] }
+poseidon-merkle = { version = "0.2.1-rc.0", features = ["rkyv-impl"] }
 dusk-jubjub = { version = "0.12", default-features = false }
+dusk-bls12_381 = "0.11"
 dusk-pki = { version = "0.12", default-features = false, features = ["rkyv-impl"] }
 rusk-abi = { version = "0.10.0-piecrust.0.6", default-features = false }
 rkyv = { version = "=0.7.39" }
@@ -28,6 +30,8 @@ base64 = "0.21"
 hex = "0.4"
 rand = "0.8"
 dusk-bytes = "0.1"
+blake3 = "1.4"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
+sha2 = "0.10"

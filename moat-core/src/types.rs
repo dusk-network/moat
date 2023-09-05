@@ -83,6 +83,25 @@ pub struct SpentTx {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct SpentTx2 {
+    pub err: Option<String>,
+    #[serde(alias = "gasSpent", default)]
+    pub gas_spent: f64,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct SpentTxResponse {
     pub tx: Option<SpentTx>,
+}
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct SpentTxResponse2 {
+    pub tx: Option<SpentTx2>,
+}
+
+#[derive(Debug)]
+pub enum TxStatus {
+    Ok,
+    NotFound,
+    Error(String),
 }

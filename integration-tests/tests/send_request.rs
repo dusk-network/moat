@@ -6,28 +6,35 @@
 
 use dusk_jubjub::BlsScalar;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::JsonLoader;
 use moat_core::{
     Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
 };
+use moat_core::{JsonLoader, TxAwaiter};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::sleep;
 use toml_base_config::BaseConfig;
+use tracing::Level;
 use wallet_accessor::{BlockchainAccessConfig, Password::PwdHash};
 use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
     "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787";
-const GAS_LIMIT: u64 = 500_000_000;
+const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn send_request() -> Result<(), Error> {
+    let subscriber = tracing_subscriber::fmt::Subscriber::builder()
+        .with_max_level(Level::INFO)
+        .with_writer(std::io::stderr);
+    tracing::subscriber::set_global_default(subscriber.finish())
+        .expect("Setting tracing default should work");
+
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
     let config_path =
@@ -58,10 +65,11 @@ async fn send_request() -> Result<(), Error> {
         GAS_PRICE,
     )
     .await?;
+    let client = RuskHttpClient::new(config.rusk_address);
+    TxAwaiter::wait_for(&client, tx_id).await?;
 
     let tx_id_hex = format!("{:x}", tx_id);
     println!("tx_id={}", tx_id_hex);
-    let client = RuskHttpClient::new(config.rusk_address);
 
     let (retrieved_request, _, _) =
         get_request_from_blockchain(tx_id_hex, &client).await?;

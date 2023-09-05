@@ -9,6 +9,8 @@ use dusk_pki::SecretSpendKey;
 use moat_core::{Error, RequestCreator};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use sha2::Digest;
+use sha2::Sha256;
 
 #[test]
 #[ignore]
@@ -22,7 +24,7 @@ fn ssk_to_vk() -> Result<(), Error> {
 }
 
 #[test]
-// #[ignore]
+#[ignore]
 fn create_serialized_request() -> Result<(), Error> {
     let rng = &mut StdRng::seed_from_u64(0xcafe);
     let request = RequestCreator::create_from_hex_args(
@@ -34,5 +36,24 @@ fn create_serialized_request() -> Result<(), Error> {
         .expect("Infallible")
         .to_vec();
     println!("request={}", hex::encode(v));
+    Ok(())
+}
+
+#[test]
+#[ignore]
+fn encode_password() -> Result<(), Error> {
+    const PSW: &str = "password";
+    let mut hasher = Sha256::new();
+    hasher.update(PSW.as_bytes());
+    println!("password={}", hex::encode(hasher.finalize().to_vec()));
+    Ok(())
+}
+
+#[test]
+#[ignore]
+fn encode_password_old() -> Result<(), Error> {
+    const PSW: &str = "password";
+    let hash = blake3::hash(PSW.as_bytes());
+    println!("password={}", hex::encode(hash.as_bytes()));
     Ok(())
 }
