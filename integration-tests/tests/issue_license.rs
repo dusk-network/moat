@@ -61,8 +61,10 @@ async fn issue_license() -> Result<(), Error> {
 
     println!("before issue_license");
 
+    // todo: pos needs to be determined in contract, and removed from the interface
+    let license_pos = 1u64;
     license_issuer
-        .issue_license(rng, &request, &reference_lp.ssk_lp)
+        .issue_license(rng, &request, &reference_lp.ssk_lp, license_pos)
         .await?;
 
     Ok(())

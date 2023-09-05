@@ -48,16 +48,17 @@ impl LicenseIssuer {
         rng: &mut R,
         request: &Request,
         ssk_lp: &SecretSpendKey,
+        license_pos: u64,
     ) -> Result<(), Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
-        let license_pos = 1u64; // todo
         let license_blob = rkyv::to_bytes::<_, 8192>(&license)
-            .expect("Request should serialize correctly")
+            .expect("License should serialize correctly")
             .to_vec();
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
         let license_hash = sponge::hash(&[lpk.get_x(), lpk.get_y()]);
         let tuple = (license_blob, license_pos, license_hash);
+        println!("sending issue license with license_pos={}", license_pos);
         PayloadSender::send_issue_license(
             tuple,
             &self.config,
