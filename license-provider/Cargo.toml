@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = "0.18"
+dusk-wallet = "=0.18.0"
 zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
 moat-core={ path = "../moat-core" }
 wallet-accessor = { path = "../wallet-accessor" }

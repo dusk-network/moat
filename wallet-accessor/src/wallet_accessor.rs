@@ -40,7 +40,7 @@ impl SecureWalletFile for WalletAccessor {
 
 impl WalletAccessor {
     pub fn new(path: WalletPath, pwd: Password) -> Self {
-        Self {
+        let slf = Self {
             path,
             pwd: pwd.clone(),
             pwd_bytes: {
@@ -55,7 +55,9 @@ impl WalletAccessor {
                     } // todo - how do we react to invalid hex of the hash
                 }
             },
-        }
+        };
+        println!("pwd_bytes={:?}", hex::encode(slf.pwd_bytes.clone()));
+        slf
     }
 
     pub async fn send<C>(
@@ -80,6 +82,7 @@ impl WalletAccessor {
                 |s| {
                     info!(target: "wallet", "{s}",);
                 },
+                // true,
             )
             .await?;
 

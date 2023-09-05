@@ -8,7 +8,7 @@ moat-core={ path = "../moat-core" }
 license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
-dusk-wallet = "0.18"
+dusk-wallet = "=0.18.0"
 zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
 dusk-jubjub = { version = "0.12", default-features = false }
 wallet-accessor = { path = "../wallet-accessor" }
@@ -25,6 +25,8 @@ gql_client = "1"
 rand = "0.8"
 bytecheck = "0.6"
 hex = "0.4"
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 [features]
 int_tests = []

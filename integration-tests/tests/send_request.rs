@@ -18,6 +18,7 @@ use tokio::time::sleep;
 use toml_base_config::BaseConfig;
 use wallet_accessor::{BlockchainAccessConfig, Password::PwdHash};
 use zk_citadel::license::Request;
+use tracing::Level;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -28,6 +29,12 @@ const GAS_PRICE: u64 = 1;
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn send_request() -> Result<(), Error> {
+    let subscriber = tracing_subscriber::fmt::Subscriber::builder()
+        .with_max_level(Level::INFO)
+        .with_writer(std::io::stderr);
+    tracing::subscriber::set_global_default(subscriber.finish())
+        .expect("Setting tracing default should work");
+
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
     let config_path =
