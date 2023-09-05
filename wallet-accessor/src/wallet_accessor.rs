@@ -82,7 +82,6 @@ impl WalletAccessor {
                 |s| {
                     info!(target: "wallet", "{s}",);
                 },
-                // true,
             )
             .await?;
 
