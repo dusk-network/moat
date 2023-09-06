@@ -9,8 +9,8 @@ use dusk_pki::SecretSpendKey;
 use moat_core::{Error, RequestCreator};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use sha2::Sha256;
 use sha2::Digest;
+use sha2::Sha256;
 
 #[test]
 #[ignore]

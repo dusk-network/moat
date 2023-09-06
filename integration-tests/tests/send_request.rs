@@ -16,9 +16,9 @@ use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::sleep;
 use toml_base_config::BaseConfig;
+use tracing::Level;
 use wallet_accessor::{BlockchainAccessConfig, Password::PwdHash};
 use zk_citadel::license::Request;
-use tracing::Level;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =

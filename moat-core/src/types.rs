@@ -86,3 +86,10 @@ pub struct SpentTx {
 pub struct SpentTxResponse {
     pub tx: Option<SpentTx>,
 }
+
+#[derive(Debug)]
+pub enum TxStatus {
+    Ok,
+    NotFound,
+    Error(String),
+}
