@@ -66,7 +66,7 @@ impl TxAwaiter {
         client: &RuskHttpClient,
         tx_id: impl AsRef<str>,
     ) -> Result<(), Error> {
-        const TIMEOUT_SECS: i32 = 30;
+        const TIMEOUT_SECS: i32 = 10;
         let mut i = 1;
         while i <= TIMEOUT_SECS {
             let status = Self::tx_status(client, tx_id.as_ref()).await?;
@@ -77,12 +77,16 @@ impl TxAwaiter {
                     return Err(TransactionError(Box::from(err)))?
                 }
                 TxStatus::NotFound => {
-                    println!("Awaiting for {}", tx_id.as_ref());
+                    println!("Awaiting ({}) for {}", i, tx_id.as_ref());
                     sleep(Duration::from_millis(1000)).await;
                     i += 1;
                 }
             }
         }
-        Ok(())
+        if i > TIMEOUT_SECS {
+            Err(TransactionError(Box::from("Confirmation timed out")))
+        } else {
+            Ok(())
+        }
     }
 }
