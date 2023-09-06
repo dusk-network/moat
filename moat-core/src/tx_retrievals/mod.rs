@@ -4,6 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+mod tx_awaiter;
 mod tx_retriever;
 
+pub use tx_awaiter::TxAwaiter;
 pub use tx_retriever::TxRetriever;

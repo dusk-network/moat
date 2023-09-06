@@ -6,10 +6,10 @@
 
 use dusk_jubjub::BlsScalar;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::JsonLoader;
 use moat_core::{
     Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
 };
+use moat_core::{JsonLoader, TxAwaiter};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
@@ -65,10 +65,11 @@ async fn send_request() -> Result<(), Error> {
         GAS_PRICE,
     )
     .await?;
+    let client = RuskHttpClient::new(config.rusk_address);
+    TxAwaiter::wait_for(&client, tx_id).await?;
 
     let tx_id_hex = format!("{:x}", tx_id);
     println!("tx_id={}", tx_id_hex);
-    let client = RuskHttpClient::new(config.rusk_address);
 
     let (retrieved_request, _, _) =
         get_request_from_blockchain(tx_id_hex, &client).await?;

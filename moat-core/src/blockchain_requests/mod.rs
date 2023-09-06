@@ -9,7 +9,6 @@ mod payload_retriever;
 mod payload_sender;
 mod request_creator;
 mod request_scanner;
-mod tx_awaiter;
 
 pub use payload_extractor::PayloadExtractor;
 pub use payload_retriever::PayloadRetriever;

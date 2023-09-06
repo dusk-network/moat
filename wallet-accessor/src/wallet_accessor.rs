@@ -98,9 +98,6 @@ impl WalletAccessor {
         let tx = wallet
             .execute(sender, contract_id, call_name, data, gas)
             .await?;
-        // let tx: Transaction = wallet
-        //     .transfer(sender, rcvr, Dusk::from(8), gas)
-        //     .await?;
         let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
         info!("TX_ID={:x}", tx_id);
         println!("TX_ID={:x}", tx_id);

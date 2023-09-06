@@ -33,6 +33,8 @@ pub enum Error {
     WebSocketStreamClosed,
     #[error("Invalid query response: {0:?}")]
     InvalidQueryResponse(Box<str>),
+    #[error("Transaction error: {0:?}")]
+    TransactionError(Box<str>),
 }
 
 impl From<serde_json::Error> for Error {

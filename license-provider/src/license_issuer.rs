@@ -7,8 +7,8 @@
 use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
-use dusk_wallet::WalletPath;
-use moat_core::{Error, PayloadSender};
+use dusk_wallet::{RuskHttpClient, WalletPath};
+use moat_core::{Error, PayloadSender, TxAwaiter};
 use rand::{CryptoRng, RngCore};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, Request};
@@ -59,7 +59,7 @@ impl LicenseIssuer {
         let license_hash = sponge::hash(&[lpk.get_x(), lpk.get_y()]);
         let tuple = (license_blob, license_pos, license_hash);
         println!("sending issue license with license_pos={}", license_pos);
-        PayloadSender::send_issue_license(
+        let tx_id = PayloadSender::send_issue_license(
             tuple,
             &self.config,
             &self.wallet_path,
@@ -68,7 +68,8 @@ impl LicenseIssuer {
             self.gas_price,
         )
         .await?;
-
+        let client = RuskHttpClient::new(self.config.rusk_address.clone());
+        TxAwaiter::wait_for(&client, tx_id).await?;
         Ok(())
     }
 }
