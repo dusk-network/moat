@@ -66,7 +66,7 @@ impl TxAwaiter {
         client: &RuskHttpClient,
         tx_id: impl AsRef<str>,
     ) -> Result<(), Error> {
-        const TIMEOUT_SECS: i32 = 10;
+        const TIMEOUT_SECS: i32 = 30;
         let mut i = 1;
         while i <= TIMEOUT_SECS {
             let status = Self::tx_status(client, tx_id.as_ref()).await?;
