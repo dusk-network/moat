@@ -23,7 +23,7 @@ use zk_citadel::license::Request;
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
     "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787";
-const GAS_LIMIT: u64 = 500_000_000;
+const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
 #[tokio::test(flavor = "multi_thread")]

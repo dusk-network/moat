@@ -58,7 +58,6 @@ impl TxAwaiter {
         tx_id: BlsScalar,
     ) -> Result<(), Error> {
         let tx_id = format!("{:x}", tx_id);
-        println!("xxx={}", tx_id);
         Self::wait_for_tx(client, tx_id).await
     }
 

@@ -95,7 +95,8 @@ impl PayloadSender {
             WalletAccessor::new(wallet_path.clone(), password.clone());
         let tx_id = wallet_accessor
             .send(
-                (payload, 1u64, BlsScalar::one()),
+                // (payload, 1u64, BlsScalar::one()),
+                payload,
                 contract_id,
                 method.as_ref().to_string(),
                 cfg,

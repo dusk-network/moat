@@ -58,7 +58,11 @@ impl LicenseIssuer {
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
         let license_hash = sponge::hash(&[lpk.get_x(), lpk.get_y()]);
         let tuple = (license_blob, license_pos, license_hash);
-        println!("sending issue license with license_pos={}, license blob size={}", license_pos, tuple.0.len());
+        println!(
+            "sending issue license with license_pos={}, license blob size={}",
+            license_pos,
+            tuple.0.len()
+        );
         let tx_id = PayloadSender::send_issue_license(
             tuple,
             &self.config,
