@@ -28,11 +28,11 @@ async fn call_get_licenses() -> Result<(), Error> {
     let block_heights = 0..1024u64;
     let response = client.contract_query::<Range<u64>, 0>(LICENSE_CONTRACT, "get_licenses", &block_heights).await?;
 
-    let response_data = check_archived_root::<Vec<Vec<u8>>>(response.as_slice())
+    let response_data = check_archived_root::<Vec<(u64,Vec<u8>)>>(response.as_slice())
         .map_err(|_| {
             InvalidQueryResponse(Box::from("rkyv deserialization error"))
         })?;
-    let r: Vec<Vec<u8>> = response_data
+    let r: Vec<(u64,Vec<u8>)> = response_data
         .deserialize(&mut Infallible)
         .expect("Infallible");
 
