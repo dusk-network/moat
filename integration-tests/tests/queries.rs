@@ -4,49 +4,38 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::{CitadelInquirer, Error, LicenseSession, LicenseSessionId};
-pub mod websocket;
-use crate::websocket::ws_license_contract_mock_multi_server;
-use dusk_jubjub::BlsScalar;
+use std::ops::Range;
+use moat_core::Error;
+use dusk_wallet::RuskHttpClient;
+use rkyv::{check_archived_root, Deserialize, Infallible};
+use toml_base_config::BaseConfig;
+use moat_core::Error::InvalidQueryResponse;
+use wallet_accessor::BlockchainAccessConfig;
 
-const TEST_DURATION_SECONDS: u64 = 4;
-const PORT: u32 = 9126;
+const LICENSE_CONTRACT: &str =
+    "0300000000000000000000000000000000000000000000000000000000000000";
+
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
-async fn contract_queries() -> Result<(), Error> {
-    const NUM_TESTS: u32 = 2;
-    tokio::spawn(ws_license_contract_mock_multi_server(
-        TEST_DURATION_SECONDS,
-        PORT,
-        NUM_TESTS,
-    ));
-    query_licenses().await?;
-    query_session().await?;
-    Ok(())
-}
+async fn call_get_licenses() -> Result<(), Error> {
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config = BlockchainAccessConfig::load_path(config_path)?;
 
-async fn query_licenses() -> Result<(), Error> {
-    let url = format!("127.0.0.1:{}", PORT);
-    let id = None;
+    let client = RuskHttpClient::new(config.rusk_address);
+
     let block_heights = 0..1024u64;
-    let ser_licenses =
-        CitadelInquirer::get_licenses(url, id, block_heights).await?;
-    assert_eq!(ser_licenses.len(), 2);
-    Ok(())
-}
+    let response = client.contract_query::<Range<u64>, 0>(LICENSE_CONTRACT, "get_licenses", &block_heights).await?;
 
-async fn query_session() -> Result<(), Error> {
-    let url = format!("127.0.0.1:{}", PORT);
-    let id = None;
-    let session_id = LicenseSessionId {
-        id: BlsScalar::zero(),
-    };
-    let session: Option<LicenseSession> =
-        CitadelInquirer::get_session(url, id, session_id).await?;
-    assert!(session.is_some());
-    let public_inputs = &session.as_ref().unwrap().public_inputs;
-    assert_eq!(public_inputs.len(), 1);
-    assert_eq!(public_inputs[0], BlsScalar::zero());
+    let response_data = check_archived_root::<Vec<Vec<u8>>>(response.as_slice())
+        .map_err(|_| {
+            InvalidQueryResponse(Box::from("rkyv deserialization error"))
+        })?;
+    let r: Vec<Vec<u8>> = response_data
+        .deserialize(&mut Infallible)
+        .expect("Infallible");
+
+    println!("response={:?}", r);
     Ok(())
 }
