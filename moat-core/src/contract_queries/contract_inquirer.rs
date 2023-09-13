@@ -40,7 +40,7 @@ impl ContractInquirer {
     {
         let stream = TcpStream::connect(url.as_ref()).await?;
 
-        let url = format!("ws://{}", url.as_ref()); // todo: find a more elegant way
+        let url = format!("ws://{}", url.as_ref()); // todo: find a more elegant way // /01/stream
 
         let (mut ws_stream, _) = client_async(url, stream).await?;
 
