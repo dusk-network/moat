@@ -4,11 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::ContractInquirer;
+use moat_core::ContractInquirerWs;
 
 pub async fn send_request_to_ws_server(port: u32) {
     let url = format!("127.0.0.1:{}", port);
-    let _result: () = ContractInquirer::query_contract(
+    let _result: () = ContractInquirerWs::query_contract(
         url,
         None,
         (),

@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::{CitadelInquirer, Error, LicenseSession, LicenseSessionId};
+use moat_core::{CitadelInquirerWs, Error, LicenseSession, LicenseSessionId};
 pub mod websocket;
 use crate::websocket::ws_license_contract_mock_multi_server;
 use dusk_jubjub::BlsScalar;
@@ -31,7 +31,7 @@ async fn query_licenses() -> Result<(), Error> {
     let id = None;
     let block_heights = 0..1024u64;
     let ser_licenses =
-        CitadelInquirer::get_licenses(url, id, block_heights).await?;
+        CitadelInquirerWs::get_licenses(url, id, block_heights).await?;
     assert_eq!(ser_licenses.len(), 2);
     Ok(())
 }
@@ -43,7 +43,7 @@ async fn query_session() -> Result<(), Error> {
         id: BlsScalar::zero(),
     };
     let session: Option<LicenseSession> =
-        CitadelInquirer::get_session(url, id, session_id).await?;
+        CitadelInquirerWs::get_session(url, id, session_id).await?;
     assert!(session.is_some());
     let public_inputs = &session.as_ref().unwrap().public_inputs;
     assert_eq!(public_inputs.len(), 1);

@@ -5,10 +5,8 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{ContractInquirer, LicenseSession, LicenseSessionId};
-use dusk_wallet::RuskHttpClient;
+use crate::{ContractInquirerWs, LicenseSession, LicenseSessionId};
 use phoenix_core::transaction::ModuleId;
-use poseidon_merkle::Opening;
 use std::ops::Range;
 
 // todo: refactor such consts to some common location
@@ -19,22 +17,19 @@ const LICENSE_CONTRACT_ID: ModuleId = {
 };
 
 const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
-const GET_MERKLE_OPENING_METHOD_NAME: &str = "get_merkle_opening";
 const GET_SESSION_METHOD_NAME: &str = "get_session";
 
-// todo: proper location for these constants
-const DEPTH: usize = 17; // depth of the Merkle tree
-const ARITY: usize = 4; // arity of the Merkle tree
+pub struct CitadelInquirerWs {}
 
-pub struct CitadelInquirer {}
-
-impl CitadelInquirer {
+impl CitadelInquirerWs {
     pub async fn get_licenses(
-        client: &RuskHttpClient,
+        url: impl AsRef<str>,
+        id: Option<i32>,
         block_heights: Range<u64>,
-    ) -> Result<Vec<(u64, Vec<u8>)>, Error> {
-        ContractInquirer::query_contract(
-            client,
+    ) -> Result<Vec<Vec<u8>>, Error> {
+        ContractInquirerWs::query_contract(
+            url,
+            id,
             block_heights,
             LICENSE_CONTRACT_ID,
             GET_LICENSES_METHOD_NAME,
@@ -42,25 +37,14 @@ impl CitadelInquirer {
         .await
     }
 
-    pub async fn get_merkle_opening(
-        client: &RuskHttpClient,
-        pos: u64,
-    ) -> Result<Option<Opening<(), DEPTH, ARITY>>, Error> {
-        ContractInquirer::query_contract(
-            client,
-            pos,
-            LICENSE_CONTRACT_ID,
-            GET_MERKLE_OPENING_METHOD_NAME,
-        )
-        .await
-    }
-
     pub async fn get_session(
-        client: &RuskHttpClient,
+        url: impl AsRef<str>,
+        id: Option<i32>,
         session_id: LicenseSessionId,
     ) -> Result<Option<LicenseSession>, Error> {
-        ContractInquirer::query_contract(
-            client,
+        ContractInquirerWs::query_contract(
+            url,
+            id,
             session_id,
             LICENSE_CONTRACT_ID,
             GET_SESSION_METHOD_NAME,

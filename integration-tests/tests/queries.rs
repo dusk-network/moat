@@ -4,17 +4,13 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use std::ops::Range;
-use moat_core::Error;
 use dusk_wallet::RuskHttpClient;
-use rkyv::{check_archived_root, Deserialize, Infallible};
+use moat_core::{CitadelInquirer, Error};
 use toml_base_config::BaseConfig;
-use moat_core::Error::InvalidQueryResponse;
 use wallet_accessor::BlockchainAccessConfig;
 
-const LICENSE_CONTRACT: &str =
-    "0300000000000000000000000000000000000000000000000000000000000000";
-
+#[allow(dead_code)]
+const MAX_CALL_SIZE: usize = 65536;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
@@ -25,17 +21,28 @@ async fn call_get_licenses() -> Result<(), Error> {
 
     let client = RuskHttpClient::new(config.rusk_address);
 
-    let block_heights = 0..1024u64;
-    let response = client.contract_query::<Range<u64>, 0>(LICENSE_CONTRACT, "get_licenses", &block_heights).await?;
+    let block_heights = 0..5000u64;
 
-    let response_data = check_archived_root::<Vec<(u64,Vec<u8>)>>(response.as_slice())
-        .map_err(|_| {
-            InvalidQueryResponse(Box::from("rkyv deserialization error"))
-        })?;
-    let r: Vec<(u64,Vec<u8>)> = response_data
-        .deserialize(&mut Infallible)
-        .expect("Infallible");
+    let response =
+        CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-    println!("response={:?}", r);
+    println!("response={:?}", response);
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
+async fn call_get_merkle_opening() -> Result<(), Error> {
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = RuskHttpClient::new(config.rusk_address);
+
+    let pos = 0u64;
+
+    let response = CitadelInquirer::get_merkle_opening(&client, pos).await?;
+
+    println!("response={:?}", response);
     Ok(())
 }
