@@ -218,10 +218,12 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let licenses = CitadelInquirer::get_licenses(&client, block_heights).await?;
     assert!(!licenses.is_empty());
-    let license = licenses[0].1.clone(); //todo: explain - why is license not used?
+    let license = licenses[0].1.clone();
 
     // deserialize license
     let license = deserialise_license(&license);
+
+    assert!(ssk_user.view_key().owns(&license.lsa), "license should be owned by the user"); // todo: make a loop checking all returned licenses
 
     let pos = licenses[0].0.clone();
     println!("license obtained at pos={}", pos);
