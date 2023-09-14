@@ -24,19 +24,20 @@ use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, PayloadSender, RequestCreator, RequestJson, TxAwaiter};
 use rand::rngs::StdRng;
-use rand::SeedableRng;
 use std::path::PathBuf;
 use dusk_jubjub::BlsScalar;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use toml_base_config::BaseConfig;
-use zk_citadel::license::Request;
-use zk_citadel::utils::CitadelUtils;
+use zk_citadel::license::{CitadelProverParameters, License, Request, SessionCookie};
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::PwdHash;
 use dusk_plonk::prelude::*;
-use rkyv::{Archive, Deserialize, Serialize};
+use rkyv::{Archive, check_archived_root, Deserialize, Infallible, Serialize};
 use bytecheck::CheckBytes;
 use dusk_bytes::DeserializableSlice;
+use poseidon_merkle::Opening;
+use rand::SeedableRng;
+use moat_core::Error::InvalidQueryResponse;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -49,7 +50,7 @@ const DEPTH: usize = 17; // depth of the Merkle tree
 const ARITY: usize = 4; // arity of the Merkle tree
 static LABEL: &[u8] = b"dusk-network";
 const CAPACITY: usize = 17; // capacity required for the setup
-
+const CHALLENGE: u64 = 20221126u64; // todo: where should it be declared?
 
 
 /// Use License Argument.
@@ -58,6 +59,29 @@ const CAPACITY: usize = 17; // capacity required for the setup
 pub struct UseLicenseArg {
     pub proof: Proof,
     pub public_inputs: Vec<BlsScalar>,
+}
+
+fn compute_citadel_parameters(
+    rng: &mut StdRng,
+    ssk: SecretSpendKey,
+    _psk: PublicSpendKey,//todo: remove me?
+    _ssk_lp: SecretSpendKey,// todo: remove me?
+    psk_lp: PublicSpendKey,
+    lic: &License,
+    merkle_proof: Opening<(), DEPTH, ARITY>,
+) -> (CitadelProverParameters<DEPTH, ARITY>, SessionCookie) {
+
+    let c = JubJubScalar::from(CHALLENGE);
+    let (cpp, sc) = CitadelProverParameters::compute_parameters(
+        &ssk,
+        &lic,
+        &psk_lp,
+        &psk_lp,
+        &c,
+        rng,
+        merkle_proof,
+    );
+    (cpp, sc)
 }
 
 async fn issue_license(
@@ -89,11 +113,13 @@ async fn use_license(
     psk_user: PublicSpendKey,
     prover: &Prover,
     verifier: &Verifier,
+    license: &License,
+    opening: Opening<(), DEPTH, ARITY>,
     rng: &mut StdRng,
 ) -> Result<BlsScalar, Error> {
     let (cpp, sc) =
-        CitadelUtils::compute_citadel_parameters::<StdRng, DEPTH, ARITY>(
-            rng, ssk_user, psk_user, reference_lp.ssk_lp, reference_lp.psk_lp,
+        compute_citadel_parameters(
+            rng, ssk_user, psk_user, reference_lp.ssk_lp, reference_lp.psk_lp, license, opening,
         );
     let circuit = LicenseCircuit::new(&cpp, &sc);
 
@@ -121,6 +147,17 @@ async fn use_license(
     ).await?;
     TxAwaiter::wait_for(&client, tx_id).await?;
     Ok(tx_id)
+}
+
+fn deserialise_license(v: &Vec<u8>) -> License {
+    let response_data = check_archived_root::<License>(v.as_slice())
+        .map_err(|_| {
+            InvalidQueryResponse(Box::from("rkyv deserialization error"))
+        }).expect("License correctly serialized");
+    let license: License = response_data
+        .deserialize(&mut Infallible)
+        .expect("Infallible");
+    license
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -181,7 +218,11 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let licenses = CitadelInquirer::get_licenses(&client, block_heights).await?;
     assert!(!licenses.is_empty());
-    let _license = licenses[0].1.clone(); //todo: explain - why is license not used?
+    let license = licenses[0].1.clone(); //todo: explain - why is license not used?
+
+    // deserialize license
+    let license = deserialise_license(&license);
+
     let pos = licenses[0].0.clone();
     println!("license obtained at pos={}", pos);
 
@@ -192,7 +233,7 @@ async fn user_round_trip() -> Result<(), Error> {
     println!("opening obtained");
 
     // compute proof, call use_license, wait for tx to confirm
-    use_license(&client, &blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, rng).await?;
+    use_license(&client, &blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
 
     // call get_session
     Ok(())
