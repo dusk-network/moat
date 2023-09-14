@@ -49,8 +49,6 @@ async fn issue_license() -> Result<(), Error> {
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
     );
 
-    println!("before LicenseIssuer::new");
-
     let license_issuer = LicenseIssuer::new(
         blockchain_config,
         wallet_path,
@@ -58,8 +56,6 @@ async fn issue_license() -> Result<(), Error> {
         GAS_LIMIT,
         GAS_PRICE,
     );
-
-    println!("before issue_license");
 
     license_issuer
         .issue_license(rng, &request, &reference_lp.ssk_lp)
