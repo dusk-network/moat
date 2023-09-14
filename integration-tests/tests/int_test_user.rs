@@ -164,6 +164,8 @@ fn deserialise_license(v: &Vec<u8>) -> License {
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn user_round_trip() -> Result<(), Error> {
     // initialize
+    // NOTE: it is important that the seed is the same as in the recovery
+    // PUB_PARAMS initialization code
     let rng = &mut StdRng::seed_from_u64(0xbeef);
 
     println!("performing setup");
