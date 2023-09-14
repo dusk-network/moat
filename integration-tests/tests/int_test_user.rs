@@ -22,13 +22,21 @@
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{CitadelInquirer, Error, JsonLoader, RequestCreator, RequestJson};
+use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, PayloadSender, RequestCreator, RequestJson};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
+use dusk_jubjub::BlsScalar;
+use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use toml_base_config::BaseConfig;
+use zk_citadel::license::Request;
+use zk_citadel::utils::CitadelUtils;
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::PwdHash;
+use dusk_plonk::prelude::*;
+use rkyv::{Archive, Deserialize, Serialize};
+use bytecheck::CheckBytes;
+use dusk_bytes::DeserializableSlice;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -36,22 +44,29 @@ const PWD_HASH: &str =
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
+// todo: proper location for these constants
+const DEPTH: usize = 17; // depth of the Merkle tree
+const ARITY: usize = 4; // arity of the Merkle tree
+static LABEL: &[u8] = b"dusk-network";
+const CAPACITY: usize = 17; // capacity required for the setup
+
+
+
+/// Use License Argument.
+#[derive(Debug, Clone, PartialEq, Archive, Serialize, Deserialize)]
+#[archive_attr(derive(CheckBytes))]
+pub struct UseLicenseArg {
+    pub proof: Proof,
+    pub public_inputs: Vec<BlsScalar>,
+}
+
 async fn issue_license(
     reference_lp: &ReferenceLP,
     blockchain_config: BlockchainAccessConfig,
     wallet_path: WalletPath,
-    request_path: impl AsRef<str>,
+    request: &Request,
+    rng: &mut StdRng,
 ) -> Result<(), Error> {
-    let request_json: RequestJson =
-        RequestJson::from_file(request_path.as_ref())?;
-
-    let rng = &mut StdRng::seed_from_u64(0xcafe);
-    let request = RequestCreator::create_from_hex_args(
-        request_json.user_ssk,
-        request_json.provider_psk,
-        rng,
-    )?;
-
     let license_issuer = LicenseIssuer::new(
         blockchain_config,
         wallet_path,
@@ -65,10 +80,57 @@ async fn issue_license(
         .await
 }
 
+async fn use_license(
+    blockchain_config: &BlockchainAccessConfig,
+    wallet_path: WalletPath,
+    reference_lp: &ReferenceLP,
+    ssk_user: SecretSpendKey,
+    psk_user: PublicSpendKey,
+    prover: &Prover,
+    verifier: &Verifier,
+    rng: &mut StdRng,
+) -> Result<BlsScalar, Error> {
+    let (cpp, sc) =
+        CitadelUtils::compute_citadel_parameters::<StdRng, DEPTH, ARITY>(
+            rng, ssk_user, psk_user, reference_lp.ssk_lp, reference_lp.psk_lp,
+        );
+    let circuit = LicenseCircuit::new(&cpp, &sc);
+
+    println!("starting calculating proof");
+    let (proof, public_inputs) =
+        prover.prove(rng, &circuit).expect("Proving should succeed");
+    println!("calculating proof done");
+
+    verifier
+        .verify(&proof, &public_inputs)
+        .expect("Verifying the circuit should succeed");
+
+    let use_license_arg = UseLicenseArg {
+        proof,
+        public_inputs,
+    };
+
+    PayloadSender::send_use_license(
+        use_license_arg,
+        &blockchain_config,
+        &wallet_path,
+        &PwdHash(PWD_HASH.to_string()),
+        GAS_LIMIT,
+        GAS_PRICE,
+    ).await
+}
+
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn user_round_trip() -> Result<(), Error> {
     // initialize
+    let rng = &mut StdRng::seed_from_u64(0xcafe);
+
+    let pp = PublicParameters::setup(1 << CAPACITY, rng).unwrap();
+
+    let (prover, verifier) = Compiler::compile::<LicenseCircuit>(&pp, LABEL)
+        .expect("Compiling circuit should succeed");
+
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
     let blockchain_config_path =
@@ -81,6 +143,21 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
+    let blockchain_config_clone =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?; // todo: eliminate this clone
+
+    let request_json: RequestJson =
+        RequestJson::from_file(request_path)?;
+
+    let request = RequestCreator::create_from_hex_args(
+        request_json.user_ssk.clone(),
+        request_json.provider_psk,
+        rng,
+    )?;
+
+    let ssk_user_bytes = hex::decode(request_json.user_ssk)?;
+    let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
+    let psk_user = ssk_user.public_spend_key();
 
     let wallet_path = WalletPath::from(
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
@@ -90,7 +167,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     // call issue license, wait for tx to confirm
 
-    issue_license(&reference_lp, blockchain_config, wallet_path, request_path).await?;
+    issue_license(&reference_lp, blockchain_config, wallet_path.clone(), &request, rng).await?; // todo: eliminate clones
 
     // call get_licenses, obtain license and pos
 
@@ -109,6 +186,8 @@ async fn user_round_trip() -> Result<(), Error> {
     println!("opening obtained={:?}", opening);
 
     // compute proof, call use_license, wait for tx to confirm
+    use_license(&blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, rng).await?;
+
     // call get_session
     Ok(())
 }

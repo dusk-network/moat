@@ -21,6 +21,7 @@ const LICENSE_CONTRACT_ID: ModuleId = {
 
 const NOOP_METHOD_NAME: &str = "noop";
 const ISSUE_LICENSE_METHOD_NAME: &str = "issue_license";
+const USE_LICENSE_METHOD_NAME: &str = "use_license";
 
 const MAX_CALL_SIZE: usize = 65536;
 
@@ -71,6 +72,31 @@ impl PayloadSender {
             gas_price,
             LICENSE_CONTRACT_ID,
             ISSUE_LICENSE_METHOD_NAME,
+        )
+        .await
+    }
+
+    /// Sends a given payload to the use license method
+    pub async fn send_use_license<P>(
+        payload: P,
+        cfg: &BlockchainAccessConfig,
+        wallet_path: &WalletPath,
+        password: &Password,
+        gas_limit: u64,
+        gas_price: u64,
+    ) -> Result<BlsScalar, Error>
+    where
+        P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
+    {
+        Self::send_to_contract_method(
+            payload,
+            cfg,
+            wallet_path,
+            password,
+            gas_limit,
+            gas_price,
+            LICENSE_CONTRACT_ID,
+            USE_LICENSE_METHOD_NAME,
         )
         .await
     }
