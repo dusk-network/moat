@@ -19,7 +19,6 @@ pub struct LicenseCircuit {
 }
 
 impl LicenseCircuit {
-    pub const CIRCUIT_ID: [u8; 32] = [2u8; 32]; // todo: what is the correct value?
     pub fn new(
         lpp: &CitadelProverParameters<DEPTH, ARITY>,
         sc: &SessionCookie,
@@ -32,7 +31,7 @@ impl LicenseCircuit {
     }
 }
 
-// #[code_hasher::hash(name = "CIRCUIT_ID", version = "0.2.0")] // todo: what about this?
+#[code_hasher::hash(name = "CIRCUIT_ID", version = "0.2.0")]
 impl Circuit for LicenseCircuit {
     fn circuit<C>(&self, composer: &mut C) -> Result<(), Error>
         where

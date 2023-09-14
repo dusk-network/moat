@@ -32,6 +32,7 @@ hex = "0.4"
 rand = "0.8"
 dusk-bytes = "0.1"
 blake3 = "1.4"
+code-hasher={ path = "../macros/code-hasher" }
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }

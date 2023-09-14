@@ -22,7 +22,7 @@
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, PayloadSender, RequestCreator, RequestJson};
+use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, PayloadSender, RequestCreator, RequestJson, TxAwaiter};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
@@ -81,6 +81,7 @@ async fn issue_license(
 }
 
 async fn use_license(
+    client: &RuskHttpClient,
     blockchain_config: &BlockchainAccessConfig,
     wallet_path: WalletPath,
     reference_lp: &ReferenceLP,
@@ -110,14 +111,16 @@ async fn use_license(
         public_inputs,
     };
 
-    PayloadSender::send_use_license(
+    let tx_id = PayloadSender::send_use_license(
         use_license_arg,
         &blockchain_config,
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
-    ).await
+    ).await?;
+    TxAwaiter::wait_for(&client, tx_id).await?;
+    Ok(tx_id)
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -126,10 +129,13 @@ async fn user_round_trip() -> Result<(), Error> {
     // initialize
     let rng = &mut StdRng::seed_from_u64(0xcafe);
 
+    println!("performing setup");
     let pp = PublicParameters::setup(1 << CAPACITY, rng).unwrap();
 
+    println!("compiling circuit");
     let (prover, verifier) = Compiler::compile::<LicenseCircuit>(&pp, LABEL)
         .expect("Compiling circuit should succeed");
+    println!("compiling circuit done");
 
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
@@ -175,7 +181,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let licenses = CitadelInquirer::get_licenses(&client, block_heights).await?;
     assert!(!licenses.is_empty());
-    let license = licenses[0].1.clone();
+    let _license = licenses[0].1.clone(); //todo: explain - why is license not used?
     let pos = licenses[0].0.clone();
     println!("license obtained at pos={}", pos);
 
@@ -183,10 +189,10 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let opening = CitadelInquirer::get_merkle_opening(&client, pos).await?;
     assert!(opening.is_some());
-    println!("opening obtained={:?}", opening);
+    println!("opening obtained");
 
     // compute proof, call use_license, wait for tx to confirm
-    use_license(&blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, rng).await?;
+    use_license(&client, &blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, rng).await?;
 
     // call get_session
     Ok(())
