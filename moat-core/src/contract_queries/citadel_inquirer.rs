@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{ContractInquirer, LicenseSession, LicenseSessionId};
+use crate::{ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH};
 use dusk_wallet::RuskHttpClient;
 use phoenix_core::transaction::ModuleId;
 use poseidon_merkle::Opening;
@@ -21,10 +21,7 @@ const LICENSE_CONTRACT_ID: ModuleId = {
 const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
 const GET_MERKLE_OPENING_METHOD_NAME: &str = "get_merkle_opening";
 const GET_SESSION_METHOD_NAME: &str = "get_session";
-
-// todo: proper location for these constants
-const DEPTH: usize = 17; // depth of the Merkle tree
-const ARITY: usize = 4; // arity of the Merkle tree
+const GET_INFO_METHOD_NAME: &str = "get_info";
 
 pub struct CitadelInquirer {}
 
@@ -64,6 +61,18 @@ impl CitadelInquirer {
             session_id,
             LICENSE_CONTRACT_ID,
             GET_SESSION_METHOD_NAME,
+        )
+        .await
+    }
+
+    pub async fn get_info(
+        client: &RuskHttpClient,
+    ) -> Result<(u32, u32, u32), Error> {
+        ContractInquirer::query_contract(
+            client,
+            (),
+            LICENSE_CONTRACT_ID,
+            GET_INFO_METHOD_NAME,
         )
         .await
     }

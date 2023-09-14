@@ -36,7 +36,6 @@ impl ContractInquirer {
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
         let contract_id = hex::encode(contract_id.as_slice());
-        println!("contract_id={}", contract_id);
         let response = client
             .contract_query::<A, MAX_CALL_SIZE>(
                 contract_id.as_ref(),
@@ -44,8 +43,6 @@ impl ContractInquirer {
                 &args,
             )
             .await?;
-
-        println!("response len={}", response.len());
 
         let response_data = check_archived_root::<R>(response.as_slice())
             .map_err(|_| {

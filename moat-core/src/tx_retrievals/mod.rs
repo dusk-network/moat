@@ -4,8 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+mod bc_inquirer;
 mod tx_awaiter;
 mod tx_retriever;
 
+pub use bc_inquirer::BcInquirer;
 pub use tx_awaiter::TxAwaiter;
 pub use tx_retriever::TxRetriever;

@@ -7,6 +7,7 @@
 use dusk_wallet::RuskHttpClient;
 use moat_core::{Error, PayloadRetriever, RequestScanner};
 use toml_base_config::BaseConfig;
+use tracing::trace;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
@@ -24,7 +25,7 @@ async fn retrieve_payload() -> Result<(), Error> {
 
     let request: Request =
         PayloadRetriever::retrieve_payload(TXID, &client).await?;
-    println!("request={:?}", request);
+    trace!("request={:?}", request);
     Ok(())
 }
 
@@ -39,7 +40,7 @@ async fn scan_all_requests() -> Result<(), Error> {
         let height_end = height + 10000;
         let (requests, top) =
             RequestScanner::scan_block_range(height, height_end, &cfg).await?;
-        println!(
+        trace!(
             "{} requests in range ({},{}) top={}",
             requests.len(),
             height,
@@ -65,7 +66,7 @@ async fn scan_requests_in_last_blocks() -> Result<(), Error> {
     const LAST_BLOCKS: usize = 10000;
 
     let requests = RequestScanner::scan_last_blocks(LAST_BLOCKS, &cfg).await?;
-    println!(
+    trace!(
         "there were {} requests found in last n={} blocks",
         requests.len(),
         LAST_BLOCKS
@@ -86,7 +87,7 @@ async fn scan_requests_in_block_range() -> Result<(), Error> {
 
     let (requests, _) =
         RequestScanner::scan_block_range(HEIGHT_BEG, HEIGHT_END, &cfg).await?;
-    println!(
+    trace!(
         "there were {} requests found in block range from {} to {}",
         requests.len(),
         HEIGHT_BEG,

@@ -10,6 +10,7 @@ use futures_util::{SinkExt, StreamExt};
 use moat_core::{Error, LicenseSession};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::Message;
+use tracing::trace;
 
 pub async fn ws_license_contract_mock_server(
     seconds: u64,
@@ -19,11 +20,11 @@ pub async fn ws_license_contract_mock_server(
 
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
-    println!("server - listening on: {}", addr);
+    trace!("server - listening on: {}", addr);
 
-    println!("server - accepting requests");
+    trace!("server - accepting requests");
     while let Ok((stream, _)) = listener.accept().await {
-        println!("server - spawning accept connection");
+        trace!("server - spawning accept connection");
         tokio::spawn(accept_connection(stream));
         tokio::time::sleep(std::time::Duration::from_secs(seconds)).await;
         break;
@@ -43,12 +44,12 @@ pub async fn ws_license_contract_mock_multi_server(
 
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
-    println!("server - listening on: {}", addr);
+    trace!("server - listening on: {}", addr);
 
-    println!("server - accepting requests");
+    trace!("server - accepting requests");
     let mut count = 0u32;
     while let Ok((stream, _)) = listener.accept().await {
-        println!("server - spawning accept connection");
+        trace!("server - spawning accept connection");
         tokio::spawn(accept_connection(stream));
         count += 1;
         if count == limit {
@@ -65,13 +66,13 @@ async fn accept_connection(stream: TcpStream) {
     let addr = stream
         .peer_addr()
         .expect("connected streams should have a peer address");
-    println!("server - peer address: {}", addr);
+    trace!("server - peer address: {}", addr);
 
     let mut ws_stream = tokio_tungstenite::accept_async(stream)
         .await
         .expect("Error during the websocket handshake occurred");
 
-    println!("server - new websocket connection: {}", addr);
+    trace!("server - new websocket connection: {}", addr);
 
     let msg = ws_stream
         .next()
@@ -87,9 +88,10 @@ async fn accept_connection(stream: TcpStream) {
     let request: ExecutionRequest = serde_json::from_str(&msg)
         .expect("Request should deserialize successfully");
 
-    println!(
+    trace!(
         "server - obtained request={:?} fn_name={}",
-        request.request_id, request.fn_name
+        request.request_id,
+        request.fn_name
     );
 
     let response_id = request.request_id;
@@ -119,7 +121,7 @@ async fn accept_connection(stream: TcpStream) {
     })
     .expect("Serializing response should succeed");
 
-    println!("server - sending response ={:?}", response_id);
+    trace!("server - sending response ={:?}", response_id);
     ws_stream
         .send(Message::Text(response))
         .await

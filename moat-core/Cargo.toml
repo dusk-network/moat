@@ -11,6 +11,7 @@ futures-util = { version = "0.3.28", default-features = false, features = ["sink
 dusk-wallet = "0.18"
 wallet-accessor = { path = "../wallet-accessor" }
 zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
+dusk-plonk = { version = "0.14", default-features = false, features = ["rkyv-impl", "alloc"] }
 phoenix-core = { version = "0.20.0-rc.0", features = ["alloc"] }
 dusk-poseidon = { version = "0.30", default-features = false, features = ["rkyv-impl", "alloc"] }
 poseidon-merkle = { version = "0.2.1-rc.0", features = ["rkyv-impl"] }
@@ -31,6 +32,8 @@ hex = "0.4"
 rand = "0.8"
 dusk-bytes = "0.1"
 blake3 = "1.4"
+code-hasher={ path = "../macros/code-hasher" }
+tracing = "0.1"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }

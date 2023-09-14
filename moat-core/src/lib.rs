@@ -12,6 +12,7 @@
 //! subproject.
 
 mod blockchain_requests;
+mod circuit;
 mod contract_queries;
 mod error;
 mod json_loader;
@@ -22,11 +23,12 @@ pub use blockchain_requests::{
     PayloadExtractor, PayloadRetriever, PayloadSender, RequestCreator,
     RequestScanner,
 };
+pub use circuit::*;
 pub use contract_queries::{
     CitadelInquirer, CitadelInquirerWs, ContractInquirer, ContractInquirerWs,
     LicenseSession, LicenseSessionId,
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;
-pub use tx_retrievals::{TxAwaiter, TxRetriever};
+pub use tx_retrievals::{BcInquirer, TxAwaiter, TxRetriever};
 pub use types::*;

@@ -7,6 +7,7 @@
 use dusk_wallet::RuskHttpClient;
 use moat_core::{CitadelInquirer, Error};
 use toml_base_config::BaseConfig;
+use tracing::debug;
 use wallet_accessor::BlockchainAccessConfig;
 
 #[allow(dead_code)]
@@ -26,7 +27,7 @@ async fn call_get_licenses() -> Result<(), Error> {
     let response =
         CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-    println!("response={:?}", response);
+    debug!("response={:?}", response);
     Ok(())
 }
 
@@ -43,6 +44,6 @@ async fn call_get_merkle_opening() -> Result<(), Error> {
 
     let response = CitadelInquirer::get_merkle_opening(&client, pos).await?;
 
-    println!("response={:?}", response);
+    debug!("response={:?}", response);
     Ok(())
 }

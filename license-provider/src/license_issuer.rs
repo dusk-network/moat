@@ -4,12 +4,13 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubAffine, JubJubScalar};
+use dusk_jubjub::{BlsScalar, JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{Error, PayloadSender, TxAwaiter};
 use rand::{CryptoRng, RngCore};
+use tracing::trace;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, Request};
 
@@ -48,7 +49,7 @@ impl LicenseIssuer {
         rng: &mut R,
         request: &Request,
         ssk_lp: &SecretSpendKey,
-    ) -> Result<(), Error> {
+    ) -> Result<BlsScalar, Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
         let license_blob = rkyv::to_bytes::<_, 8192>(&license)
@@ -57,7 +58,7 @@ impl LicenseIssuer {
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
         let license_hash = sponge::hash(&[lpk.get_x(), lpk.get_y()]);
         let tuple = (license_blob, license_hash);
-        println!(
+        trace!(
             "sending issue license with license blob size={}",
             tuple.0.len()
         );
@@ -72,6 +73,6 @@ impl LicenseIssuer {
         .await?;
         let client = RuskHttpClient::new(self.config.rusk_address.clone());
         TxAwaiter::wait_for(&client, tx_id).await?;
-        Ok(())
+        Ok(tx_id)
     }
 }

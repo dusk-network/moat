@@ -27,7 +27,7 @@ impl PayloadRetriever {
             + for<'b> CheckBytes<DefaultValidator<'b>>,
         S: AsRef<str>,
     {
-        let tx = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
+        let (tx, _) = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
         PayloadExtractor::payload_from_tx(&tx)
     }
 }
