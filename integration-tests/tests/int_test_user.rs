@@ -157,6 +157,12 @@ fn deserialise_license(v: &Vec<u8>) -> License {
     license
 }
 
+async fn show_state(client: &RuskHttpClient, s: impl AsRef<str>) -> Result<(), Error> {
+    let (num_licenses, tree_len, num_sessions) = CitadelInquirer::get_info(&client).await?;
+    println!("=== Contract state {} - licenses: {} tree length: {} sessions: {} ===", s.as_ref(), num_licenses, tree_len, num_sessions);
+    Ok(())
+}
+
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn user_round_trip() -> Result<(), Error> {
@@ -206,7 +212,9 @@ async fn user_round_trip() -> Result<(), Error> {
 
     // as a LP, call issue license, wait for tx to confirm
 
+    show_state(&client, "before issue_license").await?;
     issue_license(&reference_lp, &blockchain_config, &wallet_path, &request, rng).await?;
+    show_state(&client, "after issue_license").await?;
 
     // as a User, call get_licenses, obtain license and pos
 
@@ -230,7 +238,9 @@ async fn user_round_trip() -> Result<(), Error> {
     println!("opening obtained");
 
     // as a User, compute proof, call use_license, wait for tx to confirm
+    show_state(&client, "before use_license").await?;
     let session_id = use_license(&client, &blockchain_config, &wallet_path, &reference_lp, ssk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
+    show_state(&client, "after use_license").await?;
     let session_id = LicenseSessionId { id: session_id };
     println!("obtained session id {}", hex::encode(session_id.id.to_bytes()));
 
