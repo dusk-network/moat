@@ -22,7 +22,7 @@
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, PayloadSender, RequestCreator, RequestJson, TxAwaiter};
+use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, LicenseSessionId, PayloadSender, RequestCreator, RequestJson, TxAwaiter};
 use rand::rngs::StdRng;
 use std::path::PathBuf;
 use dusk_jubjub::BlsScalar;
@@ -34,7 +34,7 @@ use wallet_accessor::Password::PwdHash;
 use dusk_plonk::prelude::*;
 use rkyv::{Archive, check_archived_root, Deserialize, Infallible, Serialize};
 use bytecheck::CheckBytes;
-use dusk_bytes::DeserializableSlice;
+use dusk_bytes::{DeserializableSlice, Serializable};
 use poseidon_merkle::Opening;
 use rand::SeedableRng;
 use moat_core::Error::InvalidQueryResponse;
@@ -128,6 +128,9 @@ async fn use_license(
         prover.prove(rng, &circuit).expect("Proving should succeed");
     println!("calculating proof done");
 
+    assert!(!public_inputs.is_empty());
+    let session_id = public_inputs[0];
+
     verifier
         .verify(&proof, &public_inputs)
         .expect("Verifying the circuit should succeed");
@@ -146,7 +149,7 @@ async fn use_license(
         GAS_PRICE,
     ).await?;
     TxAwaiter::wait_for(&client, tx_id).await?;
-    Ok(tx_id)
+    Ok(session_id)
 }
 
 fn deserialise_license(v: &Vec<u8>) -> License {
@@ -210,19 +213,18 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
 
-    // call issue license, wait for tx to confirm
+    // as a LP, call issue license, wait for tx to confirm
 
     issue_license(&reference_lp, blockchain_config, wallet_path.clone(), &request, rng).await?; // todo: eliminate clones
 
-    // call get_licenses, obtain license and pos
+    // as a User, call get_licenses, obtain license and pos
 
     let block_heights = 0..10000u64; // todo: obtain height
 
+    println!("query license contract - get_licenses");
     let licenses = CitadelInquirer::get_licenses(&client, block_heights).await?;
     assert!(!licenses.is_empty());
     let license = licenses[0].1.clone();
-
-    // deserialize license
     let license = deserialise_license(&license);
 
     assert!(ssk_user.view_key().owns(&license.lsa), "license should be owned by the user"); // todo: make a loop checking all returned licenses
@@ -230,15 +232,23 @@ async fn user_round_trip() -> Result<(), Error> {
     let pos = licenses[0].0.clone();
     println!("license obtained at pos={}", pos);
 
-    // call get_merkle_opening, obtain opening
-
+    // as a User, call get_merkle_opening, obtain opening
+    println!("query license contract - get_merkle_opening");
     let opening = CitadelInquirer::get_merkle_opening(&client, pos).await?;
     assert!(opening.is_some());
     println!("opening obtained");
 
-    // compute proof, call use_license, wait for tx to confirm
-    use_license(&client, &blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
+    // as a User, compute proof, call use_license, wait for tx to confirm
+    let session_id = use_license(&client, &blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
+    let session_id = LicenseSessionId { id: session_id };
+    println!("obtained session id {}", hex::encode(session_id.id.to_bytes()));
 
-    // call get_session
+    // as a SP, call get_session
+    println!("query license contract - get_session");
+    let session = CitadelInquirer::get_session(&client, session_id).await?;
+    assert!(session.is_some());
+    let session = session.unwrap();
+    println!("obtained session {}", hex::encode(session.public_inputs[0].to_bytes()));
+
     Ok(())
 }
