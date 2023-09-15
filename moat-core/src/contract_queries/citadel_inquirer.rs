@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{ContractInquirer, LicenseSession, LicenseSessionId};
+use crate::{ContractInquirer, LicenseSession, LicenseSessionId, DEPTH, ARITY};
 use dusk_wallet::RuskHttpClient;
 use phoenix_core::transaction::ModuleId;
 use poseidon_merkle::Opening;
@@ -21,10 +21,6 @@ const LICENSE_CONTRACT_ID: ModuleId = {
 const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
 const GET_MERKLE_OPENING_METHOD_NAME: &str = "get_merkle_opening";
 const GET_SESSION_METHOD_NAME: &str = "get_session";
-
-// todo: proper location for these constants
-const DEPTH: usize = 17; // depth of the Merkle tree
-const ARITY: usize = 4; // arity of the Merkle tree
 
 pub struct CitadelInquirer {}
 

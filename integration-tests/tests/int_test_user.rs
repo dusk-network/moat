@@ -22,7 +22,7 @@
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, LicenseSessionId, PayloadSender, RequestCreator, RequestJson, TxAwaiter};
+use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, LicenseSessionId, PayloadSender, RequestCreator, RequestJson, TxAwaiter, DEPTH, ARITY};
 use rand::rngs::StdRng;
 use std::path::PathBuf;
 use dusk_jubjub::BlsScalar;
@@ -45,9 +45,6 @@ const PWD_HASH: &str =
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
-// todo: proper location for these constants
-const DEPTH: usize = 17; // depth of the Merkle tree
-const ARITY: usize = 4; // arity of the Merkle tree
 static LABEL: &[u8] = b"dusk-network";
 const CAPACITY: usize = 17; // capacity required for the setup
 const CHALLENGE: u64 = 20221126u64; // todo: where should it be declared?
@@ -64,8 +61,6 @@ pub struct UseLicenseArg {
 fn compute_citadel_parameters(
     rng: &mut StdRng,
     ssk: SecretSpendKey,
-    _psk: PublicSpendKey,//todo: remove me?
-    _ssk_lp: SecretSpendKey,// todo: remove me?
     psk_lp: PublicSpendKey,
     lic: &License,
     merkle_proof: Opening<(), DEPTH, ARITY>,
@@ -86,14 +81,14 @@ fn compute_citadel_parameters(
 
 async fn issue_license(
     reference_lp: &ReferenceLP,
-    blockchain_config: BlockchainAccessConfig,
-    wallet_path: WalletPath,
+    blockchain_config: &BlockchainAccessConfig,
+    wallet_path: &WalletPath,
     request: &Request,
     rng: &mut StdRng,
 ) -> Result<(), Error> {
     let license_issuer = LicenseIssuer::new(
-        blockchain_config,
-        wallet_path,
+        blockchain_config.clone(),
+        wallet_path.clone(),
         PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
@@ -107,10 +102,9 @@ async fn issue_license(
 async fn use_license(
     client: &RuskHttpClient,
     blockchain_config: &BlockchainAccessConfig,
-    wallet_path: WalletPath,
+    wallet_path: &WalletPath,
     reference_lp: &ReferenceLP,
     ssk_user: SecretSpendKey,
-    psk_user: PublicSpendKey,
     prover: &Prover,
     verifier: &Verifier,
     license: &License,
@@ -119,11 +113,11 @@ async fn use_license(
 ) -> Result<BlsScalar, Error> {
     let (cpp, sc) =
         compute_citadel_parameters(
-            rng, ssk_user, psk_user, reference_lp.ssk_lp, reference_lp.psk_lp, license, opening,
+            rng, ssk_user, reference_lp.psk_lp, license, opening,
         );
     let circuit = LicenseCircuit::new(&cpp, &sc);
 
-    println!("starting calculating proof");
+    println!("calculating proof");
     let (proof, public_inputs) =
         prover.prove(rng, &circuit).expect("Proving should succeed");
     println!("calculating proof done");
@@ -191,8 +185,6 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
-    let blockchain_config_clone =
-        BlockchainAccessConfig::load_path(blockchain_config_path)?; // todo: eliminate this clone
 
     let request_json: RequestJson =
         RequestJson::from_file(request_path)?;
@@ -205,7 +197,6 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let ssk_user_bytes = hex::decode(request_json.user_ssk)?;
     let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
-    let psk_user = ssk_user.public_spend_key();
 
     let wallet_path = WalletPath::from(
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
@@ -215,7 +206,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     // as a LP, call issue license, wait for tx to confirm
 
-    issue_license(&reference_lp, blockchain_config, wallet_path.clone(), &request, rng).await?; // todo: eliminate clones
+    issue_license(&reference_lp, &blockchain_config, &wallet_path, &request, rng).await?;
 
     // as a User, call get_licenses, obtain license and pos
 
@@ -239,7 +230,7 @@ async fn user_round_trip() -> Result<(), Error> {
     println!("opening obtained");
 
     // as a User, compute proof, call use_license, wait for tx to confirm
-    let session_id = use_license(&client, &blockchain_config_clone, wallet_path, &reference_lp, ssk_user, psk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
+    let session_id = use_license(&client, &blockchain_config, &wallet_path, &reference_lp, ssk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
     let session_id = LicenseSessionId { id: session_id };
     println!("obtained session id {}", hex::encode(session_id.id.to_bytes()));
 
