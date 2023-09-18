@@ -13,20 +13,20 @@ const TEST_DURATION_SECONDS: u64 = 4;
 const PORT: u32 = 9126;
 
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "int_tests"), ignore)]
-async fn contract_queries() -> Result<(), Error> {
+#[ignore]
+async fn contract_ws_queries() -> Result<(), Error> {
     const NUM_TESTS: u32 = 2;
     tokio::spawn(ws_license_contract_mock_multi_server(
         TEST_DURATION_SECONDS,
         PORT,
         NUM_TESTS,
     ));
-    query_licenses().await?;
-    query_session().await?;
+    ws_query_licenses().await?;
+    ws_query_session().await?;
     Ok(())
 }
 
-async fn query_licenses() -> Result<(), Error> {
+async fn ws_query_licenses() -> Result<(), Error> {
     let url = format!("127.0.0.1:{}", PORT);
     let id = None;
     let block_heights = 0..1024u64;
@@ -36,7 +36,7 @@ async fn query_licenses() -> Result<(), Error> {
     Ok(())
 }
 
-async fn query_session() -> Result<(), Error> {
+async fn ws_query_session() -> Result<(), Error> {
     let url = format!("127.0.0.1:{}", PORT);
     let id = None;
     let session_id = LicenseSessionId {

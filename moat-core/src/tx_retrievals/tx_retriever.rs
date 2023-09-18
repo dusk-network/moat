@@ -43,7 +43,7 @@ impl TxRetriever {
     ) -> Result<(Transactions, u64), Error> {
         let mut transactions = Transactions::default();
         let range_str = format!("{},{}", height_beg, height_end);
-        let tx_query = "query { blockTxs(range: [####] ) { id, raw, callData {contractId, fnName, data}}}".replace("####", range_str.as_str());
+        let tx_query = "query { blockTxs(range: [####] ) { id, raw, tx { callData {contractId, fnName, data} } } }".replace("####", range_str.as_str());
         let tx_response = gql_query(client, tx_query.as_str()).await?;
         let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
         let top_block_query =
@@ -63,7 +63,7 @@ impl TxRetriever {
     ) -> Result<Transactions, Error> {
         let mut transactions = Transactions::default();
         let n_str = format!("{}", n);
-        let tx_query = "query { blockTxs(last:####) { id, raw, callData {contractId, fnName, data}}}".replace("####", n_str.as_str());
+        let tx_query = "query { blockTxs(last:####) { id, raw, tx { callData {contractId, fnName, data} } } }".replace("####", n_str.as_str());
         let tx_response = gql_query(client, tx_query.as_str()).await?;
         let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
         transactions.transactions.extend(tx_result.block_txs);

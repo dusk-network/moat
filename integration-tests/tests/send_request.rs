@@ -57,7 +57,7 @@ async fn send_request() -> Result<(), Error> {
     );
 
     let tx_id = PayloadSender::send_noop(
-        request,
+        (request, 0u64, BlsScalar::one()),
         &config,
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
