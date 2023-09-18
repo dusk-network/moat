@@ -90,7 +90,8 @@ async fn accept_connection(stream: TcpStream) {
 
     trace!(
         "server - obtained request={:?} fn_name={}",
-        request.request_id, request.fn_name
+        request.request_id,
+        request.fn_name
     );
 
     let response_id = request.request_id;

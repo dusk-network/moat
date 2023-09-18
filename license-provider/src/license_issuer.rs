@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubAffine, JubJubScalar};
+use dusk_jubjub::{BlsScalar, JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
@@ -49,7 +49,7 @@ impl LicenseIssuer {
         rng: &mut R,
         request: &Request,
         ssk_lp: &SecretSpendKey,
-    ) -> Result<(), Error> {
+    ) -> Result<BlsScalar, Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
         let license_blob = rkyv::to_bytes::<_, 8192>(&license)
@@ -73,6 +73,6 @@ impl LicenseIssuer {
         .await?;
         let client = RuskHttpClient::new(self.config.rusk_address.clone());
         TxAwaiter::wait_for(&client, tx_id).await?;
-        Ok(())
+        Ok(tx_id)
     }
 }

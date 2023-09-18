@@ -73,16 +73,16 @@ impl TxRetriever {
     pub async fn retrieve_tx<S>(
         txid: S,
         client: &RuskHttpClient,
-    ) -> Result<Tx, Error>
+    ) -> Result<(Tx, u64), Error>
     where
         S: AsRef<str>,
     {
-        let query = "query { tx(hash:\"####\") { tx {id, raw, callData {contractId, fnName, data}}}}".replace("####", txid.as_ref());
+        let query = "query { tx(hash:\"####\") { tx {id, raw, callData {contractId, fnName, data}}, blockHeight }}".replace("####", txid.as_ref());
         let response = gql_query(client, query.as_str()).await?;
         let result = serde_json::from_slice::<SpentTxResponse>(&response)?;
         result
             .tx
-            .map(|spent_tx| spent_tx.tx)
+            .map(|spent_tx| (spent_tx.tx, spent_tx.block_height))
             .ok_or(TransactionNotFound)
     }
 }

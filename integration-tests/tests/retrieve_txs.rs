@@ -7,8 +7,8 @@
 use dusk_wallet::RuskHttpClient;
 use moat_core::{Error, TxRetriever};
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
 use tracing::trace;
+use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
@@ -88,11 +88,9 @@ async fn retrieve_tx_by_id() -> Result<(), Error> {
 
     let client = RuskHttpClient::new(config.rusk_address);
 
-    let result = TxRetriever::retrieve_tx(TXID, &client).await;
+    let (tx, height) = TxRetriever::retrieve_tx(TXID, &client).await?;
 
-    trace!("res={:?}", result);
-
-    assert!(result.is_ok());
+    trace!("tx={:?}, block_height={}", tx, height);
 
     Ok(())
 }

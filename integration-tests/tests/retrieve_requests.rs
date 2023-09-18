@@ -7,9 +7,9 @@
 use dusk_wallet::RuskHttpClient;
 use moat_core::{Error, PayloadRetriever, RequestScanner};
 use toml_base_config::BaseConfig;
+use tracing::trace;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
-use tracing::trace;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "vol_tests"), ignore)]

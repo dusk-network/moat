@@ -17,8 +17,7 @@
 //!   - at the end we can make sure that the license is used, so a subsequent
 //!     try to use the license is not successful (in other words, there is a
 //!     nullifier (or session id) in a collection which stops us from double
-//!     usage of the license) TBD - this last scenario needs to be cleared with
-//!     Xavi still
+//!     usage of the license)
 
 use bytecheck::CheckBytes;
 use dusk_bytes::{DeserializableSlice, Serializable};
@@ -30,7 +29,8 @@ use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     CitadelInquirer, Error, JsonLoader, LicenseCircuit, LicenseSessionId,
-    PayloadSender, RequestCreator, RequestJson, TxAwaiter, ARITY, DEPTH,
+    PayloadSender, RequestCreator, RequestJson, TxAwaiter, TxRetriever, ARITY,
+    DEPTH,
 };
 use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
@@ -89,7 +89,7 @@ async fn issue_license(
     wallet_path: &WalletPath,
     request: &Request,
     rng: &mut StdRng,
-) -> Result<(), Error> {
+) -> Result<BlsScalar, Error> {
     let license_issuer = LicenseIssuer::new(
         blockchain_config.clone(),
         wallet_path.clone(),
@@ -185,10 +185,10 @@ fn find_owned_license(
     ssk_user: SecretSpendKey,
     licenses: Vec<(u64, Vec<u8>)>,
 ) -> Option<(u64, License)> {
-    for (pos, license) in licenses {
+    for (pos, license) in licenses.iter().rev() {
         let license = deserialise_license(&license);
         if ssk_user.view_key().owns(&license.lsa) {
-            return Some((pos, license));
+            return Some((pos.clone(), license));
         }
     }
     None
@@ -197,6 +197,7 @@ fn find_owned_license(
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn user_round_trip() -> Result<(), Error> {
+    const BLOCK_RANGE: u64 = 10000;
     let subscriber = tracing_subscriber::fmt::Subscriber::builder()
         .with_max_level(Level::INFO)
         .with_writer(std::io::stderr);
@@ -249,7 +250,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     show_state(&client, "before issue_license").await?;
     info!("calling issue_license (as an LP)");
-    issue_license(
+    let issue_license_txid = issue_license(
         &reference_lp,
         &blockchain_config,
         &wallet_path,
@@ -258,12 +259,25 @@ async fn user_round_trip() -> Result<(), Error> {
     )
     .await?;
     show_state(&client, "after issue_license").await?;
+    TxAwaiter::wait_for(&client, issue_license_txid).await?;
+    let issue_license_txid = format!("{:x}", issue_license_txid);
+    let (_, end_height) =
+        TxRetriever::retrieve_tx(issue_license_txid, &client).await?;
+    info!("end_height={}", end_height);
 
     // as a User, call get_licenses, obtain license and pos
 
-    let block_heights = 0..10000u64; // todo: obtain height
+    let start_height = if end_height > BLOCK_RANGE {
+        end_height - BLOCK_RANGE
+    } else {
+        0u64
+    };
+    let block_heights = start_height..(end_height.clone() + 1);
 
-    info!("calling get_licenses (as a user)");
+    info!(
+        "calling get_licenses with range {:?} (as a user)",
+        block_heights
+    );
     let licenses =
         CitadelInquirer::get_licenses(&client, block_heights).await?;
     assert!(!licenses.is_empty());

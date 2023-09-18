@@ -76,9 +76,11 @@ pub struct QueryResult2 {
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct SpentTx {
-    pub txerror: Option<String>,
+    pub err: Option<String>,
     #[serde(alias = "gasSpent", default)]
-    pub gas_spent: f64,
+    pub gas_spent: u64,
+    #[serde(alias = "blockHeight", default)]
+    pub block_height: u64,
     pub tx: Tx,
 }
 
@@ -86,7 +88,7 @@ pub struct SpentTx {
 pub struct SpentTx2 {
     pub err: Option<String>,
     #[serde(alias = "gasSpent", default)]
-    pub gas_spent: f64,
+    pub gas_spent: u64,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
