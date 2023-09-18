@@ -69,7 +69,6 @@ async fn send_request() -> Result<(), Error> {
     TxAwaiter::wait_for(&client, tx_id).await?;
 
     let tx_id_hex = format!("{:x}", tx_id);
-    println!("tx_id={}", tx_id_hex);
 
     let (retrieved_request, _, _) =
         get_request_from_blockchain(tx_id_hex, &client).await?;
@@ -94,11 +93,9 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
             PayloadRetriever::retrieve_payload(tx_id.as_ref().clone(), client)
                 .await;
         if result.is_err() && i < (NUM_RETRIES - 1) {
-            println!("{}", i);
             let _ = sleep(Duration::from_millis(1000)).await;
             continue;
         }
-        println!("returning from loop at i={}, res={:?}", i, result);
         return result;
     }
     unreachable!()

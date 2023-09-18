@@ -10,6 +10,7 @@ use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{Error, PayloadSender, TxAwaiter};
 use rand::{CryptoRng, RngCore};
+use tracing::trace;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, Request};
 
@@ -57,7 +58,7 @@ impl LicenseIssuer {
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
         let license_hash = sponge::hash(&[lpk.get_x(), lpk.get_y()]);
         let tuple = (license_blob, license_hash);
-        println!(
+        trace!(
             "sending issue license with license blob size={}",
             tuple.0.len()
         );

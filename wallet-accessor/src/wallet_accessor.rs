@@ -13,7 +13,7 @@ use dusk_wallet_core::MAX_CALL_SIZE;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
 use sha2::{Digest, Sha256};
-use tracing::info;
+use tracing::debug;
 
 #[derive(Debug, Clone)]
 pub enum Password {
@@ -78,21 +78,20 @@ impl WalletAccessor {
                 cfg.rusk_address.clone(),
                 cfg.prover_address.clone(),
                 |s| {
-                    info!(target: "wallet", "{s}",);
+                    debug!(target: "wallet", "{s}",);
                 },
             )
             .await?;
 
         assert!(wallet.is_online(), "Wallet should be online");
 
-        println!(
+        debug!(
             "Sending tx with a call to method '{}' of contract='{}'",
             call_name.clone(),
             hex::encode(contract_id)
         );
 
         let sender = wallet.default_address();
-        // let rcvr = wallet.addresses().get(1).expect("address exists");
         let mut gas = Gas::new(gas_limit);
         gas.set_price(gas_price);
 
@@ -100,7 +99,6 @@ impl WalletAccessor {
             .execute(sender, contract_id, call_name.clone(), data, gas)
             .await?;
         let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
-        println!("TX_ID={:x}", tx_id);
         Ok(tx_id)
     }
 }

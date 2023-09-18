@@ -11,6 +11,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_wallet::{RuskHttpClient, RuskRequest};
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::trace;
 
 pub struct TxAwaiter;
 
@@ -34,20 +35,20 @@ impl TxAwaiter {
         let query = "query { tx(hash: \"####\") { err }}"
             .replace("####", tx_id.as_ref());
         let response = Self::query(client, &query).await?;
-        println!("response={:x?}", std::str::from_utf8(response.as_slice()));
+        trace!("response={:x?}", std::str::from_utf8(response.as_slice()));
         let response =
             serde_json::from_slice::<SpentTxResponse2>(&response)?.tx;
         match response {
             Some(SpentTx2 { err: Some(err), .. }) => {
-                println!("status ERR={}", err);
+                trace!("status ERR={}", err);
                 Ok(TxStatus::Error(err))
             }
             Some(_) => {
-                println!("status OK");
+                trace!("status OK");
                 Ok(TxStatus::Ok)
             }
             None => {
-                println!("status NOT_FOUND");
+                trace!("status NOT_FOUND");
                 Ok(TxStatus::NotFound)
             }
         }
@@ -76,7 +77,7 @@ impl TxAwaiter {
                     return Err(TransactionError(Box::from(err)))?
                 }
                 TxStatus::NotFound => {
-                    println!("Awaiting ({}) for {}", i, tx_id.as_ref());
+                    trace!("Awaiting ({}) for {}", i, tx_id.as_ref());
                     sleep(Duration::from_millis(1000)).await;
                     i += 1;
                 }

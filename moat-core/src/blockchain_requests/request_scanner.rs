@@ -18,7 +18,6 @@ impl RequestScanner {
     pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
-            println!("tx={:?}", tx);
             if let Ok(request) =
                 PayloadExtractor::payload_from_tx::<Request>(tx)
             {

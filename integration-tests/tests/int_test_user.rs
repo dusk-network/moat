@@ -20,24 +20,30 @@
 //!     usage of the license) TBD - this last scenario needs to be cleared with
 //!     Xavi still
 
-use dusk_wallet::{RuskHttpClient, WalletPath};
-use license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{CitadelInquirer, Error, JsonLoader, LicenseCircuit, LicenseSessionId, PayloadSender, RequestCreator, RequestJson, TxAwaiter, DEPTH, ARITY};
-use rand::rngs::StdRng;
-use std::path::PathBuf;
-use dusk_jubjub::BlsScalar;
-use dusk_pki::{PublicSpendKey, SecretSpendKey};
-use toml_base_config::BaseConfig;
-use zk_citadel::license::{CitadelProverParameters, License, Request, SessionCookie};
-use wallet_accessor::BlockchainAccessConfig;
-use wallet_accessor::Password::PwdHash;
-use dusk_plonk::prelude::*;
-use rkyv::{Archive, check_archived_root, Deserialize, Infallible, Serialize};
 use bytecheck::CheckBytes;
 use dusk_bytes::{DeserializableSlice, Serializable};
-use poseidon_merkle::Opening;
-use rand::SeedableRng;
+use dusk_jubjub::BlsScalar;
+use dusk_pki::{PublicSpendKey, SecretSpendKey};
+use dusk_plonk::prelude::*;
+use dusk_wallet::{RuskHttpClient, WalletPath};
+use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
+use moat_core::{
+    CitadelInquirer, Error, JsonLoader, LicenseCircuit, LicenseSessionId,
+    PayloadSender, RequestCreator, RequestJson, TxAwaiter, ARITY, DEPTH,
+};
+use poseidon_merkle::Opening;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
+use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
+use std::path::PathBuf;
+use toml_base_config::BaseConfig;
+use tracing::{info, Level};
+use wallet_accessor::BlockchainAccessConfig;
+use wallet_accessor::Password::PwdHash;
+use zk_citadel::license::{
+    CitadelProverParameters, License, Request, SessionCookie,
+};
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -47,8 +53,6 @@ const GAS_PRICE: u64 = 1;
 
 static LABEL: &[u8] = b"dusk-network";
 const CAPACITY: usize = 17; // capacity required for the setup
-const CHALLENGE: u64 = 20221126u64; // todo: where should it be declared?
-
 
 /// Use License Argument.
 #[derive(Debug, Clone, PartialEq, Archive, Serialize, Deserialize)]
@@ -65,7 +69,7 @@ fn compute_citadel_parameters(
     lic: &License,
     merkle_proof: Opening<(), DEPTH, ARITY>,
 ) -> (CitadelProverParameters<DEPTH, ARITY>, SessionCookie) {
-
+    const CHALLENGE: u64 = 20221127u64;
     let c = JubJubScalar::from(CHALLENGE);
     let (cpp, sc) = CitadelProverParameters::compute_parameters(
         &ssk,
@@ -111,16 +115,18 @@ async fn use_license(
     opening: Opening<(), DEPTH, ARITY>,
     rng: &mut StdRng,
 ) -> Result<BlsScalar, Error> {
-    let (cpp, sc) =
-        compute_citadel_parameters(
-            rng, ssk_user, reference_lp.psk_lp, license, opening,
-        );
+    let (cpp, sc) = compute_citadel_parameters(
+        rng,
+        ssk_user,
+        reference_lp.psk_lp,
+        license,
+        opening,
+    );
     let circuit = LicenseCircuit::new(&cpp, &sc);
 
-    println!("calculating proof");
+    info!("calculating proof");
     let (proof, public_inputs) =
         prover.prove(rng, &circuit).expect("Proving should succeed");
-    println!("calculating proof done");
 
     assert!(!public_inputs.is_empty());
     let session_id = public_inputs[0];
@@ -141,7 +147,8 @@ async fn use_license(
         &PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
-    ).await?;
+    )
+    .await?;
     TxAwaiter::wait_for(&client, tx_id).await?;
     Ok(session_id)
 }
@@ -150,34 +157,63 @@ fn deserialise_license(v: &Vec<u8>) -> License {
     let response_data = check_archived_root::<License>(v.as_slice())
         .map_err(|_| {
             InvalidQueryResponse(Box::from("rkyv deserialization error"))
-        }).expect("License correctly serialized");
+        })
+        .expect("License correctly serialized");
     let license: License = response_data
         .deserialize(&mut Infallible)
         .expect("Infallible");
     license
 }
 
-async fn show_state(client: &RuskHttpClient, s: impl AsRef<str>) -> Result<(), Error> {
-    let (num_licenses, tree_len, num_sessions) = CitadelInquirer::get_info(&client).await?;
-    println!("=== Contract state {} - licenses: {} tree length: {} sessions: {} ===", s.as_ref(), num_licenses, tree_len, num_sessions);
+async fn show_state(
+    client: &RuskHttpClient,
+    s: impl AsRef<str>,
+) -> Result<(), Error> {
+    let (num_licenses, tree_len, num_sessions) =
+        CitadelInquirer::get_info(&client).await?;
+    info!(
+        "contract state {} - licenses: {} tree length: {} sessions: {}",
+        s.as_ref(),
+        num_licenses,
+        tree_len,
+        num_sessions
+    );
     Ok(())
 }
 
+fn find_owned_license(
+    ssk_user: SecretSpendKey,
+    licenses: Vec<(u64, Vec<u8>)>,
+) -> Option<(u64, License)> {
+    for (pos, license) in licenses {
+        let license = deserialise_license(&license);
+        if ssk_user.view_key().owns(&license.lsa) {
+            return Some((pos, license));
+        }
+    }
+    None
+}
+
 #[tokio::test(flavor = "multi_thread")]
-#[cfg_attr(not(feature = "int_tests"), ignore)]
+#[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn user_round_trip() -> Result<(), Error> {
+    let subscriber = tracing_subscriber::fmt::Subscriber::builder()
+        .with_max_level(Level::INFO)
+        .with_writer(std::io::stderr);
+    tracing::subscriber::set_global_default(subscriber.finish())
+        .expect("Setting tracing default should work");
+
     // initialize
     // NOTE: it is important that the seed is the same as in the recovery
     // PUB_PARAMS initialization code
     let rng = &mut StdRng::seed_from_u64(0xbeef);
 
-    println!("performing setup");
+    info!("performing setup");
     let pp = PublicParameters::setup(1 << CAPACITY, rng).unwrap();
 
-    println!("compiling circuit");
+    info!("compiling circuit");
     let (prover, verifier) = Compiler::compile::<LicenseCircuit>(&pp, LABEL)
         .expect("Compiling circuit should succeed");
-    println!("compiling circuit done");
 
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
@@ -192,8 +228,7 @@ async fn user_round_trip() -> Result<(), Error> {
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
-    let request_json: RequestJson =
-        RequestJson::from_file(request_path)?;
+    let request_json: RequestJson = RequestJson::from_file(request_path)?;
 
     let request = RequestCreator::create_from_hex_args(
         request_json.user_ssk.clone(),
@@ -213,48 +248,69 @@ async fn user_round_trip() -> Result<(), Error> {
     // as a LP, call issue license, wait for tx to confirm
 
     show_state(&client, "before issue_license").await?;
-    issue_license(&reference_lp, &blockchain_config, &wallet_path, &request, rng).await?;
+    info!("calling issue_license (as an LP)");
+    issue_license(
+        &reference_lp,
+        &blockchain_config,
+        &wallet_path,
+        &request,
+        rng,
+    )
+    .await?;
     show_state(&client, "after issue_license").await?;
 
     // as a User, call get_licenses, obtain license and pos
 
     let block_heights = 0..10000u64; // todo: obtain height
 
-    println!("query license contract - get_licenses");
-    let licenses = CitadelInquirer::get_licenses(&client, block_heights).await?;
+    info!("calling get_licenses (as a user)");
+    let licenses =
+        CitadelInquirer::get_licenses(&client, block_heights).await?;
     assert!(!licenses.is_empty());
-    let license = licenses[0].1.clone();
-    let license = deserialise_license(&license);
 
-    assert!(ssk_user.view_key().owns(&license.lsa), "license should be owned by the user"); // todo: make a loop checking all returned licenses
-
-    let pos = licenses[0].0.clone();
-    println!("license obtained at pos={}", pos);
+    let (pos, license) =
+        find_owned_license(ssk_user, licenses).expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
-    println!("query license contract - get_merkle_opening");
+    info!("calling get_merkle_opening (as a user)");
     let opening = CitadelInquirer::get_merkle_opening(&client, pos).await?;
     assert!(opening.is_some());
-    println!("opening obtained");
 
     // as a User, compute proof, call use_license, wait for tx to confirm
     show_state(&client, "before use_license").await?;
-    let session_id = use_license(&client, &blockchain_config, &wallet_path, &reference_lp, ssk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
+    info!("calling use_license (as a user)");
+    let session_id = use_license(
+        &client,
+        &blockchain_config,
+        &wallet_path,
+        &reference_lp,
+        ssk_user,
+        &prover,
+        &verifier,
+        &license,
+        opening.unwrap(),
+        rng,
+    )
+    .await?;
     show_state(&client, "after use_license").await?;
     let session_id = LicenseSessionId { id: session_id };
-    println!("obtained session id {}", hex::encode(session_id.id.to_bytes()));
 
     // as a SP, call get_session
-    println!("query license contract - get_session");
+    info!("calling get_session (as an SP)");
     let session = CitadelInquirer::get_session(&client, session_id).await?;
     assert!(session.is_some());
     let session = session.unwrap();
-    println!("obtained session {}", hex::encode(session.public_inputs[0].to_bytes()));
+    info!(
+        "obtained session {}",
+        hex::encode(session.public_inputs[0].to_bytes())
+    );
 
-    // as a User, try to call use_license again, should it be rejected?
-    // currently, it panics giving: RuntimeError { source: Trap(UnreachableCodeReached)
-    // show_state(&client, "before second use_license").await?;
-    // use_license(&client, &blockchain_config, &wallet_path, &reference_lp, ssk_user, &prover, &verifier, &license, opening.unwrap(), rng).await?;
-    // show_state(&client, "after second use_license").await?;
+    // as a User, try to call use_license again, it should be rejected?
+    // currently, it panics giving: RuntimeError { source:
+    // Trap(UnreachableCodeReached) show_state(&client, "before second
+    // use_license").await?; use_license(&client, &blockchain_config,
+    // &wallet_path, &reference_lp, ssk_user, &prover, &verifier, &license,
+    // opening.unwrap(), rng).await?; show_state(&client, "after second
+    // use_license").await?;
     Ok(())
 }

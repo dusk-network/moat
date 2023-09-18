@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{ContractInquirer, LicenseSession, LicenseSessionId, DEPTH, ARITY};
+use crate::{ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH};
 use dusk_wallet::RuskHttpClient;
 use phoenix_core::transaction::ModuleId;
 use poseidon_merkle::Opening;
