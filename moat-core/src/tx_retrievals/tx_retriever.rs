@@ -39,15 +39,9 @@ impl TxRetriever {
         let tx_response =
             BcInquirer::gql_query(client, tx_query.as_str()).await?;
         let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
-        let top_block_query =
-            "query { block(height: -1) { header { height} }}".to_string();
-        let top_block_response =
-            BcInquirer::gql_query(client, top_block_query.as_str()).await?;
-        let top_block_result =
-            serde_json::from_slice::<QueryResult2>(&top_block_response)?;
-
         transactions.transactions.extend(tx_result.block_txs);
-        Ok((transactions, top_block_result.block.header.height))
+        let height = BcInquirer::block_height(client).await?;
+        Ok((transactions, height))
     }
 
     pub async fn txs_from_last_n_blocks(
