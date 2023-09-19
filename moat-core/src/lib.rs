@@ -30,5 +30,5 @@ pub use contract_queries::{
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;
-pub use tx_retrievals::{TxAwaiter, TxRetriever};
+pub use tx_retrievals::{BcInquirer, TxAwaiter, TxRetriever};
 pub use types::*;

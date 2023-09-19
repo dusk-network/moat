@@ -7,18 +7,10 @@
 use crate::error::Error;
 use crate::types::*;
 use crate::Error::TransactionNotFound;
-use crate::QueryResult;
-use dusk_wallet::{RuskHttpClient, RuskRequest};
+use crate::{BcInquirer, QueryResult};
+use dusk_wallet::RuskHttpClient;
 
 pub struct TxRetriever;
-
-async fn gql_query(
-    client: &RuskHttpClient,
-    query: &str,
-) -> Result<Vec<u8>, dusk_wallet::Error> {
-    let request = RuskRequest::new("gql", query.as_bytes().to_vec());
-    client.call(2, "Chain", &request).await
-}
 
 impl TxRetriever {
     pub async fn txs_from_block(
@@ -44,12 +36,13 @@ impl TxRetriever {
         let mut transactions = Transactions::default();
         let range_str = format!("{},{}", height_beg, height_end);
         let tx_query = "query { blockTxs(range: [####] ) { id, raw, tx { callData {contractId, fnName, data} } } }".replace("####", range_str.as_str());
-        let tx_response = gql_query(client, tx_query.as_str()).await?;
+        let tx_response =
+            BcInquirer::gql_query(client, tx_query.as_str()).await?;
         let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
         let top_block_query =
             "query { block(height: -1) { header { height} }}".to_string();
         let top_block_response =
-            gql_query(client, top_block_query.as_str()).await?;
+            BcInquirer::gql_query(client, top_block_query.as_str()).await?;
         let top_block_result =
             serde_json::from_slice::<QueryResult2>(&top_block_response)?;
 
@@ -64,7 +57,8 @@ impl TxRetriever {
         let mut transactions = Transactions::default();
         let n_str = format!("{}", n);
         let tx_query = "query { blockTxs(last:####) { id, raw, tx { callData {contractId, fnName, data} } } }".replace("####", n_str.as_str());
-        let tx_response = gql_query(client, tx_query.as_str()).await?;
+        let tx_response =
+            BcInquirer::gql_query(client, tx_query.as_str()).await?;
         let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
         transactions.transactions.extend(tx_result.block_txs);
         Ok(transactions)
@@ -78,7 +72,7 @@ impl TxRetriever {
         S: AsRef<str>,
     {
         let query = "query { tx(hash:\"####\") { tx {id, raw, callData {contractId, fnName, data}}, blockHeight }}".replace("####", txid.as_ref());
-        let response = gql_query(client, query.as_str()).await?;
+        let response = BcInquirer::gql_query(client, query.as_str()).await?;
         let result = serde_json::from_slice::<SpentTxResponse>(&response)?;
         result
             .tx

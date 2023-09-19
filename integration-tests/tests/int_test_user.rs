@@ -28,9 +28,9 @@ use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
-    CitadelInquirer, Error, JsonLoader, LicenseCircuit, LicenseSessionId,
-    PayloadSender, RequestCreator, RequestJson, TxAwaiter, TxRetriever, ARITY,
-    DEPTH,
+    BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
+    LicenseSessionId, PayloadSender, RequestCreator, RequestJson, TxAwaiter,
+    ARITY, DEPTH,
 };
 use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
@@ -260,9 +260,7 @@ async fn user_round_trip() -> Result<(), Error> {
     .await?;
     show_state(&client, "after issue_license").await?;
     TxAwaiter::wait_for(&client, issue_license_txid).await?;
-    let issue_license_txid = format!("{:x}", issue_license_txid);
-    let (_, end_height) =
-        TxRetriever::retrieve_tx(issue_license_txid, &client).await?;
+    let end_height = BcInquirer::block_height(&client).await?;
     info!("end_height={}", end_height);
 
     // as a User, call get_licenses, obtain license and pos
