@@ -83,6 +83,8 @@ fn compute_citadel_parameters(
     (cpp, sc)
 }
 
+/// Calls license contract's issue license method.
+/// Awaits for confirmation of the contract-calling transaction.
 async fn issue_license(
     reference_lp: &ReferenceLP,
     blockchain_config: &BlockchainAccessConfig,
@@ -103,6 +105,9 @@ async fn issue_license(
         .await
 }
 
+/// Calculates and verified proof, sends proof along with public parameters
+/// as arguments to the license contract's use_license method.
+/// Awaits for confirmation of the contract-calling transaction.
 async fn use_license(
     client: &RuskHttpClient,
     blockchain_config: &BlockchainAccessConfig,
@@ -153,18 +158,20 @@ async fn use_license(
     Ok(session_id)
 }
 
+/// Deserializes license, panics if deserialization fails.
 fn deserialise_license(v: &Vec<u8>) -> License {
     let response_data = check_archived_root::<License>(v.as_slice())
         .map_err(|_| {
             InvalidQueryResponse(Box::from("rkyv deserialization error"))
         })
-        .expect("License correctly serialized");
+        .expect("License should deserialize correctly");
     let license: License = response_data
         .deserialize(&mut Infallible)
         .expect("Infallible");
     license
 }
 
+/// Displays license contract current state summary.
 async fn show_state(
     client: &RuskHttpClient,
     s: impl AsRef<str>,
@@ -181,6 +188,8 @@ async fn show_state(
     Ok(())
 }
 
+/// Finds owned license in a collection of licenses.
+/// It searches in a reverse order to return a newest license.
 fn find_owned_license(
     ssk_user: SecretSpendKey,
     licenses: Vec<(u64, Vec<u8>)>,
@@ -284,11 +293,13 @@ async fn user_round_trip() -> Result<(), Error> {
         find_owned_license(ssk_user, licenses).expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
+
     info!("calling get_merkle_opening (as a user)");
     let opening = CitadelInquirer::get_merkle_opening(&client, pos).await?;
     assert!(opening.is_some());
 
     // as a User, compute proof, call use_license, wait for tx to confirm
+
     show_state(&client, "before use_license").await?;
     info!("calling use_license (as a user)");
     let session_id = use_license(
@@ -307,7 +318,8 @@ async fn user_round_trip() -> Result<(), Error> {
     show_state(&client, "after use_license").await?;
     let session_id = LicenseSessionId { id: session_id };
 
-    // as a SP, call get_session
+    // as an SP, call get_session
+
     info!("calling get_session (as an SP)");
     let session = CitadelInquirer::get_session(&client, session_id).await?;
     assert!(session.is_some());
@@ -317,12 +329,7 @@ async fn user_round_trip() -> Result<(), Error> {
         hex::encode(session.public_inputs[0].to_bytes())
     );
 
-    // as a User, try to call use_license again, it should be rejected?
-    // currently, it panics giving: RuntimeError { source:
-    // Trap(UnreachableCodeReached) show_state(&client, "before second
-    // use_license").await?; use_license(&client, &blockchain_config,
-    // &wallet_path, &reference_lp, ssk_user, &prover, &verifier, &license,
-    // opening.unwrap(), rng).await?; show_state(&client, "after second
-    // use_license").await?;
+    // if we try to call use_license again, it will be rejected
+    // (currently, it panics giving Trap(UnreachableCodeReached))
     Ok(())
 }
