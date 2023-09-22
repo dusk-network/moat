@@ -214,14 +214,15 @@ fn find_owned_license(
     ssk_user: SecretSpendKey,
     mut stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>> + std::marker::Unpin,
 ) -> Result<(u64, License), Error> {
-    const SZ: usize = std::mem::size_of::<License>();
-    const SER_LIC_SIZE: usize = 584;
+    const SER_LIC_SIZE: usize = std::mem::size_of::<License>();
+    const VEC_OVERHEAD: usize = 8;
+    const POS_OVERHEAD: usize = std::mem::size_of::<u64>();
+
     let mut buffer = vec![];
     while let Some(http_chunk) = stream.next().wait() {
         buffer.extend_from_slice(&http_chunk.map_err(|_| Error::PayloadNotPresent(Box::from("1")))?); // todo: error wrong
-        println!("buffer len = {}, SZ={}", buffer.len(), SZ);
-        let mut chunk = buffer.chunks_exact(SER_LIC_SIZE+16);
-
+        println!("buffer len = {}, SER_LIC_SIZE={}", buffer.len(), SER_LIC_SIZE);
+        let mut chunk = buffer.chunks_exact(SER_LIC_SIZE + VEC_OVERHEAD + POS_OVERHEAD);
         for bytes in chunk.by_ref() {
             let (pos, lic_vec): (u64, Vec<u8>) =
                 rkyv::from_bytes(bytes).map_err(|_| Error::PayloadNotPresent(Box::from("2")))?;// todo: error wrong
