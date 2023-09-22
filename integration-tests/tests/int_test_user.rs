@@ -37,6 +37,8 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
 use std::path::PathBuf;
+use bytes::Bytes;
+use futures_util::StreamExt;
 use toml_base_config::BaseConfig;
 use tracing::{info, Level};
 use wallet_accessor::BlockchainAccessConfig;
@@ -44,6 +46,24 @@ use wallet_accessor::Password::PwdHash;
 use zk_citadel::license::{
     CitadelProverParameters, License, Request, SessionCookie,
 };
+
+
+use tokio::runtime::Handle;
+use tokio::task::block_in_place;
+
+pub trait Block {
+    fn wait(self) -> <Self as futures::Future>::Output
+        where
+            Self: Sized,
+            Self: futures::Future,
+    {
+        block_in_place(move || Handle::current().block_on(self))
+    }
+}
+
+impl<F, T> Block for F where F: futures::Future<Output = T> {}
+
+
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -188,19 +208,32 @@ async fn show_state(
     Ok(())
 }
 
-/// Finds owned license in a collection of licenses.
+/// Finds owned license in a stream of licenses.
 /// It searches in a reverse order to return a newest license.
 fn find_owned_license(
     ssk_user: SecretSpendKey,
-    licenses: Vec<(u64, Vec<u8>)>,
-) -> Option<(u64, License)> {
-    for (pos, license) in licenses.iter().rev() {
-        let license = deserialise_license(&license);
-        if ssk_user.view_key().owns(&license.lsa) {
-            return Some((pos.clone(), license));
+    mut stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>> + std::marker::Unpin,
+) -> Result<(u64, License), Error> {
+    const SZ: usize = std::mem::size_of::<License>();
+    const SER_LIC_SIZE: usize = 584;
+    let mut buffer = vec![];
+    while let Some(http_chunk) = stream.next().wait() {
+        buffer.extend_from_slice(&http_chunk.map_err(|_| Error::PayloadNotPresent(Box::from("1")))?); // todo: error wrong
+        println!("buffer len = {}, SZ={}", buffer.len(), SZ);
+        let mut chunk = buffer.chunks_exact(SER_LIC_SIZE+16);
+
+        for bytes in chunk.by_ref() {
+            let (pos, lic_vec): (u64, Vec<u8>) =
+                rkyv::from_bytes(bytes).map_err(|_| Error::PayloadNotPresent(Box::from("2")))?;// todo: error wrong
+            let license = deserialise_license(&lic_vec);
+            if ssk_user.view_key().owns(&license.lsa) {
+                println!("owned license found: pos={} license.pos={}", pos, license.pos);
+                return Ok((pos, license));
+            }
         }
+        buffer = chunk.remainder().to_vec();
     }
-    None
+    Err(Error::PayloadNotPresent(Box::from("3"))) // todo: error wrong
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -285,12 +318,12 @@ async fn user_round_trip() -> Result<(), Error> {
         "calling get_licenses with range {:?} (as a user)",
         block_heights
     );
-    let licenses =
-        CitadelInquirer::get_licenses(&client, block_heights).await?;
-    assert!(!licenses.is_empty());
+    let licenses_stream =
+        CitadelInquirer::get_licenses2(&client, block_heights).await?;
+    // assert!(!licenses.is_empty());
 
     let (pos, license) =
-        find_owned_license(ssk_user, licenses).expect("owned license found");
+        find_owned_license(ssk_user, licenses_stream).expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
 

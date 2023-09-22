@@ -10,6 +10,8 @@ use dusk_wallet::RuskHttpClient;
 use phoenix_core::transaction::ModuleId;
 use poseidon_merkle::Opening;
 use std::ops::Range;
+use bytes::Bytes;
+use crate::contract_queries::block::Block;
 
 // todo: refactor such consts to some common location
 const LICENSE_CONTRACT_ID: ModuleId = {
@@ -37,6 +39,20 @@ impl CitadelInquirer {
             GET_LICENSES_METHOD_NAME,
         )
         .await
+    }
+
+    pub async fn get_licenses2(
+        client: &RuskHttpClient,
+        block_heights: Range<u64>,
+    ) -> Result<impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>, Error>
+    {
+        ContractInquirer::query_contract_with_feeder(
+            client,
+            block_heights,
+            LICENSE_CONTRACT_ID,
+            GET_LICENSES_METHOD_NAME,
+        )
+        .wait()
     }
 
     pub async fn get_merkle_opening(

@@ -10,6 +10,7 @@ mod citadel_types;
 mod contract_inquirer;
 mod contract_inquirer_ws;
 mod ws_types;
+mod block;
 
 pub use citadel_inquirer::CitadelInquirer;
 pub use citadel_inquirer_ws::CitadelInquirerWs;

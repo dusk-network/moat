@@ -7,6 +7,7 @@ edition = "2021"
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
 tokio-tungstenite = { version = "0.19", default-features = false, features = ["connect"] }
 futures = "0.3"
+futures-core = "0.3"
 futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
 dusk-wallet = "0.18"
 wallet-accessor = { path = "../wallet-accessor" }
@@ -34,6 +35,8 @@ dusk-bytes = "0.1"
 blake3 = "1.4"
 code-hasher={ path = "../macros/code-hasher" }
 tracing = "0.1"
+bytes = "1.4"
+reqwest = "0.11"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
