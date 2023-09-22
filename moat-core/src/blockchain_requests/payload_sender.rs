@@ -5,6 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
+use crate::{
+    ISSUE_LICENSE_METHOD_NAME, LICENSE_CONTRACT_ID, MAX_CALL_SIZE,
+    NOOP_METHOD_NAME, USE_LICENSE_METHOD_NAME,
+};
 use dusk_jubjub::BlsScalar;
 use dusk_wallet::WalletPath;
 use phoenix_core::transaction::ModuleId;
@@ -12,18 +16,6 @@ use rkyv::ser::serializers::AllocSerializer;
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 pub struct PayloadSender;
-
-const LICENSE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x03;
-    bytes
-};
-
-const NOOP_METHOD_NAME: &str = "noop";
-const ISSUE_LICENSE_METHOD_NAME: &str = "issue_license";
-const USE_LICENSE_METHOD_NAME: &str = "use_license";
-
-const MAX_CALL_SIZE: usize = 65536;
 
 impl PayloadSender {
     /// Sends a given payload to the noop method

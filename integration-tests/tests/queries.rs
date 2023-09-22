@@ -5,13 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CitadelInquirer, Error};
+use moat_core::{CitadelInquirer, Error, StreamAux};
 use toml_base_config::BaseConfig;
-use tracing::debug;
+use tracing::trace;
 use wallet_accessor::BlockchainAccessConfig;
-
-#[allow(dead_code)]
-const MAX_CALL_SIZE: usize = 65536;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
@@ -24,10 +21,11 @@ async fn call_get_licenses() -> Result<(), Error> {
 
     let block_heights = 0..5000u64;
 
-    let response =
-        CitadelInquirer::get_licenses(&client, block_heights).await?;
+    let stream = CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-    debug!("response={:?}", response);
+    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
+    let response = StreamAux::collect_all::<(u64, Vec<u8>), ITEM_LEN>(stream)?;
+    trace!("response={:?}", response);
     Ok(())
 }
 
@@ -43,7 +41,6 @@ async fn call_get_merkle_opening() -> Result<(), Error> {
     let pos = 0u64;
 
     let response = CitadelInquirer::get_merkle_opening(&client, pos).await?;
-
-    debug!("response={:?}", response);
+    trace!("response={:?}", response);
     Ok(())
 }

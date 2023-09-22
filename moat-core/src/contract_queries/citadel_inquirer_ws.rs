@@ -5,19 +5,11 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
-use crate::{ContractInquirerWs, LicenseSession, LicenseSessionId};
-use phoenix_core::transaction::ModuleId;
-use std::ops::Range;
-
-// todo: refactor such consts to some common location
-const LICENSE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x03;
-    bytes
+use crate::{
+    ContractInquirerWs, LicenseSession, LicenseSessionId,
+    GET_LICENSES_METHOD_NAME, GET_SESSION_METHOD_NAME, LICENSE_CONTRACT_ID,
 };
-
-const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
-const GET_SESSION_METHOD_NAME: &str = "get_session";
+use std::ops::Range;
 
 pub struct CitadelInquirerWs {}
 

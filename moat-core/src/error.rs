@@ -19,6 +19,8 @@ pub enum Error {
     DuskWalletError(Arc<dusk_wallet::Error>),
     #[error("A serialization error occurred: {0:?}")]
     BytesError(Arc<dusk_bytes::Error>),
+    #[error("A serialization error occurred.")]
+    Rkyv,
     #[error(transparent)]
     HexError(Arc<hex::FromHexError>),
     #[error("A GraphQL error occurred: {0:?}")]
@@ -35,6 +37,8 @@ pub enum Error {
     InvalidQueryResponse(Box<str>),
     #[error("Transaction error: {0:?}")]
     TransactionError(Box<str>),
+    #[error("Stream item not present or stream error: {0:?}")]
+    StreamItem(Box<str>),
 }
 
 impl From<serde_json::Error> for Error {

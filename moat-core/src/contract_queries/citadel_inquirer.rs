@@ -4,39 +4,43 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::contract_queries::block::Block;
 use crate::error::Error;
-use crate::{ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH};
+use crate::{
+    ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH,
+    GET_INFO_METHOD_NAME, GET_LICENSES_METHOD_NAME,
+    GET_MERKLE_OPENING_METHOD_NAME, GET_SESSION_METHOD_NAME,
+    LICENSE_CONTRACT_ID,
+};
+use bytes::Bytes;
 use dusk_wallet::RuskHttpClient;
-use phoenix_core::transaction::ModuleId;
 use poseidon_merkle::Opening;
 use std::ops::Range;
-
-// todo: refactor such consts to some common location
-const LICENSE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x03;
-    bytes
-};
-
-const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
-const GET_MERKLE_OPENING_METHOD_NAME: &str = "get_merkle_opening";
-const GET_SESSION_METHOD_NAME: &str = "get_session";
-const GET_INFO_METHOD_NAME: &str = "get_info";
+use zk_citadel::license::License;
 
 pub struct CitadelInquirer {}
 
 impl CitadelInquirer {
+    // vector overhead needed as get_licenses returns licenses
+    // serialized as vector of bytes
+    const VEC_OVERHEAD: usize = 8;
+    pub const GET_LICENSES_ITEM_LEN: usize =
+        std::mem::size_of::<(u64, License)>() + Self::VEC_OVERHEAD;
+
     pub async fn get_licenses(
         client: &RuskHttpClient,
         block_heights: Range<u64>,
-    ) -> Result<Vec<(u64, Vec<u8>)>, Error> {
-        ContractInquirer::query_contract(
+    ) -> Result<
+        impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>,
+        Error,
+    > {
+        ContractInquirer::query_contract_with_feeder(
             client,
             block_heights,
             LICENSE_CONTRACT_ID,
             GET_LICENSES_METHOD_NAME,
         )
-        .await
+        .wait()
     }
 
     pub async fn get_merkle_opening(

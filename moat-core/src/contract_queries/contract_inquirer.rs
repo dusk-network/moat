@@ -4,21 +4,19 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::contract_queries::block::Block;
 use crate::error::Error;
 use crate::Error::InvalidQueryResponse;
+use crate::MAX_CALL_SIZE;
 use bytecheck::CheckBytes;
-use dusk_wallet::RuskHttpClient;
+use bytes::Bytes;
+use dusk_wallet::{RuskHttpClient, RuskRequest};
 use phoenix_core::transaction::ModuleId;
 use rkyv::validation::validators::DefaultValidator;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 
-#[allow(dead_code)]
 pub struct ContractInquirer {}
 
-#[allow(dead_code)]
-const MAX_CALL_SIZE: usize = 65536;
-
-#[allow(dead_code)]
 impl ContractInquirer {
     pub async fn query_contract<A, R>(
         client: &RuskHttpClient,
@@ -52,5 +50,34 @@ impl ContractInquirer {
             .deserialize(&mut Infallible)
             .expect("Infallible");
         Ok(r)
+    }
+
+    pub async fn query_contract_with_feeder<A>(
+        client: &RuskHttpClient,
+        args: A,
+        contract_id: ModuleId,
+        method: impl AsRef<str>,
+    ) -> Result<
+        impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>,
+        Error,
+    >
+    where
+        A: Archive,
+        A: rkyv::Serialize<
+            rkyv::ser::serializers::AllocSerializer<MAX_CALL_SIZE>,
+        >,
+    {
+        let contract_id = hex::encode(contract_id.as_slice());
+        let req = rkyv::to_bytes(&args).map_err(|_| Error::Rkyv)?.to_vec();
+        let stream = client
+            .call_raw(
+                1,
+                contract_id.as_ref(),
+                &RuskRequest::new(method.as_ref(), req),
+                true,
+            )
+            .wait()?
+            .bytes_stream();
+        Ok(stream)
     }
 }

@@ -67,7 +67,7 @@ async fn scan_requests_in_last_blocks() -> Result<(), Error> {
 
     let requests = RequestScanner::scan_last_blocks(LAST_BLOCKS, &cfg).await?;
     trace!(
-        "there were {} requests found in last n={} blocks",
+        "there were {} requests found in last {} blocks",
         requests.len(),
         LAST_BLOCKS
     );

@@ -26,7 +26,7 @@ pub use blockchain_requests::{
 pub use circuit::*;
 pub use contract_queries::{
     CitadelInquirer, CitadelInquirerWs, ContractInquirer, ContractInquirerWs,
-    LicenseSession, LicenseSessionId,
+    LicenseSession, LicenseSessionId, StreamAux,
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;

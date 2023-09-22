@@ -20,6 +20,7 @@
 //!     usage of the license)
 
 use bytecheck::CheckBytes;
+use bytes::Bytes;
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::BlsScalar;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
@@ -29,8 +30,8 @@ use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
-    LicenseSessionId, PayloadSender, RequestCreator, RequestJson, TxAwaiter,
-    ARITY, DEPTH,
+    LicenseSessionId, PayloadSender, RequestCreator, RequestJson, StreamAux,
+    TxAwaiter, ARITY, DEPTH,
 };
 use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
@@ -108,7 +109,7 @@ async fn issue_license(
 /// Calculates and verified proof, sends proof along with public parameters
 /// as arguments to the license contract's use_license method.
 /// Awaits for confirmation of the contract-calling transaction.
-async fn use_license(
+async fn prove_and_send_use_license(
     client: &RuskHttpClient,
     blockchain_config: &BlockchainAccessConfig,
     wallet_path: &WalletPath,
@@ -188,19 +189,22 @@ async fn show_state(
     Ok(())
 }
 
-/// Finds owned license in a collection of licenses.
+/// Finds owned license in a stream of licenses.
 /// It searches in a reverse order to return a newest license.
 fn find_owned_license(
     ssk_user: SecretSpendKey,
-    licenses: Vec<(u64, Vec<u8>)>,
-) -> Option<(u64, License)> {
-    for (pos, license) in licenses.iter().rev() {
-        let license = deserialise_license(&license);
-        if ssk_user.view_key().owns(&license.lsa) {
-            return Some((pos.clone(), license));
-        }
-    }
-    None
+    stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+        + std::marker::Unpin,
+) -> Result<(u64, License), Error> {
+    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
+    let (pos, lic_ser) = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
+        |(_, lic_vec)| {
+            let license = deserialise_license(lic_vec);
+            Ok(ssk_user.view_key().owns(&license.lsa))
+        },
+        stream,
+    )?;
+    Ok((pos, deserialise_license(&lic_ser)))
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -285,12 +289,11 @@ async fn user_round_trip() -> Result<(), Error> {
         "calling get_licenses with range {:?} (as a user)",
         block_heights
     );
-    let licenses =
+    let licenses_stream =
         CitadelInquirer::get_licenses(&client, block_heights).await?;
-    assert!(!licenses.is_empty());
 
-    let (pos, license) =
-        find_owned_license(ssk_user, licenses).expect("owned license found");
+    let (pos, license) = find_owned_license(ssk_user, licenses_stream)
+        .expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
 
@@ -302,7 +305,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     show_state(&client, "before use_license").await?;
     info!("calling use_license (as a user)");
-    let session_id = use_license(
+    let session_id = prove_and_send_use_license(
         &client,
         &blockchain_config,
         &wallet_path,
@@ -330,6 +333,5 @@ async fn user_round_trip() -> Result<(), Error> {
     );
 
     // if we try to call use_license again, it will be rejected
-    // (currently, it panics giving Trap(UnreachableCodeReached))
     Ok(())
 }

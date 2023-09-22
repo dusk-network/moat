@@ -9,7 +9,7 @@ license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
 dusk-wallet = "0.18"
-zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
+zk-citadel = "0.4"
 phoenix-core = { version = "0.20.0-rc.0", features = ["alloc"] }
 poseidon-merkle = { version = "0.2.1-rc.0", features = ["rkyv-impl"] }
 dusk-pki = { version = "0.12", default-features = false, features = ["rkyv-impl"] }
@@ -32,8 +32,11 @@ hex = "0.4"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 dusk-bytes = "0.1"
+bytes = "1.4"
+futures-core = "0.3"
+reqwest = "0.11"
 
 [features]
-int_tests = []
-exp_tests = []
-vol_tests = []
+int_tests = [] #integration tests - require a running Rusk node/cluster
+exp_tests = [] #expensive tests - integration tests which take longer time to run
+vol_tests = [] #volatile tests - integration tests which require constants' update before running

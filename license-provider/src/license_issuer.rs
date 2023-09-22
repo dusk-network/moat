@@ -8,7 +8,7 @@ use dusk_jubjub::{BlsScalar, JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{Error, PayloadSender, TxAwaiter};
+use moat_core::{Error, PayloadSender, TxAwaiter, MAX_LICENSE_SIZE};
 use rand::{CryptoRng, RngCore};
 use tracing::trace;
 use wallet_accessor::{BlockchainAccessConfig, Password};
@@ -22,11 +22,8 @@ pub struct LicenseIssuer {
     gas_price: u64,
 }
 
-// todo: explain how are user attributes going to be passed in here from the
-// user
-const USER_ATTRIBUTES: u64 = 1 << 17; //0x9b308734u64;
+const USER_ATTRIBUTES: u64 = 1 << 17;
 
-#[allow(dead_code)]
 impl LicenseIssuer {
     pub fn new(
         config: BlockchainAccessConfig,
@@ -52,7 +49,7 @@ impl LicenseIssuer {
     ) -> Result<BlsScalar, Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
-        let license_blob = rkyv::to_bytes::<_, 8192>(&license)
+        let license_blob = rkyv::to_bytes::<_, MAX_LICENSE_SIZE>(&license)
             .expect("License should serialize correctly")
             .to_vec();
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
