@@ -31,19 +31,6 @@ impl CitadelInquirer {
     pub async fn get_licenses(
         client: &RuskHttpClient,
         block_heights: Range<u64>,
-    ) -> Result<Vec<(u64, Vec<u8>)>, Error> {
-        ContractInquirer::query_contract(
-            client,
-            block_heights,
-            LICENSE_CONTRACT_ID,
-            GET_LICENSES_METHOD_NAME,
-        )
-        .await
-    }
-
-    pub async fn get_licenses2(
-        client: &RuskHttpClient,
-        block_heights: Range<u64>,
     ) -> Result<
         impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>,
         Error,

@@ -308,7 +308,7 @@ async fn user_round_trip() -> Result<(), Error> {
         block_heights
     );
     let licenses_stream =
-        CitadelInquirer::get_licenses2(&client, block_heights).await?;
+        CitadelInquirer::get_licenses(&client, block_heights).await?;
     // assert!(!licenses.is_empty());
 
     let (pos, license) = find_owned_license(ssk_user, licenses_stream)
