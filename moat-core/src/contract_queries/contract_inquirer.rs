@@ -4,9 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::contract_queries::block::Block;
 use crate::error::Error;
 use crate::Error::InvalidQueryResponse;
-use crate::contract_queries::block::Block;
 use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_wallet::{RuskHttpClient, RuskRequest};
@@ -61,13 +61,26 @@ impl ContractInquirer {
         args: A,
         contract_id: ModuleId,
         method: impl AsRef<str>,
-    ) -> Result<impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>, Error>
+    ) -> Result<
+        impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>,
+        Error,
+    >
     where
         // A: Archive,
         // A: rkyv::Serialize<
         //     rkyv::ser::serializers::AllocSerializer<MAX_CALL_SIZE>,
         // >,
-        A: Archive + rkyv::Serialize<rkyv::ser::serializers::CompositeSerializer<rkyv::ser::serializers::AlignedSerializer<rkyv::AlignedVec>, rkyv::ser::serializers::FallbackScratch<rkyv::ser::serializers::HeapScratch<16384>, rkyv::ser::serializers::AllocScratch>, rkyv::ser::serializers::SharedSerializeMap>>
+        A: Archive
+            + rkyv::Serialize<
+                rkyv::ser::serializers::CompositeSerializer<
+                    rkyv::ser::serializers::AlignedSerializer<rkyv::AlignedVec>,
+                    rkyv::ser::serializers::FallbackScratch<
+                        rkyv::ser::serializers::HeapScratch<16384>,
+                        rkyv::ser::serializers::AllocScratch,
+                    >,
+                    rkyv::ser::serializers::SharedSerializeMap,
+                >,
+            >,
     {
         let contract_id = hex::encode(contract_id.as_slice());
         let req = rkyv::to_bytes::<_, 16384>(&args)

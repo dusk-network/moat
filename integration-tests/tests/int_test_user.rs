@@ -20,6 +20,7 @@
 //!     usage of the license)
 
 use bytecheck::CheckBytes;
+use bytes::Bytes;
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::BlsScalar;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
@@ -29,16 +30,14 @@ use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
-    LicenseSessionId, PayloadSender, RequestCreator, RequestJson, TxAwaiter,
-    ARITY, DEPTH,
+    LicenseSessionId, PayloadSender, RequestCreator, RequestJson, StreamAux,
+    TxAwaiter, ARITY, DEPTH,
 };
 use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
 use std::path::PathBuf;
-use bytes::Bytes;
-use futures_util::StreamExt;
 use toml_base_config::BaseConfig;
 use tracing::{info, Level};
 use wallet_accessor::BlockchainAccessConfig;
@@ -47,23 +46,20 @@ use zk_citadel::license::{
     CitadelProverParameters, License, Request, SessionCookie,
 };
 
-
 use tokio::runtime::Handle;
 use tokio::task::block_in_place;
 
 pub trait Block {
     fn wait(self) -> <Self as futures::Future>::Output
-        where
-            Self: Sized,
-            Self: futures::Future,
+    where
+        Self: Sized,
+        Self: futures::Future,
     {
         block_in_place(move || Handle::current().block_on(self))
     }
 }
 
 impl<F, T> Block for F where F: futures::Future<Output = T> {}
-
-
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -212,29 +208,21 @@ async fn show_state(
 /// It searches in a reverse order to return a newest license.
 fn find_owned_license(
     ssk_user: SecretSpendKey,
-    mut stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>> + std::marker::Unpin,
+    stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+        + std::marker::Unpin,
 ) -> Result<(u64, License), Error> {
-    const SER_LIC_SIZE: usize = std::mem::size_of::<License>();
     const VEC_OVERHEAD: usize = 8;
-    const POS_OVERHEAD: usize = std::mem::size_of::<u64>();
-
-    let mut buffer = vec![];
-    while let Some(http_chunk) = stream.next().wait() {
-        buffer.extend_from_slice(&http_chunk.map_err(|_| Error::PayloadNotPresent(Box::from("1")))?); // todo: error wrong
-        println!("buffer len = {}, SER_LIC_SIZE={}", buffer.len(), SER_LIC_SIZE);
-        let mut chunk = buffer.chunks_exact(SER_LIC_SIZE + VEC_OVERHEAD + POS_OVERHEAD);
-        for bytes in chunk.by_ref() {
-            let (pos, lic_vec): (u64, Vec<u8>) =
-                rkyv::from_bytes(bytes).map_err(|_| Error::PayloadNotPresent(Box::from("2")))?;// todo: error wrong
-            let license = deserialise_license(&lic_vec);
-            if ssk_user.view_key().owns(&license.lsa) {
-                println!("owned license found: pos={} license.pos={}", pos, license.pos);
-                return Ok((pos, license));
-            }
-        }
-        buffer = chunk.remainder().to_vec();
-    }
-    Err(Error::PayloadNotPresent(Box::from("3"))) // todo: error wrong
+    const ITEM_LEN: usize = std::mem::size_of::<u64>()
+        + VEC_OVERHEAD
+        + std::mem::size_of::<License>();
+    let (pos, lic_ser) = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
+        |(_, lic_vec)| {
+            let license = deserialise_license(lic_vec);
+            Ok(ssk_user.view_key().owns(&license.lsa))
+        },
+        stream,
+    )?;
+    Ok((pos, deserialise_license(&lic_ser)))
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -323,8 +311,8 @@ async fn user_round_trip() -> Result<(), Error> {
         CitadelInquirer::get_licenses2(&client, block_heights).await?;
     // assert!(!licenses.is_empty());
 
-    let (pos, license) =
-        find_owned_license(ssk_user, licenses_stream).expect("owned license found");
+    let (pos, license) = find_owned_license(ssk_user, licenses_stream)
+        .expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
 

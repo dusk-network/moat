@@ -9,9 +9,9 @@ use tokio::task::block_in_place;
 
 pub(crate) trait Block {
     fn wait(self) -> <Self as futures::Future>::Output
-        where
-            Self: Sized,
-            Self: futures::Future,
+    where
+        Self: Sized,
+        Self: futures::Future,
     {
         block_in_place(move || Handle::current().block_on(self))
     }

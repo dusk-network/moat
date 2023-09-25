@@ -37,6 +37,8 @@ pub enum Error {
     InvalidQueryResponse(Box<str>),
     #[error("Transaction error: {0:?}")]
     TransactionError(Box<str>),
+    #[error("Stream item not present or stream error: {0:?}")]
+    StreamItem(Box<str>),
 }
 
 impl From<serde_json::Error> for Error {
