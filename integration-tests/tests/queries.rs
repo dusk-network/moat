@@ -9,7 +9,6 @@ use moat_core::{CitadelInquirer, Error, StreamAux};
 use toml_base_config::BaseConfig;
 use tracing::debug;
 use wallet_accessor::BlockchainAccessConfig;
-use zk_citadel::license::License;
 
 #[allow(dead_code)]
 const MAX_CALL_SIZE: usize = 65536;
@@ -27,10 +26,7 @@ async fn call_get_licenses() -> Result<(), Error> {
 
     let stream = CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-    const VEC_OVERHEAD: usize = 8;
-    const ITEM_LEN: usize = std::mem::size_of::<u64>()
-        + VEC_OVERHEAD
-        + std::mem::size_of::<License>();
+    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
     let response = StreamAux::collect_all::<(u64, Vec<u8>), ITEM_LEN>(stream)?;
     debug!("response={:?}", response);
     Ok(())

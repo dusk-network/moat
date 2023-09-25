@@ -12,6 +12,7 @@ use dusk_wallet::RuskHttpClient;
 use phoenix_core::transaction::ModuleId;
 use poseidon_merkle::Opening;
 use std::ops::Range;
+use zk_citadel::license::License;
 
 // todo: refactor such consts to some common location
 const LICENSE_CONTRACT_ID: ModuleId = {
@@ -28,6 +29,12 @@ const GET_INFO_METHOD_NAME: &str = "get_info";
 pub struct CitadelInquirer {}
 
 impl CitadelInquirer {
+    // vector overhead needed as get_licenses returns licenses
+    // serialized as vector of bytes
+    const VEC_OVERHEAD: usize = 8;
+    pub const GET_LICENSES_ITEM_LEN: usize =
+        std::mem::size_of::<(u64, License)>() + Self::VEC_OVERHEAD;
+
     pub async fn get_licenses(
         client: &RuskHttpClient,
         block_heights: Range<u64>,

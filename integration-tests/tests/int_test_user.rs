@@ -196,10 +196,7 @@ fn find_owned_license(
     stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
         + std::marker::Unpin,
 ) -> Result<(u64, License), Error> {
-    const VEC_OVERHEAD: usize = 8;
-    const ITEM_LEN: usize = std::mem::size_of::<u64>()
-        + VEC_OVERHEAD
-        + std::mem::size_of::<License>();
+    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
     let (pos, lic_ser) = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
         |(_, lic_vec)| {
             let license = deserialise_license(lic_vec);
@@ -294,7 +291,6 @@ async fn user_round_trip() -> Result<(), Error> {
     );
     let licenses_stream =
         CitadelInquirer::get_licenses(&client, block_heights).await?;
-    // assert!(!licenses.is_empty());
 
     let (pos, license) = find_owned_license(ssk_user, licenses_stream)
         .expect("owned license found");
