@@ -46,21 +46,6 @@ use zk_citadel::license::{
     CitadelProverParameters, License, Request, SessionCookie,
 };
 
-use tokio::runtime::Handle;
-use tokio::task::block_in_place;
-
-pub trait Block {
-    fn wait(self) -> <Self as futures::Future>::Output
-    where
-        Self: Sized,
-        Self: futures::Future,
-    {
-        block_in_place(move || Handle::current().block_on(self))
-    }
-}
-
-impl<F, T> Block for F where F: futures::Future<Output = T> {}
-
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
     "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787";
