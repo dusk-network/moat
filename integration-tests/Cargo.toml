@@ -9,7 +9,7 @@ license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
 dusk-wallet = "0.18"
-zk-citadel = { version = "0.4", git = "https://github.com/dusk-network/citadel", tag = "0.4.1-rc.0" }
+zk-citadel = "0.4"
 phoenix-core = { version = "0.20.0-rc.0", features = ["alloc"] }
 poseidon-merkle = { version = "0.2.1-rc.0", features = ["rkyv-impl"] }
 dusk-pki = { version = "0.12", default-features = false, features = ["rkyv-impl"] }
