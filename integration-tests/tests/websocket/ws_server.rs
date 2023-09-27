@@ -7,7 +7,7 @@
 use crate::websocket::ws_common::*;
 use dusk_jubjub::BlsScalar;
 use futures_util::{SinkExt, StreamExt};
-use moat_core::{Error, LicenseSession};
+use moat_core::{Error, LicenseSession, MAX_RESPONSE_SIZE};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::Message;
 use tracing::trace;
@@ -33,7 +33,6 @@ pub async fn ws_license_contract_mock_server(
     Ok(())
 }
 
-// todo: remove this redundant server implementation
 #[allow(dead_code)]
 pub async fn ws_license_contract_mock_multi_server(
     seconds: u64,
@@ -101,13 +100,13 @@ async fn accept_connection(stream: TcpStream) {
             let response_data: Option<LicenseSession> = Some(LicenseSession {
                 public_inputs: vec![BlsScalar::zero()],
             });
-            rkyv::to_bytes::<_, 8192>(&response_data)
+            rkyv::to_bytes::<_, MAX_RESPONSE_SIZE>(&response_data)
                 .expect("Data should serialize correctly")
                 .to_vec()
         }
         "get_licenses" => {
             let response_data = vec![vec![1u8], vec![2u8]];
-            rkyv::to_bytes::<_, 8192>(&response_data)
+            rkyv::to_bytes::<_, MAX_RESPONSE_SIZE>(&response_data)
                 .expect("Data should serialize correctly")
                 .to_vec()
         }

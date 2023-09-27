@@ -6,25 +6,17 @@
 
 use crate::contract_queries::block::Block;
 use crate::error::Error;
-use crate::{ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH};
+use crate::{
+    ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH,
+    GET_INFO_METHOD_NAME, GET_LICENSES_METHOD_NAME,
+    GET_MERKLE_OPENING_METHOD_NAME, GET_SESSION_METHOD_NAME,
+    LICENSE_CONTRACT_ID,
+};
 use bytes::Bytes;
 use dusk_wallet::RuskHttpClient;
-use phoenix_core::transaction::ModuleId;
 use poseidon_merkle::Opening;
 use std::ops::Range;
 use zk_citadel::license::License;
-
-// todo: refactor such consts to some common location
-const LICENSE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x03;
-    bytes
-};
-
-const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
-const GET_MERKLE_OPENING_METHOD_NAME: &str = "get_merkle_opening";
-const GET_SESSION_METHOD_NAME: &str = "get_session";
-const GET_INFO_METHOD_NAME: &str = "get_info";
 
 pub struct CitadelInquirer {}
 

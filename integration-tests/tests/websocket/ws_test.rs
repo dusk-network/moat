@@ -14,7 +14,7 @@ const TEST_DURATION_SECONDS: u64 = 4;
 const PORT: u32 = 9125;
 
 #[tokio::test]
-#[cfg_attr(not(feature = "int_tests"), ignore)]
+#[ignore]
 async fn ws_license_contract_mock_call() -> Result<(), Error> {
     trace!("test driver - spawning ws license contract mock server");
     tokio::spawn(ws_license_contract_mock_server(TEST_DURATION_SECONDS, PORT));

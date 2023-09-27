@@ -6,7 +6,7 @@
 
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_pki::SecretSpendKey;
-use moat_core::{Error, RequestCreator};
+use moat_core::{Error, RequestCreator, MAX_REQUEST_SIZE};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use sha2::Digest;
@@ -32,7 +32,7 @@ fn create_serialized_request() -> Result<(), Error> {
         "29c4336ef24e585f4506e32e269c5363a71f7dcd74586b210c56e569ad2644e832c785f102dd3c985c705008ec188be819bac85b65c9f70decb9adcf4a72cc43",
         rng,
     )?;
-    let v = rkyv::to_bytes::<_, 8192>(&request)
+    let v = rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&request)
         .expect("Infallible")
         .to_vec();
     println!("request={}", hex::encode(v));

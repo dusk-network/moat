@@ -7,6 +7,7 @@
 use crate::contract_queries::block::Block;
 use crate::error::Error;
 use crate::Error::InvalidQueryResponse;
+use crate::MAX_CALL_SIZE;
 use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_wallet::{RuskHttpClient, RuskRequest};
@@ -14,13 +15,8 @@ use phoenix_core::transaction::ModuleId;
 use rkyv::validation::validators::DefaultValidator;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 
-#[allow(dead_code)]
 pub struct ContractInquirer {}
 
-#[allow(dead_code)]
-const MAX_CALL_SIZE: usize = 65536;
-
-#[allow(dead_code)]
 impl ContractInquirer {
     pub async fn query_contract<A, R>(
         client: &RuskHttpClient,
