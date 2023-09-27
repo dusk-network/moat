@@ -5,20 +5,14 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter};
-use phoenix_core::transaction::ModuleId;
+use moat_core::{
+    Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter,
+    ADD_OWNER_METHOD_NAME, STAKE_CONTRACT_ID,
+};
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::PwdHash;
-
-const STAKE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x02;
-    bytes
-};
-
-const ADD_OWNER_METHOD_NAME: &str = "add_owner";
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =

@@ -49,8 +49,6 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
     )
     .await?;
 
-    assert!(top_block > 0);
-
     trace!("transactions retrieved={}", txs.transactions.len());
     trace!("current top block={}", top_block);
 

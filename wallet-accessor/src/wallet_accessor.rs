@@ -50,9 +50,9 @@ impl WalletAccessor {
                         hasher.update(s.as_bytes());
                         hasher.finalize().to_vec()
                     }
-                    PwdHash(h) => {
-                        hex::decode(h.as_str()).unwrap_or([0u8; 32].to_vec())
-                    } // todo - how do we react to invalid hex of the hash
+                    PwdHash(h) => hex::decode(h.as_str())
+                        .expect("Password hash should be valid hex string")
+                        .to_vec(),
                 }
             },
         }

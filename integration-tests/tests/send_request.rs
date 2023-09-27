@@ -8,6 +8,7 @@ use dusk_jubjub::BlsScalar;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{
     Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
+    MAX_REQUEST_SIZE,
 };
 use moat_core::{JsonLoader, TxAwaiter};
 use rand::rngs::StdRng;
@@ -48,7 +49,9 @@ async fn send_request() -> Result<(), Error> {
         request_json.provider_psk,
         rng,
     )?;
-    let request_vec = rkyv::to_bytes::<_, 8192>(&request).unwrap().to_vec();
+    let request_vec = rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&request)
+        .unwrap()
+        .to_vec();
 
     let config = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -74,7 +77,7 @@ async fn send_request() -> Result<(), Error> {
         get_request_from_blockchain(tx_id_hex, &client).await?;
     assert_eq!(
         request_vec,
-        rkyv::to_bytes::<_, 8192>(&retrieved_request)
+        rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&retrieved_request)
             .unwrap()
             .to_vec(),
         "requests not equal"

@@ -37,6 +37,6 @@ futures-core = "0.3"
 reqwest = "0.11"
 
 [features]
-int_tests = []
-exp_tests = []
-vol_tests = []
+int_tests = [] #integration tests - require a running Rusk node/cluster
+exp_tests = [] #expensive tests - integration tests which take longer time to run
+vol_tests = [] #volatile tests - integration tests which require constants' update before running

@@ -7,7 +7,7 @@
 use blake3::OUT_LEN;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey, ViewKey};
-use moat_core::{Error, JsonLoader, RequestScanner};
+use moat_core::{Error, JsonLoader, RequestScanner, MAX_REQUEST_SIZE};
 use std::collections::BTreeSet;
 use std::path::Path;
 use wallet_accessor::BlockchainAccessConfig;
@@ -140,7 +140,7 @@ impl ReferenceLP {
 
     fn hash_request(request: &Request) -> [u8; OUT_LEN] {
         *blake3::hash(
-            rkyv::to_bytes::<_, 4096>(request)
+            rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(request)
                 .expect("Request should serialize correctly")
                 .as_slice(),
         )

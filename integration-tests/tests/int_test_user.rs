@@ -109,7 +109,7 @@ async fn issue_license(
 /// Calculates and verified proof, sends proof along with public parameters
 /// as arguments to the license contract's use_license method.
 /// Awaits for confirmation of the contract-calling transaction.
-async fn use_license(
+async fn prove_and_send_use_license(
     client: &RuskHttpClient,
     blockchain_config: &BlockchainAccessConfig,
     wallet_path: &WalletPath,
@@ -305,7 +305,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     show_state(&client, "before use_license").await?;
     info!("calling use_license (as a user)");
-    let session_id = use_license(
+    let session_id = prove_and_send_use_license(
         &client,
         &blockchain_config,
         &wallet_path,
@@ -333,6 +333,5 @@ async fn user_round_trip() -> Result<(), Error> {
     );
 
     // if we try to call use_license again, it will be rejected
-    // (currently, it panics giving Trap(UnreachableCodeReached))
     Ok(())
 }
