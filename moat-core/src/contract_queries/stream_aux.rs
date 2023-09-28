@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::contract_queries::block::Block;
+use crate::contract_queries::block::BlockInPlace;
 use crate::Error;
 use bytecheck::CheckBytes;
 use bytes::Bytes;

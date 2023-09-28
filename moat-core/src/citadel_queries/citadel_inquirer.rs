@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::contract_queries::block::Block;
 use crate::error::Error;
+use crate::BlockInPlace;
 use crate::{
     ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH,
     GET_INFO_METHOD_NAME, GET_LICENSES_METHOD_NAME,

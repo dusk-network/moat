@@ -13,6 +13,7 @@
 
 mod blockchain_requests;
 mod circuit;
+mod citadel_queries;
 mod contract_queries;
 mod error;
 mod json_loader;
@@ -24,9 +25,11 @@ pub use blockchain_requests::{
     RequestScanner,
 };
 pub use circuit::*;
+pub use citadel_queries::{
+    CitadelInquirer, CitadelInquirerWs, LicenseSession, LicenseSessionId,
+};
 pub use contract_queries::{
-    CitadelInquirer, CitadelInquirerWs, ContractInquirer, ContractInquirerWs,
-    LicenseSession, LicenseSessionId, StreamAux,
+    block::*, ContractInquirer, ContractInquirerWs, StreamAux,
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;
