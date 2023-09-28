@@ -19,6 +19,7 @@ mod error;
 mod json_loader;
 mod tx_retrievals;
 mod types;
+mod citadel_types;
 
 pub use blockchain_requests::{
     PayloadExtractor, PayloadRetriever, PayloadSender, RequestCreator,
@@ -35,3 +36,4 @@ pub use error::Error;
 pub use json_loader::JsonLoader;
 pub use tx_retrievals::{BcInquirer, TxAwaiter, TxRetriever};
 pub use types::*;
+pub use citadel_types::*;

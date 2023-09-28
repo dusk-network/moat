@@ -12,42 +12,11 @@ pub const STAKE_CONTRACT_ID: ModuleId = {
     bytes[0] = 0x02;
     bytes
 };
-pub const LICENSE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x03;
-    bytes
-};
-
-// license contract method names
-pub const NOOP_METHOD_NAME: &str = "noop";
-pub const ISSUE_LICENSE_METHOD_NAME: &str = "issue_license";
-pub const USE_LICENSE_METHOD_NAME: &str = "use_license";
-pub const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
-pub const GET_MERKLE_OPENING_METHOD_NAME: &str = "get_merkle_opening";
-pub const GET_SESSION_METHOD_NAME: &str = "get_session";
-pub const GET_INFO_METHOD_NAME: &str = "get_info";
-
 // stake contract method names
 pub const ADD_OWNER_METHOD_NAME: &str = "add_owner";
 
 pub const MAX_CALL_SIZE: usize = 65536;
-pub const MAX_REQUEST_SIZE: usize = 8192;
-pub const MAX_LICENSE_SIZE: usize = 16384;
 pub const MAX_RESPONSE_SIZE: usize = 65536;
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct RequestJson {
-    pub user_ssk: String,
-    pub provider_psk: String,
-}
-
-impl JsonLoader for RequestJson {}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct ContractInfo {
-    pub method: String,
-    pub contract: String,
-}
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Tx {
@@ -73,12 +42,6 @@ pub struct CallInfoJson {
     #[serde(alias = "fnName", default)]
     pub fn_name: String,
     pub data: String,
-}
-
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub struct TxJson {
-    pub anchor: String,
-    pub call: CallInfoJson,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
