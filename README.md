@@ -1,16 +1,22 @@
 # dusk moat
 
-[![Repository](https://img.shields.io/badge/github-piecrust-blueviolet?logo=github)](https://github.com/dusk-network/moat)
-![Build Status](https://github.com/dusk-network/moat/workflows/build/badge.svg)
+[![Repository](https://img.shields.io/badge/github-moat-blueviolet?logo=github)](https://github.com/dusk-network/moat)
+![Build Status](https://github.com/dusk-network/moat/workflows/dusk_ci/badge.svg)
 [![Documentation](https://img.shields.io/badge/docs-moat-blue?logo=rust)](https://docs.rs/moat/)
 
-`moat` is a Rust workspace containing the following crates: `moat-cli`, `moat-core`, `wallet-accessor`, `integration-tests` and `license-provider`.
+`moat` is a Rust workspace containing the following crates:
 
 - `moat-cli`: Command line interface (CLI) for submitting license requests to the Dusk blockchain.
-- `moat-core`: Library for submitting and scanning license requests in the Dusk blockchain.
+- `moat-core`: Library providing an SDK required for implementing Citadel scenarios with the Dusk blockchain.
+- `license-provider`: Reference implementation of a license provider.
+- `integration-tests`: Moat library integration tests (test which require access to Dusk Wallet and live Dusk cluster).
 - `wallet-accessor`: Library for submitting contract-call transactions to the Dusk blockchain.
-- `integration-tests`: Moat library integration tests (test which require access to Dusk Wallet and a live Dusk cluser).
-- `license-prvider`: A reference implementation of a license provider.
+
+
+## moat-cli
+
+moat-cli utility can be used to submit license request to the Dusk blockchain.
+Any license provider can then scan the blockchain for requests, filter out relevant requests and process them accordingly.
 
 Example usage of the moat-cli utility:
 ```sh
@@ -22,64 +28,36 @@ where:
 - `password`: password for your wallet
 - `...request.json`: path to your request json file (as explained in the request section)
 
-Example usage of the moat-core library:
+Request sending can also be performed programmatically, using moat-core, described below:
 ```rust
-use moat_core::{JsonLoader, RequestCreator, RequestJson, RequestSender};
-use wallet_accessor::BlockchainAccessConfig;
 //...
     let request_json: RequestJson = RequestJson::from_file(json_path)?;
+    let rng = &mut StdRng::seed_from_u64(0xcafe);
     let request = RequestCreator::create_from_hex_args(
         request_json.user_ssk,
         request_json.provider_psk,
         rng,
     )?;
-
-    let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
-    let blockchain_access_config =
-        BlockchainAccessConfig::load_path(config_path)?;
-
-    RequestSender::send(
+//...
+   PayloadSender::send_to_contract_method(
         request,
         &blockchain_access_config,
-        wallet_path,
-        password,
+        &wallet_path,
+        &psw,
         gas_limit,
         gas_price,
+        LICENSE_CONTRACT_ID,
+        NOOP_METHOD_NAME,
     )
     .await?;
 //...
 ```
-In the above example, the user is expected to have a request json file prepared and available
+In the above example, the user is expected to have a request json file available
 at some filesystem path. The code loads contents of the file, extracts request arguments from it and 
 instantiates a request object. Subsequently, request is being sent to blockchain via
 a provided wallet (utilizing wallet path and password, as well as a blockchain access configuration file).
 
-Example usage of the wallet-accessor library:
-```rust
-use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
-//...
-        let wallet_accessor = WalletAccessor {
-            path: wallet_path,
-            pwd: password,
-        };
-        let tx_id = wallet_accessor
-            .send(
-                request,
-                YOUR_CONTRACT_ID,
-                YOUR_METHOD_NAME.to_string(),
-                cfg,
-                gas_limit,
-                gas_price,
-            )
-            .await?;
-//...
-```
-In the above example, the code issues a contract call with request as an argument. The contract is identified by a given contract id,
-while contract's method is identified by method's name. Note that request sent as argument of the contract
-call is generic, so it can be any type declared by the user of the library, as long as it is rkyv-serializable.
-
-##Request
-`moat-cli` requires a path to a json request file. An example request json file looks as follows:
+As the `moat-cli` requires a path to a json request file. An example request json file looks as follows:
 ```json
 {
   "user_ssk": "c6afd78c8b3902b474d4c0972b62888e4b880dccf8da68e86266fefa45ee7505926f06ab82ac200995f1239d518fdb74903f225f4460d8db62f2449f6d4dc402",
@@ -88,55 +66,34 @@ call is generic, so it can be any type declared by the user of the library, as l
 ```
 It contains the user secret spend key (user_ssk) and provider public spend key (provider_psk), both in a form of a hexadecimal string.
 
-##Scanning for Requests
-The following code illustrates how to scan for all requests in the blockchain:
-```rust
-    let mut height = 0;
-    loop {
-        let height_end = height + 10000;
-        let (requests, top) =
-            RequestScanner::scan_block_range(height, height_end, &cfg).await?;
+## moat-core
+Provides an SDK for writing user, LP, and SP applications based on the Dusk blockchain.
+It provides the following functionality, related to license contract:
+- creating requests
+- sending license requests
+- scanning blockchain for requests
+- performing license contract queries: _get_licenses, get_merkle_opening, get_session, get_info_
 
-        println!(
-            "{} requests in range ({},{}) top={}",
-            requests.len(),
-            height,
-            height_end,
-            top
-        );
+In addition, it provides the following generic Dusk blockchain functionality, not necessarily related to license contract:
+- sending payloads to any method of any contract (e.g., can be used for _issue_license_ and _use_license_)
+- retrieving payloads of any type from the blockchain
+- performing queries on any method of any contract (with return values passed directly or via a feeder/stream)
+- retrieving transactions from blockchain (e.g., by block range)
 
-        if top <= height_end {
-            break;
-        }
+In addition, websocket functionality for the queries is also provided.
 
-        height = height_end;
-    }
-```
-In the above example, calls scanning the blockchain are executed in a loop, in effect, scanning the entire blockchain. The user may also want 
-to arrange the calls differently. User may also scan only the last n blocks - an appropriate API for that is also available.
+## license-provider
+Provides functionality needed for implementors of license provider, including:
+- license issuer
+- blockchain scanner for relevant request
+The crate allows for implementation of a license provider, whose task is to periodically check for license requests in the blockchain, and the to process the request and issue licenses.
 
-##Configuration
-`moat-cli` requires a configuration file with the urls which allow for blockchain access.
-An example configuration file looks as follows:
-```toml
-rusk_address = "https://devnet.nodes.dusk.network:8585"
-prover_address = "https://devnet.provers.dusk.network:8686"
-graphql_address = "http://devnet.nodes.dusk.network:9500/graphql"
-```
-The file is also used by the `moat-core` library.
+## integration-tests
+As most of the functionality provided by Moat deals with a blockchain, integration tests play critical role.
+As in the case of moat-core functionality, tests include both Citadel-specific tests and blockchain generic test.
 
-##Testing
-To build and run unit tests:
-```sh
-cargo t
-```
-
-To build and run unit tests and integration tests:
-```sh
-cargo t --features integration_tests
-```
-
-To build and run unit tests and expensive tests (like scanning the entire Dusk blockchain for requests):
-```sh
-cargo t --features expensive_tests
-```
+## wallet accessor
+This is a low-level crate which provides wallet (Blockchain) connectivity for functions of moat-core.
+Users of moat-core do not need to be aware of this crate, yet for maintainers and extenders, the crate
+provides a convenient low level interface between the higher-level moat-core library and the blockchain.
+Note that this crate deals only with contract method calling, it does not deal with contract queries.

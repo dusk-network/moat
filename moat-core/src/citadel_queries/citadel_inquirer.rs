@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::contract_queries::block::Block;
 use crate::error::Error;
+use crate::BlockInPlace;
 use crate::{
     ContractInquirer, LicenseSession, LicenseSessionId, ARITY, DEPTH,
     GET_INFO_METHOD_NAME, GET_LICENSES_METHOD_NAME,
@@ -21,11 +21,11 @@ use zk_citadel::license::License;
 pub struct CitadelInquirer {}
 
 impl CitadelInquirer {
-    // vector overhead needed as get_licenses returns licenses
+    // vector overhead length is needed as get_licenses returns licenses
     // serialized as vector of bytes
-    const VEC_OVERHEAD: usize = 8;
+    const VEC_OVERHEAD_LEN: usize = 8;
     pub const GET_LICENSES_ITEM_LEN: usize =
-        std::mem::size_of::<(u64, License)>() + Self::VEC_OVERHEAD;
+        std::mem::size_of::<(u64, License)>() + Self::VEC_OVERHEAD_LEN;
 
     pub async fn get_licenses(
         client: &RuskHttpClient,

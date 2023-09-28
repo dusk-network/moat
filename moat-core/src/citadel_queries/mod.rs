@@ -4,13 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-pub(crate) mod block;
-mod contract_inquirer;
-mod contract_inquirer_ws;
-mod stream_aux;
-mod ws_types;
+mod citadel_inquirer;
+mod citadel_inquirer_ws;
+mod citadel_types;
 
-pub use block::*;
-pub use contract_inquirer::ContractInquirer;
-pub use contract_inquirer_ws::ContractInquirerWs;
-pub use stream_aux::StreamAux;
+pub use citadel_inquirer::CitadelInquirer;
+pub use citadel_inquirer_ws::CitadelInquirerWs;
+pub use citadel_types::{LicenseSession, LicenseSessionId};
