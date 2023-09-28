@@ -5,16 +5,6 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::JsonLoader;
-use phoenix_core::transaction::ModuleId;
-
-pub const STAKE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x02;
-    bytes
-};
-// stake contract method names
-pub const ADD_OWNER_METHOD_NAME: &str = "add_owner";
-
 pub const MAX_CALL_SIZE: usize = 65536;
 pub const MAX_RESPONSE_SIZE: usize = 65536;
 

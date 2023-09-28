@@ -5,10 +5,8 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{
-    Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter,
-    ADD_OWNER_METHOD_NAME, STAKE_CONTRACT_ID,
-};
+use moat_core::{Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter};
+use phoenix_core::transaction::ModuleId;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -19,6 +17,13 @@ const PWD_HASH: &str =
     "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
+
+pub const STAKE_CONTRACT_ID: ModuleId = {
+    let mut bytes = [0u8; 32];
+    bytes[0] = 0x02;
+    bytes
+};
+pub const ADD_OWNER_METHOD_NAME: &str = "add_owner";
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]

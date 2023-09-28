@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::bc_types::*;
 use crate::error::Error;
-use crate::types::*;
 use dusk_wallet::{RuskHttpClient, RuskRequest};
 
 pub struct BcInquirer;

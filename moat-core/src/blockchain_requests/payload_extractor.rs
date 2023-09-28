@@ -6,8 +6,8 @@
 
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 
+use crate::bc_types::Tx;
 use crate::error::Error;
-use crate::types::Tx;
 use crate::Error::PayloadNotPresent;
 use bytecheck::CheckBytes;
 use rkyv::validation::validators::DefaultValidator;

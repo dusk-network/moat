@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::types::{SpentTx2, SpentTxResponse2, TxStatus};
+use crate::bc_types::{SpentTx2, SpentTxResponse2, TxStatus};
 use crate::Error;
 use crate::Error::TransactionError;
 use dusk_bls12_381::BlsScalar;
