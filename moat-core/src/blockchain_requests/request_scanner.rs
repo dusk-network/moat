@@ -45,7 +45,6 @@ impl RequestScanner {
         height_end: u64,
         cfg: &BlockchainAccessConfig,
     ) -> Result<(Vec<Request>, u64), Error> {
-        // let client = Client::new(cfg.graphql_address.clone());
         let client = RuskHttpClient::new(cfg.rusk_address.clone());
         let (txs, top) =
             TxRetriever::txs_from_block_range(&client, height_beg, height_end)
