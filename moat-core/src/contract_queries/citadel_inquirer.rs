@@ -21,11 +21,11 @@ use zk_citadel::license::License;
 pub struct CitadelInquirer {}
 
 impl CitadelInquirer {
-    // vector overhead needed as get_licenses returns licenses
+    // vector overhead length is needed as get_licenses returns licenses
     // serialized as vector of bytes
-    const VEC_OVERHEAD: usize = 8;
+    const VEC_OVERHEAD_LEN: usize = 8;
     pub const GET_LICENSES_ITEM_LEN: usize =
-        std::mem::size_of::<(u64, License)>() + Self::VEC_OVERHEAD;
+        std::mem::size_of::<(u64, License)>() + Self::VEC_OVERHEAD_LEN;
 
     pub async fn get_licenses(
         client: &RuskHttpClient,

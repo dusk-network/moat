@@ -31,7 +31,7 @@ use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, PayloadSender, RequestCreator, RequestJson, StreamAux,
-    TxAwaiter, ARITY, DEPTH,
+    TxAwaiter, ARITY, DEPTH, LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
 };
 use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
@@ -146,13 +146,15 @@ async fn prove_and_send_use_license(
         public_inputs,
     };
 
-    let tx_id = PayloadSender::send_use_license(
+    let tx_id = PayloadSender::send_to_contract_method(
         use_license_arg,
         &blockchain_config,
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
+        LICENSE_CONTRACT_ID,
+        USE_LICENSE_METHOD_NAME,
     )
     .await?;
     TxAwaiter::wait_for(&client, tx_id).await?;
@@ -332,6 +334,7 @@ async fn user_round_trip() -> Result<(), Error> {
         hex::encode(session.public_inputs[0].to_bytes())
     );
 
-    // if we try to call use_license again, it will be rejected
+    // if we try to call use_license with the same license again, it will be
+    // rejected
     Ok(())
 }
