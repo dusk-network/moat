@@ -66,7 +66,7 @@ As the `moat-cli` requires a path to a json request file. An example request jso
 ```
 It contains the user secret spend key (user_ssk) and provider public spend key (provider_psk), both in a form of a hexadecimal string.
 
-##moat-core
+## moat-core
 Provides an SDK for writing user, LP, and SP applications based on the Dusk blockchain.
 It provides the following functionality, related to license contract:
 - creating requests
@@ -82,23 +82,17 @@ In addition, it provides the following generic Dusk blockchain functionality, no
 
 In addition, websocket functionality for the queries is also provided.
 
-##license-provider
+## license-provider
 Provides functionality needed for implementors of license provider, including:
 - license issuer
 - blockchain scanner for relevant request
 The crate allows for implementation of a license provider, whose task is to periodically check for license requests in the blockchain, and the to process the request and issue licenses.
 
-##integration-tests
-As most of the functionality provided by Moat deals with a blockchain, integration tests play critical role. The crate contains the following groups of tests:
-- license-provider related tests including scanning and license issuing
-- License contract round-trip scenario test (this test contains LP, SP and user scenario)
-- contract queries tests
-- request retrieval tests
-- request submitting tests
-- generic payload sending tests
-As in the case of moat-core, tests include both Citadel-specific tests and blockchain generic test.
+## integration-tests
+As most of the functionality provided by Moat deals with a blockchain, integration tests play critical role.
+As in the case of moat-core functionality, tests include both Citadel-specific tests and blockchain generic test.
 
-##wallet accessor
+## wallet accessor
 This is a low-level crate which provides wallet (Blockchain) connectivity for functions of moat-core.
 Users of moat-core do not need to be aware of this crate, yet for maintainers and extenders, the crate
 provides a convenient low level interface between the higher-level moat-core library and the blockchain.
