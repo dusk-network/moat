@@ -58,7 +58,9 @@ impl WalletAccessor {
         }
     }
 
-    pub async fn send<C>(
+    /// submits a transaction which will execute a given method
+    /// of a given contract
+    pub async fn execute_contract_method<C>(
         &self,
         data: C,
         contract_id: ModuleId,

@@ -34,7 +34,7 @@ impl PayloadSender {
         let wallet_accessor =
             WalletAccessor::new(wallet_path.clone(), password.clone());
         let tx_id = wallet_accessor
-            .send(
+            .execute_contract_method(
                 payload,
                 contract_id,
                 method.as_ref().to_string(),
