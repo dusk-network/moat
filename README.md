@@ -1,7 +1,7 @@
 # dusk moat
 
-[![Repository](https://img.shields.io/badge/github-piecrust-blueviolet?logo=github)](https://github.com/dusk-network/moat)
-![Build Status](https://github.com/dusk-network/moat/workflows/build/badge.svg)
+[![Repository](https://img.shields.io/badge/github-moat-blueviolet?logo=github)](https://github.com/dusk-network/moat)
+![Build Status](https://github.com/dusk-network/moat/workflows/dusk_ci/badge.svg)
 [![Documentation](https://img.shields.io/badge/docs-moat-blue?logo=rust)](https://docs.rs/moat/)
 
 `moat` is a Rust workspace containing the following crates:
