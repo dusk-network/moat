@@ -209,6 +209,25 @@ fn find_owned_license(
     Ok((pos, deserialise_license(&lic_ser)))
 }
 
+///
+/// test user_round_trip realizes the following scenario:
+/// - creates request (User)
+/// - based on the request, calls issue_license (LP)
+/// - calls get_licenses, obtains license and position (User)
+/// - calls get_merkle_opening for a given position, obtains the opening (User)
+/// - based on license and opening, computes proof (User)
+/// - calls use_license and creates a session_id (User)
+/// - use_license verifies the proof, creates the corresponding session (License
+///   Contract)
+/// - calls get_session based on a session id given to the SP by the User (SP)
+///
+/// - Note that session_id is created by the User and not returned by
+///   use_license. Although use_license, internally, also creates the same
+///   session_id, it is not returned by it because contract state changing
+///   methods do not have the ability to return values. It is assumed that
+///   license_id created by the user and by contract are the same.
+/// - Note that after each contract method call the test waits for transaction
+///   to confirm.
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn user_round_trip() -> Result<(), Error> {
@@ -244,6 +263,14 @@ async fn user_round_trip() -> Result<(), Error> {
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
+    let wallet_path = WalletPath::from(
+        PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
+    );
+
+    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
+
+    // create request
+
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
 
     let request = RequestCreator::create_from_hex_args(
@@ -254,12 +281,6 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let ssk_user_bytes = hex::decode(request_json.user_ssk)?;
     let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
-
-    let wallet_path = WalletPath::from(
-        PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
-    );
-
-    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
 
     // as a LP, call issue license, wait for tx to confirm
 
