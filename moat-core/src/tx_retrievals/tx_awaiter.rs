@@ -4,9 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::types::{SpentTx2, SpentTxResponse2, TxStatus};
+use crate::bc_types::{SpentTx2, SpentTxResponse2, TxStatus};
 use crate::Error;
-use crate::Error::TransactionError;
+use crate::Error::Transaction;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::{RuskHttpClient, RuskRequest};
 use std::time::Duration;
@@ -74,7 +74,7 @@ impl TxAwaiter {
             match status {
                 TxStatus::Ok => break,
                 TxStatus::Error(err) => {
-                    return Err(TransactionError(Box::from(err)))?
+                    return Err(Transaction(Box::from(err)))?
                 }
                 TxStatus::NotFound => {
                     trace!("Awaiting ({}) for {}", i, tx_id.as_ref());
@@ -84,7 +84,7 @@ impl TxAwaiter {
             }
         }
         if i > TIMEOUT_SECS {
-            Err(TransactionError(Box::from("Confirmation timed out")))
+            Err(Transaction(Box::from("Confirmation timed out")))
         } else {
             Ok(())
         }

@@ -8,7 +8,10 @@ use dusk_jubjub::{BlsScalar, JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{Error, PayloadSender, TxAwaiter, MAX_LICENSE_SIZE};
+use moat_core::{
+    Error, PayloadSender, TxAwaiter, ISSUE_LICENSE_METHOD_NAME,
+    LICENSE_CONTRACT_ID, MAX_LICENSE_SIZE,
+};
 use rand::{CryptoRng, RngCore};
 use tracing::trace;
 use wallet_accessor::{BlockchainAccessConfig, Password};
@@ -59,13 +62,15 @@ impl LicenseIssuer {
             "sending issue license with license blob size={}",
             tuple.0.len()
         );
-        let tx_id = PayloadSender::send_issue_license(
+        let tx_id = PayloadSender::send_to_contract_method(
             tuple,
             &self.config,
             &self.wallet_path,
             &self.password,
             self.gas_limit,
             self.gas_price,
+            LICENSE_CONTRACT_ID,
+            ISSUE_LICENSE_METHOD_NAME,
         )
         .await?;
         let client = RuskHttpClient::new(self.config.rusk_address.clone());

@@ -60,7 +60,10 @@ use crate::args::Args;
 
 use clap::Parser;
 use dusk_wallet::WalletPath;
-use moat_core::{JsonLoader, PayloadSender, RequestCreator, RequestJson};
+use moat_core::{
+    JsonLoader, PayloadSender, RequestCreator, RequestJson,
+    LICENSE_CONTRACT_ID, NOOP_METHOD_NAME,
+};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::error::Error;
@@ -104,13 +107,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         PwdHash(pwd_hash)
     };
 
-    PayloadSender::send_noop(
+    PayloadSender::send_to_contract_method(
         request,
         &blockchain_access_config,
         &wallet_path,
         &psw,
         gas_limit,
         gas_price,
+        LICENSE_CONTRACT_ID,
+        NOOP_METHOD_NAME,
     )
     .await?;
 

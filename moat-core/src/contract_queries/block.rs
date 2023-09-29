@@ -7,7 +7,7 @@
 use tokio::runtime::Handle;
 use tokio::task::block_in_place;
 
-pub(crate) trait Block {
+pub trait BlockInPlace {
     fn wait(self) -> <Self as futures::Future>::Output
     where
         Self: Sized,
@@ -17,4 +17,4 @@ pub(crate) trait Block {
     }
 }
 
-impl<F, T> Block for F where F: futures::Future<Output = T> {}
+impl<F, T> BlockInPlace for F where F: futures::Future<Output = T> {}

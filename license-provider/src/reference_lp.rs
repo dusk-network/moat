@@ -71,7 +71,7 @@ impl ReferenceLP {
                 RequestScanner::scan_block_range(height, height_end, cfg)
                     .await?;
             total += requests.len();
-            let owned_requests = self.filter_owned_requests(&requests)?;
+            let owned_requests = self.retain_owned_requests(requests);
             total_owned += owned_requests.len();
             for owned_request in owned_requests {
                 self.insert_request(owned_request);
@@ -95,7 +95,7 @@ impl ReferenceLP {
         let mut total_owned = 0usize;
         let requests = RequestScanner::scan_last_blocks(n, cfg).await?;
         total += requests.len();
-        let owned_requests = self.filter_owned_requests(&requests)?;
+        let owned_requests = self.retain_owned_requests(requests);
         total_owned += owned_requests.len();
         for owned_request in owned_requests {
             self.insert_request(owned_request);
@@ -103,20 +103,14 @@ impl ReferenceLP {
         Ok((total, total_owned))
     }
 
-    /// Given a collection of requests, returns a new collection
-    /// containing only requests relevant to `this` license provider
-    pub fn filter_owned_requests(
+    /// Given a collection of requests, retain only those requests
+    /// in the collection which are owned by 'this' license provider
+    pub fn retain_owned_requests(
         &self,
-        requests: &[Request],
-    ) -> Result<Vec<Request>, Error> {
-        let mut relevant_requests: Vec<Request> = Vec::new();
-        for request in requests.iter() {
-            if self.is_owned_request(request) {
-                let r = Request { ..*request };
-                relevant_requests.push(r);
-            }
-        }
-        Ok(relevant_requests)
+        mut requests: Vec<Request>,
+    ) -> Vec<Request> {
+        requests.retain(|request| self.is_owned_request(request));
+        requests
     }
 
     fn is_owned_request(&self, request: &Request) -> bool {
