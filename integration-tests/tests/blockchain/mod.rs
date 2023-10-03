@@ -4,6 +4,5 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-mod websocket;
-mod citadel;
-mod blockchain;
+mod retrieve_txs;
+mod stake_add_owner;
