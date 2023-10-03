@@ -6,6 +6,8 @@
 
 mod request_creator;
 mod request_scanner;
+mod request_sender;
 
 pub use request_creator::RequestCreator;
 pub use request_scanner::RequestScanner;
+pub use request_sender::RequestSender;

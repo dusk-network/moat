@@ -21,8 +21,8 @@
 
 use bytecheck::CheckBytes;
 use bytes::Bytes;
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Serializable};
-use dusk_jubjub::BlsScalar;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};

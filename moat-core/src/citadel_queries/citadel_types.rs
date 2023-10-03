@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use bytecheck::CheckBytes;
-use dusk_jubjub::BlsScalar;
+use dusk_bls12_381::BlsScalar;
 use rkyv::{Archive, Deserialize, Serialize};
 
 /// License Session Id

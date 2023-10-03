@@ -4,8 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::websocket::ws_license_contract_mock_multi_server;
+use dusk_bls12_381::BlsScalar;
 use moat_core::{CitadelInquirerWs, Error, LicenseSession, LicenseSessionId};
-use dusk_jubjub::BlsScalar;
 
 const TEST_DURATION_SECONDS: u64 = 4;
 const PORT: u32 = 9126;

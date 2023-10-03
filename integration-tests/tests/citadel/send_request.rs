@@ -4,11 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::BlsScalar;
+use dusk_bls12_381::BlsScalar;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{
-    Error, PayloadRetriever, PayloadSender, RequestCreator, RequestJson,
-    LICENSE_CONTRACT_ID, MAX_REQUEST_SIZE, NOOP_METHOD_NAME,
+    Error, PayloadRetriever, RequestCreator, RequestJson, RequestSender,
+    MAX_REQUEST_SIZE,
 };
 use moat_core::{JsonLoader, TxAwaiter};
 use rand::rngs::StdRng;
@@ -59,15 +59,13 @@ async fn send_request() -> Result<(), Error> {
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
     );
 
-    let tx_id = PayloadSender::send_to_contract_method(
-        (request, 0u64, BlsScalar::one()),
+    let tx_id = RequestSender::send_request(
+        request,
         &config,
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
-        LICENSE_CONTRACT_ID,
-        NOOP_METHOD_NAME,
     )
     .await?;
     let client = RuskHttpClient::new(config.rusk_address);

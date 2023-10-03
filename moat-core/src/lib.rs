@@ -13,9 +13,9 @@
 
 mod bc_types;
 mod blockchain_requests;
-mod citadel_requests;
 mod circuit;
 mod citadel_queries;
+mod citadel_requests;
 mod citadel_types;
 mod contract_queries;
 mod error;
@@ -26,13 +26,11 @@ pub use bc_types::*;
 pub use blockchain_requests::{
     PayloadExtractor, PayloadRetriever, PayloadSender,
 };
-pub use citadel_requests::{
-    RequestCreator, RequestScanner
-};
 pub use circuit::*;
 pub use citadel_queries::{
     CitadelInquirer, CitadelInquirerWs, LicenseSession, LicenseSessionId,
 };
+pub use citadel_requests::{RequestCreator, RequestScanner, RequestSender};
 pub use citadel_types::*;
 pub use contract_queries::{
     block::*, ContractInquirer, ContractInquirerWs, StreamAux,

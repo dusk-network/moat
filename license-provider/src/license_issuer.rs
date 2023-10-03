@@ -4,7 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{BlsScalar, JubJubAffine, JubJubScalar};
+use dusk_bls12_381::BlsScalar;
+use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};

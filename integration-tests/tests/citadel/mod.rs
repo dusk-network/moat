@@ -4,9 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+mod int_test_lp;
 mod int_test_user;
 mod issue_license;
 mod queries;
-mod send_request;
 mod retrieve_requests;
-mod int_test_lp;
+mod send_request;

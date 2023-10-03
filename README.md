@@ -97,3 +97,21 @@ This is a low-level crate which provides wallet (Blockchain) connectivity for fu
 Users of moat-core do not need to be aware of this crate, yet for maintainers and extenders, the crate
 provides a convenient low level interface between the higher-level moat-core library and the blockchain.
 Note that this crate deals only with contract method calling, it does not deal with contract queries.
+
+## moat-core
+
+### creating license requests
+Class: RequestCreator
+Methods: create, create_from_hex_args
+Both methods allow for creation of a request, given user's secret spend key and license provider's public spend key.
+The request can then be sent to license provider, off-chain or on-chain.
+
+### sending license requests
+Class: RequestSender
+Methods: send_request
+Sends a request to blockchain, by calling a "noop" method of the license contract.
+
+### scanning license requests
+Class: 
+Methods: scan_last_blocks, scan_block_range
+Scans requests in a collection of blocks, given either as a number of last blocks, or as a range of blocks.
