@@ -10,20 +10,16 @@ use crate::Error::TransactionNotFound;
 use crate::{BcInquirer, QueryResult};
 use dusk_wallet::RuskHttpClient;
 
-pub struct TxRetriever;
+pub struct TxInquirer;
 
-impl TxRetriever {
+impl TxInquirer {
     pub async fn txs_from_block(
         client: &RuskHttpClient,
         block_height: u64,
     ) -> Result<Transactions, Error> {
-        TxRetriever::txs_from_block_range(
-            client,
-            block_height,
-            block_height + 1,
-        )
-        .await
-        .map(|(txs, _)| txs)
+        TxInquirer::txs_from_block_range(client, block_height, block_height + 1)
+            .await
+            .map(|(txs, _)| txs)
     }
 
     // range retrieval seems to have a limit of 10k

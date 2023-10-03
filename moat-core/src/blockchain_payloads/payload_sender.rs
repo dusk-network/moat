@@ -6,7 +6,7 @@
 
 use crate::error::Error;
 use crate::MAX_CALL_SIZE;
-use dusk_jubjub::BlsScalar;
+use dusk_bls12_381::BlsScalar;
 use dusk_wallet::WalletPath;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
@@ -17,7 +17,7 @@ pub struct PayloadSender;
 impl PayloadSender {
     /// Sends payload to a given method
     #[allow(clippy::too_many_arguments)]
-    pub async fn send_to_contract_method<P, M>(
+    pub async fn execute_contract_method<P, M>(
         payload: P,
         cfg: &BlockchainAccessConfig,
         wallet_path: &WalletPath,

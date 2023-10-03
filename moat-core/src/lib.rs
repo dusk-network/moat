@@ -12,28 +12,29 @@
 //! subproject.
 
 mod bc_types;
-mod blockchain_requests;
+mod blockchain_payloads;
+mod blockchain_queries;
 mod circuit;
 mod citadel_queries;
+mod citadel_requests;
 mod citadel_types;
 mod contract_queries;
 mod error;
 mod json_loader;
-mod tx_retrievals;
 
 pub use bc_types::*;
-pub use blockchain_requests::{
-    PayloadExtractor, PayloadRetriever, PayloadSender, RequestCreator,
-    RequestScanner,
+pub use blockchain_payloads::{
+    PayloadExtractor, PayloadRetriever, PayloadSender,
 };
+pub use blockchain_queries::{BcInquirer, TxAwaiter, TxInquirer};
 pub use circuit::*;
 pub use citadel_queries::{
     CitadelInquirer, CitadelInquirerWs, LicenseSession, LicenseSessionId,
 };
+pub use citadel_requests::{RequestCreator, RequestScanner, RequestSender};
 pub use citadel_types::*;
 pub use contract_queries::{
     block::*, ContractInquirer, ContractInquirerWs, StreamAux,
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;
-pub use tx_retrievals::{BcInquirer, TxAwaiter, TxRetriever};

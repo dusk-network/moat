@@ -4,9 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter};
-use phoenix_core::transaction::ModuleId;
+use dusk_wallet::WalletPath;
+use license_provider::{LicenseIssuer, ReferenceLP};
+use moat_core::{Error, JsonLoader, RequestCreator, RequestJson};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
@@ -18,44 +20,46 @@ const PWD_HASH: &str =
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
-pub const STAKE_CONTRACT_ID: ModuleId = {
-    let mut bytes = [0u8; 32];
-    bytes[0] = 0x02;
-    bytes
-};
-pub const ADD_OWNER_METHOD_NAME: &str = "add_owner";
-
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
-async fn stake_add_owner() -> Result<(), Error> {
+async fn issue_license() -> Result<(), Error> {
+    let request_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
-    let blockchain_config =
-        BlockchainAccessConfig::load_path(blockchain_config_path)?;
+    let lp_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
 
-    let request_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
+    let reference_lp = ReferenceLP::create(&lp_config_path)?;
 
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
+
+    let rng = &mut StdRng::seed_from_u64(0xcafe);
+    let request = RequestCreator::create_from_hex_args(
+        request_json.user_ssk,
+        request_json.provider_psk,
+        rng,
+    )?;
+
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
     let wallet_path = WalletPath::from(
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
     );
 
-    let tx_id = PayloadSender::send_to_contract_method(
-        request_json.provider_psk,
-        &blockchain_config,
-        &wallet_path,
-        &PwdHash(PWD_HASH.to_string()),
+    let license_issuer = LicenseIssuer::new(
+        blockchain_config,
+        wallet_path,
+        PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
-        STAKE_CONTRACT_ID,
-        ADD_OWNER_METHOD_NAME,
-    )
-    .await?;
-    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
-    TxAwaiter::wait_for(&client, tx_id).await?;
+    );
+
+    license_issuer
+        .issue_license(rng, &request, &reference_lp.ssk_lp)
+        .await?;
 
     Ok(())
 }

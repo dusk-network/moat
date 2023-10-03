@@ -15,6 +15,8 @@ use zk_citadel::license::Request;
 pub struct RequestCreator;
 
 impl RequestCreator {
+    /// creates request from user's secret spend key
+    /// and license provider's public spend key
     pub fn create<R: RngCore + CryptoRng>(
         ssk_user: &SecretSpendKey,
         psk_lp: &PublicSpendKey,
@@ -31,6 +33,9 @@ impl RequestCreator {
         Ok(request)
     }
 
+    /// creates request from user's secret spend key
+    /// and license provider's public spend key
+    /// parameters are expected to be hexadecimal strings
     pub fn create_from_hex_args<
         R: RngCore + CryptoRng,
         S: AsRef<str>,

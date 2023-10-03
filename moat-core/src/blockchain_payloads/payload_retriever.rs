@@ -9,9 +9,9 @@ use dusk_wallet::RuskHttpClient;
 use rkyv::validation::validators::DefaultValidator;
 use rkyv::{Archive, Deserialize, Infallible};
 
-use crate::blockchain_requests::PayloadExtractor;
+use crate::blockchain_payloads::PayloadExtractor;
 use crate::error::Error;
-use crate::TxRetriever;
+use crate::TxInquirer;
 
 pub struct PayloadRetriever;
 
@@ -27,7 +27,7 @@ impl PayloadRetriever {
             + for<'b> CheckBytes<DefaultValidator<'b>>,
         S: AsRef<str>,
     {
-        let (tx, _) = TxRetriever::retrieve_tx(txid.as_ref(), client).await?;
+        let (tx, _) = TxInquirer::retrieve_tx(txid.as_ref(), client).await?;
         PayloadExtractor::payload_from_tx(&tx)
     }
 }
