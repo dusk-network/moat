@@ -19,7 +19,7 @@ impl RequestScanner {
         let mut requests = Vec::new();
         for tx in &txs.transactions {
             if let Ok(request) =
-                PayloadExtractor::payload_from_tx::<Request>(tx)
+            PayloadExtractor::payload_from_tx::<Request>(tx)
             {
                 requests.push(request)
             }

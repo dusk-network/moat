@@ -13,6 +13,7 @@
 
 mod bc_types;
 mod blockchain_requests;
+mod citadel_requests;
 mod circuit;
 mod citadel_queries;
 mod citadel_types;
@@ -23,8 +24,10 @@ mod tx_retrievals;
 
 pub use bc_types::*;
 pub use blockchain_requests::{
-    PayloadExtractor, PayloadRetriever, PayloadSender, RequestCreator,
-    RequestScanner,
+    PayloadExtractor, PayloadRetriever, PayloadSender,
+};
+pub use citadel_requests::{
+    RequestCreator, RequestScanner
 };
 pub use circuit::*;
 pub use citadel_queries::{
