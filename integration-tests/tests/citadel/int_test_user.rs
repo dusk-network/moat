@@ -30,8 +30,9 @@ use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
-    LicenseSessionId, PayloadSender, RequestCreator, RequestJson, StreamAux,
-    TxAwaiter, ARITY, DEPTH, LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
+    LicenseSessionId, PayloadRetriever, PayloadSender, RequestCreator,
+    RequestJson, RequestSender, StreamAux, TxAwaiter, ARITY, DEPTH,
+    LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
 };
 use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
@@ -270,20 +271,37 @@ async fn user_round_trip() -> Result<(), Error> {
     let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
 
     // create request
-
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
+    let ssk_user_bytes = hex::decode(request_json.user_ssk.clone())?;
+    let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
 
     let request = RequestCreator::create_from_hex_args(
-        request_json.user_ssk.clone(),
+        request_json.user_ssk,
         request_json.provider_psk,
         rng,
     )?;
 
-    let ssk_user_bytes = hex::decode(request_json.user_ssk)?;
-    let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
+    // as a User, submit request to blockchain
+    info!("submitting request to blockchain (as a User)");
+    let tx_id = RequestSender::send_request(
+        request,
+        &blockchain_config,
+        &wallet_path,
+        &PwdHash(PWD_HASH.to_string()),
+        GAS_LIMIT,
+        GAS_PRICE,
+    )
+    .await?;
+    TxAwaiter::wait_for(&client, tx_id).await?;
+
+    // as a LP, retrieve request from blockchain
+    info!("retrieving request from blockchain (as an LP)");
+    let tx_id = format!("{:X}", tx_id);
+    let (request, _, _): (Request, u64, BlsScalar) =
+    // let request: Request =
+        PayloadRetriever::retrieve_payload(tx_id, &client).await?;
 
     // as a LP, call issue license, wait for tx to confirm
-
     show_state(&client, "before issue_license").await?;
     info!("calling issue_license (as an LP)");
     let issue_license_txid = issue_license(
@@ -300,7 +318,6 @@ async fn user_round_trip() -> Result<(), Error> {
     info!("end_height={}", end_height);
 
     // as a User, call get_licenses, obtain license and pos
-
     let start_height = if end_height > BLOCK_RANGE {
         end_height - BLOCK_RANGE
     } else {
@@ -319,13 +336,11 @@ async fn user_round_trip() -> Result<(), Error> {
         .expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
-
     info!("calling get_merkle_opening (as a user)");
     let opening = CitadelInquirer::get_merkle_opening(&client, pos).await?;
     assert!(opening.is_some());
 
     // as a User, compute proof, call use_license, wait for tx to confirm
-
     show_state(&client, "before use_license").await?;
     info!("calling use_license (as a user)");
     let session_id = prove_and_send_use_license(
@@ -345,7 +360,6 @@ async fn user_round_trip() -> Result<(), Error> {
     let session_id = LicenseSessionId { id: session_id };
 
     // as an SP, call get_session
-
     info!("calling get_session (as an SP)");
     let session = CitadelInquirer::get_session(&client, session_id).await?;
     assert!(session.is_some());

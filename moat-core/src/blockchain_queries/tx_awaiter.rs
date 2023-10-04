@@ -55,7 +55,6 @@ impl TxAwaiter {
     }
 
     pub async fn wait_for(
-        // todo: rename
         client: &RuskHttpClient,
         tx_id: BlsScalar,
     ) -> Result<(), Error> {
@@ -64,7 +63,6 @@ impl TxAwaiter {
     }
 
     async fn wait_for_tx(
-        // todo: rename
         client: &RuskHttpClient,
         tx_id: impl AsRef<str>,
     ) -> Result<(), Error> {
