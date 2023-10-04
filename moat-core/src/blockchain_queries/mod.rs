@@ -6,8 +6,8 @@
 
 mod bc_inquirer;
 mod tx_awaiter;
-mod tx_retriever;
+mod tx_inquirer;
 
 pub use bc_inquirer::BcInquirer;
 pub use tx_awaiter::TxAwaiter;
-pub use tx_retriever::TxRetriever;
+pub use tx_inquirer::TxInquirer;

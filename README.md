@@ -100,18 +100,77 @@ Note that this crate deals only with contract method calling, it does not deal w
 
 ## moat-core
 
-### creating license requests
+### citadel requests
+
 Class: RequestCreator
-Methods: create, create_from_hex_args
+Methods: 
+    create, 
+    create_from_hex_args
 Both methods allow for creation of a request, given user's secret spend key and license provider's public spend key.
 The request can then be sent to license provider, off-chain or on-chain.
 
-### sending license requests
 Class: RequestSender
 Methods: send_request
-Sends a request to blockchain, by calling a "noop" method of the license contract.
+Submits the request into blockchain.
 
-### scanning license requests
-Class: 
-Methods: scan_last_blocks, scan_block_range
-Scans requests in a collection of blocks, given either as a number of last blocks, or as a range of blocks.
+Class: RequestScanner
+Methods:
+    scan_transactions,
+    scan_last_blocks, 
+    scan_block_range
+Methods scan requests in a given collection of transactions, 
+in a given range of blocks, 
+or in a given number of most recent blocks.
+
+### citadel queries
+
+Class: CitadelInquirer
+Methods: 
+    get_licenses, 
+    get_merkle_opening, 
+    get_session, 
+    get_info
+
+### blockchain requests
+
+Class: PayloadExtractor
+Methods: payload_from_tx
+Extracts payload from transaction, if present (i.e., it is a contract calling transaction)
+
+Class: PayloadRetriever
+Methods: retrieve_payload
+Retrieves payload of a given transaction in a blockchain, on the condition that the transaction is found and contains a payload (i.e., it is a contract calling transaction)
+
+Class: PayloadSender
+Methods: send_to_contract_method
+Calls a given method of a given contract, passing to it a payload.
+
+### contract queries
+
+Class: ContractInquirer
+Methods: 
+    query_contract, 
+    query_contract_with_feeder
+query_contract: accepts generic argument A, contract id and method name and returns generic value R
+query_contract_with_feeder: accepts generic argument A, contract id and method name and returns a Stream of type Bytes
+
+### blockchain queries
+
+Class: BcInquirer
+Methods: 
+    gql_query, 
+    block_height
+
+Class: TxAwaiter
+Methods: 
+    wait_for, 
+    wait_for_tx
+Waits for transaction identified by a given transaction id to be confirmed on the blockchain.
+
+Class: TxInquirer
+Methods: 
+    txs_from_block, 
+    txs_from_block_range,
+    txs_from_last_n_blocks,
+    retrieve_tx
+

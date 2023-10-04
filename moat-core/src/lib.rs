@@ -12,6 +12,7 @@
 //! subproject.
 
 mod bc_types;
+mod blockchain_queries;
 mod blockchain_requests;
 mod circuit;
 mod citadel_queries;
@@ -20,9 +21,9 @@ mod citadel_types;
 mod contract_queries;
 mod error;
 mod json_loader;
-mod tx_retrievals;
 
 pub use bc_types::*;
+pub use blockchain_queries::{BcInquirer, TxAwaiter, TxInquirer};
 pub use blockchain_requests::{
     PayloadExtractor, PayloadRetriever, PayloadSender,
 };
@@ -37,4 +38,3 @@ pub use contract_queries::{
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;
-pub use tx_retrievals::{BcInquirer, TxAwaiter, TxRetriever};
