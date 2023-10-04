@@ -63,7 +63,7 @@ impl LicenseIssuer {
             "sending issue license with license blob size={}",
             tuple.0.len()
         );
-        let tx_id = PayloadSender::send_to_contract_method(
+        let tx_id = PayloadSender::execute_contract_method(
             tuple,
             &self.config,
             &self.wallet_path,

@@ -17,7 +17,7 @@ pub struct PayloadSender;
 impl PayloadSender {
     /// Sends payload to a given method
     #[allow(clippy::too_many_arguments)]
-    pub async fn send_to_contract_method<P, M>(
+    pub async fn execute_contract_method<P, M>(
         payload: P,
         cfg: &BlockchainAccessConfig,
         wallet_path: &WalletPath,

@@ -31,7 +31,7 @@ async fn issue_license() -> Result<(), Error> {
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
 
-    let reference_lp = ReferenceLP::init(&lp_config_path)?;
+    let reference_lp = ReferenceLP::create(&lp_config_path)?;
 
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
 

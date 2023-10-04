@@ -43,7 +43,7 @@ async fn stake_add_owner() -> Result<(), Error> {
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
     );
 
-    let tx_id = PayloadSender::send_to_contract_method(
+    let tx_id = PayloadSender::execute_contract_method(
         request_json.provider_psk,
         &blockchain_config,
         &wallet_path,

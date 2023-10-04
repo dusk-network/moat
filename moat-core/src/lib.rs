@@ -12,8 +12,8 @@
 //! subproject.
 
 mod bc_types;
+mod blockchain_payloads;
 mod blockchain_queries;
-mod blockchain_requests;
 mod circuit;
 mod citadel_queries;
 mod citadel_requests;
@@ -23,10 +23,10 @@ mod error;
 mod json_loader;
 
 pub use bc_types::*;
-pub use blockchain_queries::{BcInquirer, TxAwaiter, TxInquirer};
-pub use blockchain_requests::{
+pub use blockchain_payloads::{
     PayloadExtractor, PayloadRetriever, PayloadSender,
 };
+pub use blockchain_queries::{BcInquirer, TxAwaiter, TxInquirer};
 pub use circuit::*;
 pub use citadel_queries::{
     CitadelInquirer, CitadelInquirerWs, LicenseSession, LicenseSessionId,

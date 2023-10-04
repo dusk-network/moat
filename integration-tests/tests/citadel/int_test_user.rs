@@ -147,7 +147,7 @@ async fn prove_and_send_use_license(
         public_inputs,
     };
 
-    let tx_id = PayloadSender::send_to_contract_method(
+    let tx_id = PayloadSender::execute_contract_method(
         use_license_arg,
         &blockchain_config,
         &wallet_path,
@@ -259,7 +259,7 @@ async fn user_round_trip() -> Result<(), Error> {
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
 
-    let reference_lp = ReferenceLP::init(&lp_config_path)?;
+    let reference_lp = ReferenceLP::create(&lp_config_path)?;
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
@@ -297,8 +297,7 @@ async fn user_round_trip() -> Result<(), Error> {
     // as a LP, retrieve request from blockchain
     info!("retrieving request from blockchain (as an LP)");
     let tx_id = format!("{:X}", tx_id);
-    let (request, _, _): (Request, u64, BlsScalar) =
-    // let request: Request =
+    let request: Request =
         PayloadRetriever::retrieve_payload(tx_id, &client).await?;
 
     // as a LP, call issue license, wait for tx to confirm

@@ -131,19 +131,21 @@ Methods:
     get_session, 
     get_info
 
-### blockchain requests
+### blockchain payloads
 
 Class: PayloadExtractor
 Methods: payload_from_tx
-Extracts payload from transaction, if present (i.e., it is a contract calling transaction)
+Extracts payload from transaction, errors if payload of a given type is not present
+in the transaction or a give transaction is not a contract calling transaction.
 
 Class: PayloadRetriever
 Methods: retrieve_payload
-Retrieves payload of a given transaction in a blockchain, on the condition that the transaction is found and contains a payload (i.e., it is a contract calling transaction)
+Retrieves payload of a given transaction in a blockchain, errors if the transaction 
+is not found or it doesn't contain a payload (e.g., given transaction is not a contract calling transaction)
 
 Class: PayloadSender
-Methods: send_to_contract_method
-Calls a given method of a given contract, passing to it a payload.
+Methods: execute_contract_method
+Executes a given method of a given contract, passing to it the given payload as an argument.
 
 ### contract queries
 

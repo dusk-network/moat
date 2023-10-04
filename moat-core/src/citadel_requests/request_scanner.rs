@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::blockchain_requests::PayloadExtractor;
+use crate::blockchain_payloads::PayloadExtractor;
 use crate::error::Error;
 use crate::{Transactions, TxInquirer};
 use dusk_wallet::RuskHttpClient;

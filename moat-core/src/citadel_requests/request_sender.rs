@@ -21,8 +21,8 @@ impl RequestSender {
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<BlsScalar, Error> {
-        let tx_id = PayloadSender::send_to_contract_method(
-            (request, 0u64, BlsScalar::one()), // todo: explain this,
+        let tx_id = PayloadSender::execute_contract_method(
+            request,
             &config,
             &wallet_path,
             password,

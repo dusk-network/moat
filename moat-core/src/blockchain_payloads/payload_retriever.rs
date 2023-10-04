@@ -9,7 +9,7 @@ use dusk_wallet::RuskHttpClient;
 use rkyv::validation::validators::DefaultValidator;
 use rkyv::{Archive, Deserialize, Infallible};
 
-use crate::blockchain_requests::PayloadExtractor;
+use crate::blockchain_payloads::PayloadExtractor;
 use crate::error::Error;
 use crate::TxInquirer;
 

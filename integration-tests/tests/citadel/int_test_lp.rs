@@ -20,7 +20,7 @@ async fn lp_scan() -> Result<(), Error> {
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
-    let mut reference_lp = ReferenceLP::init(&lp_config_path)?;
+    let mut reference_lp = ReferenceLP::create(&lp_config_path)?;
 
     reference_lp.scan(&blockchain_config).await?;
     Ok(())
@@ -37,7 +37,7 @@ async fn lp_scan_last_blocks() -> Result<(), Error> {
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
-    let mut reference_lp = ReferenceLP::init(&lp_config_path)?;
+    let mut reference_lp = ReferenceLP::create(&lp_config_path)?;
 
     let (_total, _owned) = reference_lp
         .scan_last_blocks(10000, &blockchain_config)
@@ -58,8 +58,8 @@ async fn lp_scan_2_lps() -> Result<(), Error> {
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
-    let mut reference_lp1 = ReferenceLP::init(&lp1_config_path)?;
-    let mut reference_lp2 = ReferenceLP::init(&lp2_config_path)?;
+    let mut reference_lp1 = ReferenceLP::create(&lp1_config_path)?;
+    let mut reference_lp2 = ReferenceLP::create(&lp2_config_path)?;
     let (_, _lp1_count) = reference_lp1.scan(&blockchain_config).await?;
     let (_, _lp2_count) = reference_lp2.scan(&blockchain_config).await?;
     Ok(())

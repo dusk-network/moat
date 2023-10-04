@@ -4,7 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_bls12_381::BlsScalar;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{
     Error, PayloadRetriever, RequestCreator, RequestJson, RequestSender,
@@ -73,7 +72,7 @@ async fn send_request() -> Result<(), Error> {
 
     let tx_id_hex = format!("{:x}", tx_id);
 
-    let (retrieved_request, _, _) =
+    let retrieved_request =
         get_request_from_blockchain(tx_id_hex, &client).await?;
     assert_eq!(
         request_vec,
@@ -89,7 +88,7 @@ async fn send_request() -> Result<(), Error> {
 async fn get_request_from_blockchain<S: AsRef<str>>(
     tx_id: S,
     client: &RuskHttpClient,
-) -> Result<(Request, u64, BlsScalar), Error> {
+) -> Result<Request, Error> {
     const NUM_RETRIES: i32 = 30;
     for i in 0..NUM_RETRIES {
         let result =
