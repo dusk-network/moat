@@ -23,8 +23,8 @@ impl RequestSender {
     ) -> Result<BlsScalar, Error> {
         let tx_id = PayloadSender::execute_contract_method(
             request,
-            &config,
-            &wallet_path,
+            config,
+            wallet_path,
             password,
             gas_limit,
             gas_price,

@@ -112,15 +112,15 @@ The request can then be sent to license provider, off-chain or on-chain.
 Class: RequestSender
 Methods: send_request
 Submits the request into blockchain.
+It does so by calling a dummy contract method with request as an argument.
 
 Class: RequestScanner
 Methods:
     scan_transactions,
     scan_last_blocks, 
     scan_block_range
-Methods scan requests in a given collection of transactions, 
-in a given range of blocks, 
-or in a given number of most recent blocks.
+Scan requests in a given collection of transactions, 
+contained in a given range of blocks or in a given number of most recent blocks.
 
 ### citadel queries
 
@@ -130,22 +130,24 @@ Methods:
     get_merkle_opening, 
     get_session, 
     get_info
+Execute citadel-specific query methods of the license contract method. 
 
 ### blockchain payloads
 
 Class: PayloadExtractor
 Methods: payload_from_tx
-Extracts payload from transaction, errors if payload of a given type is not present
-in the transaction or a give transaction is not a contract calling transaction.
+Extracts a payload from the given transaction,
+errors if payload of a given type is not present or the transaction is not a contract calling transaction.
 
 Class: PayloadRetriever
 Methods: retrieve_payload
-Retrieves payload of a given transaction in a blockchain, errors if the transaction 
-is not found or it doesn't contain a payload (e.g., given transaction is not a contract calling transaction)
+Retrieves payload of a given transaction id, 
+errors if transaction is not found, or it does not contain a payload
+(for example, given transaction is not a contract calling transaction)
 
 Class: PayloadSender
 Methods: execute_contract_method
-Executes a given method of a given contract, passing to it the given payload as an argument.
+Executes given method of a given contract (identified by a contract id), passing to it the payload as an argument.
 
 ### contract queries
 
@@ -153,8 +155,8 @@ Class: ContractInquirer
 Methods: 
     query_contract, 
     query_contract_with_feeder
-query_contract: accepts generic argument A, contract id and method name and returns generic value R
-query_contract_with_feeder: accepts generic argument A, contract id and method name and returns a Stream of type Bytes
+query_contract - accepts a generic argument, contract id and contract query method name, returns a generic value result
+query_contract_with_feeder - accepts a generic argument, contract id and method name, returns result as a Stream of bytes
 
 ### blockchain queries
 
@@ -162,12 +164,14 @@ Class: BcInquirer
 Methods: 
     gql_query, 
     block_height
+gql_query - executes a GQL query and returns result as a vector of bytes
+block_height - returns the current block height as u64
 
 Class: TxAwaiter
 Methods: 
     wait_for, 
     wait_for_tx
-Waits for transaction identified by a given transaction id to be confirmed on the blockchain.
+Waits for a transaction identified by transaction id to be confirmed on the blockchain.
 
 Class: TxInquirer
 Methods: 
@@ -175,4 +179,4 @@ Methods:
     txs_from_block_range,
     txs_from_last_n_blocks,
     retrieve_tx
-
+Retrieve transaction identified by transaction id, or transactions contained in a given block, or a collection of blocks.

@@ -7,6 +7,6 @@
 mod int_test_lp;
 mod int_test_user;
 mod issue_license;
-mod queries;
+mod license_queries;
 mod retrieve_requests;
 mod send_request;

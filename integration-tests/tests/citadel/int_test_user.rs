@@ -70,15 +70,14 @@ fn compute_citadel_parameters(
     psk_lp: PublicSpendKey,
     lic: &License,
     merkle_proof: Opening<(), DEPTH, ARITY>,
+    challenge: &JubJubScalar,
 ) -> (CitadelProverParameters<DEPTH, ARITY>, SessionCookie) {
-    const CHALLENGE: u64 = 20221127u64;
-    let c = JubJubScalar::from(CHALLENGE);
     let (cpp, sc) = CitadelProverParameters::compute_parameters(
         &ssk,
         &lic,
         &psk_lp,
         &psk_lp,
-        &c,
+        challenge,
         rng,
         merkle_proof,
     );
@@ -121,6 +120,7 @@ async fn prove_and_send_use_license(
     license: &License,
     opening: Opening<(), DEPTH, ARITY>,
     rng: &mut StdRng,
+    challenge: &JubJubScalar,
 ) -> Result<BlsScalar, Error> {
     let (cpp, sc) = compute_citadel_parameters(
         rng,
@@ -128,6 +128,7 @@ async fn prove_and_send_use_license(
         reference_lp.psk_lp,
         license,
         opening,
+        &challenge,
     );
     let circuit = LicenseCircuit::new(&cpp, &sc);
 
@@ -336,11 +337,16 @@ async fn user_round_trip() -> Result<(), Error> {
 
     // as a User, call get_merkle_opening, obtain opening
     info!("calling get_merkle_opening (as a user)");
-    let opening = CitadelInquirer::get_merkle_opening(&client, pos).await?;
+    let opening =
+        CitadelInquirer::get_merkle_opening(&client, pos.clone()).await?;
     assert!(opening.is_some());
 
     // as a User, compute proof, call use_license, wait for tx to confirm
     show_state(&client, "before use_license").await?;
+    // for test purposes we make challenge dependent on the number of sessions,
+    // so that it is different every time we run the test
+    let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
+    let challenge = JubJubScalar::from(num_sessions as u64 + 1);
     info!("calling use_license (as a user)");
     let session_id = prove_and_send_use_license(
         &client,
@@ -353,6 +359,7 @@ async fn user_round_trip() -> Result<(), Error> {
         &license,
         opening.unwrap(),
         rng,
+        &challenge,
     )
     .await?;
     show_state(&client, "after use_license").await?;
