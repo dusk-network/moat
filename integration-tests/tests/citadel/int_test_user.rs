@@ -21,8 +21,8 @@
 
 use bytecheck::CheckBytes;
 use bytes::Bytes;
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Serializable};
-use dusk_jubjub::BlsScalar;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
@@ -30,8 +30,9 @@ use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
-    LicenseSessionId, PayloadSender, RequestCreator, RequestJson, StreamAux,
-    TxAwaiter, ARITY, DEPTH, LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
+    LicenseSessionId, PayloadRetriever, PayloadSender, RequestCreator,
+    RequestJson, RequestSender, StreamAux, TxAwaiter, ARITY, DEPTH,
+    LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
 };
 use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
@@ -69,15 +70,14 @@ fn compute_citadel_parameters(
     psk_lp: PublicSpendKey,
     lic: &License,
     merkle_proof: Opening<(), DEPTH, ARITY>,
+    challenge: &JubJubScalar,
 ) -> (CitadelProverParameters<DEPTH, ARITY>, SessionCookie) {
-    const CHALLENGE: u64 = 20221127u64;
-    let c = JubJubScalar::from(CHALLENGE);
     let (cpp, sc) = CitadelProverParameters::compute_parameters(
         &ssk,
         &lic,
         &psk_lp,
         &psk_lp,
-        &c,
+        challenge,
         rng,
         merkle_proof,
     );
@@ -120,6 +120,7 @@ async fn prove_and_send_use_license(
     license: &License,
     opening: Opening<(), DEPTH, ARITY>,
     rng: &mut StdRng,
+    challenge: &JubJubScalar,
 ) -> Result<BlsScalar, Error> {
     let (cpp, sc) = compute_citadel_parameters(
         rng,
@@ -127,6 +128,7 @@ async fn prove_and_send_use_license(
         reference_lp.psk_lp,
         license,
         opening,
+        &challenge,
     );
     let circuit = LicenseCircuit::new(&cpp, &sc);
 
@@ -146,7 +148,7 @@ async fn prove_and_send_use_license(
         public_inputs,
     };
 
-    let tx_id = PayloadSender::send_to_contract_method(
+    let tx_id = PayloadSender::execute_contract_method(
         use_license_arg,
         &blockchain_config,
         &wallet_path,
@@ -258,7 +260,7 @@ async fn user_round_trip() -> Result<(), Error> {
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
 
-    let reference_lp = ReferenceLP::init(&lp_config_path)?;
+    let reference_lp = ReferenceLP::create(&lp_config_path)?;
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
@@ -270,20 +272,36 @@ async fn user_round_trip() -> Result<(), Error> {
     let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
 
     // create request
-
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
+    let ssk_user_bytes = hex::decode(request_json.user_ssk.clone())?;
+    let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
 
     let request = RequestCreator::create_from_hex_args(
-        request_json.user_ssk.clone(),
+        request_json.user_ssk,
         request_json.provider_psk,
         rng,
     )?;
 
-    let ssk_user_bytes = hex::decode(request_json.user_ssk)?;
-    let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
+    // as a User, submit request to blockchain
+    info!("submitting request to blockchain (as a User)");
+    let tx_id = RequestSender::send_request(
+        request,
+        &blockchain_config,
+        &wallet_path,
+        &PwdHash(PWD_HASH.to_string()),
+        GAS_LIMIT,
+        GAS_PRICE,
+    )
+    .await?;
+    TxAwaiter::wait_for(&client, tx_id).await?;
+
+    // as a LP, retrieve request from blockchain
+    info!("retrieving request from blockchain (as an LP)");
+    let tx_id = format!("{:X}", tx_id);
+    let request: Request =
+        PayloadRetriever::retrieve_payload(tx_id, &client).await?;
 
     // as a LP, call issue license, wait for tx to confirm
-
     show_state(&client, "before issue_license").await?;
     info!("calling issue_license (as an LP)");
     let issue_license_txid = issue_license(
@@ -300,7 +318,6 @@ async fn user_round_trip() -> Result<(), Error> {
     info!("end_height={}", end_height);
 
     // as a User, call get_licenses, obtain license and pos
-
     let start_height = if end_height > BLOCK_RANGE {
         end_height - BLOCK_RANGE
     } else {
@@ -319,14 +336,17 @@ async fn user_round_trip() -> Result<(), Error> {
         .expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
-
     info!("calling get_merkle_opening (as a user)");
-    let opening = CitadelInquirer::get_merkle_opening(&client, pos).await?;
+    let opening =
+        CitadelInquirer::get_merkle_opening(&client, pos.clone()).await?;
     assert!(opening.is_some());
 
     // as a User, compute proof, call use_license, wait for tx to confirm
-
     show_state(&client, "before use_license").await?;
+    // for test purposes we make challenge dependent on the number of sessions,
+    // so that it is different every time we run the test
+    let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
+    let challenge = JubJubScalar::from(num_sessions as u64 + 1);
     info!("calling use_license (as a user)");
     let session_id = prove_and_send_use_license(
         &client,
@@ -339,13 +359,13 @@ async fn user_round_trip() -> Result<(), Error> {
         &license,
         opening.unwrap(),
         rng,
+        &challenge,
     )
     .await?;
     show_state(&client, "after use_license").await?;
     let session_id = LicenseSessionId { id: session_id };
 
     // as an SP, call get_session
-
     info!("calling get_session (as an SP)");
     let session = CitadelInquirer::get_session(&client, session_id).await?;
     assert!(session.is_some());

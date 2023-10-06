@@ -6,6 +6,7 @@
 
 pub mod ws_client;
 pub mod ws_common;
+pub mod ws_queries;
 pub mod ws_server;
 pub mod ws_test;
 

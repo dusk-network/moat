@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::RuskHttpClient;
-use moat_core::{Error, TxRetriever};
+use moat_core::{Error, TxInquirer};
 use toml_base_config::BaseConfig;
 use tracing::trace;
 use wallet_accessor::BlockchainAccessConfig;
@@ -22,7 +22,7 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 
     const BLOCK_HEIGHT: u64 = 110;
 
-    let txs = TxRetriever::txs_from_block(&client, BLOCK_HEIGHT).await?;
+    let txs = TxInquirer::txs_from_block(&client, BLOCK_HEIGHT).await?;
 
     trace!("transactions retrieved={}", txs.transactions.len());
 
@@ -42,7 +42,7 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
     const BLOCK_HEIGHT_BEG: u64 = 1;
     const BLOCK_HEIGHT_END: u64 = 1000;
 
-    let (txs, top_block) = TxRetriever::txs_from_block_range(
+    let (txs, top_block) = TxInquirer::txs_from_block_range(
         &client,
         BLOCK_HEIGHT_BEG,
         BLOCK_HEIGHT_END,
@@ -66,7 +66,7 @@ async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
     let client = RuskHttpClient::new(cfg.rusk_address);
 
     const N: usize = 10000;
-    let txs = TxRetriever::txs_from_last_n_blocks(&client, N).await?;
+    let txs = TxInquirer::txs_from_last_n_blocks(&client, N).await?;
 
     trace!("transactions={}", txs.transactions.len());
 
@@ -86,7 +86,7 @@ async fn retrieve_tx_by_id() -> Result<(), Error> {
 
     let client = RuskHttpClient::new(config.rusk_address);
 
-    let (tx, height) = TxRetriever::retrieve_tx(TXID, &client).await?;
+    let (tx, height) = TxInquirer::retrieve_tx(TXID, &client).await?;
 
     trace!("tx={:?}, block_height={}", tx, height);
 

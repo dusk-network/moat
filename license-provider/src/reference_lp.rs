@@ -45,7 +45,7 @@ impl ReferenceLP {
         }
     }
 
-    pub fn init<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
+    pub fn create<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
         let lp_config: LPConfig = LPConfig::from_file(lp_config_path)?;
         let psk_bytes = hex::decode(lp_config.psk_lp)?;
         let ssk_bytes = hex::decode(lp_config.ssk_lp)?;

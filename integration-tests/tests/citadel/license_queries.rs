@@ -4,8 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_bls12_381::BlsScalar;
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CitadelInquirer, Error, StreamAux};
+use moat_core::{CitadelInquirer, Error, LicenseSessionId, StreamAux};
 use toml_base_config::BaseConfig;
 use tracing::trace;
 use wallet_accessor::BlockchainAccessConfig;
@@ -41,6 +42,40 @@ async fn call_get_merkle_opening() -> Result<(), Error> {
     let pos = 0u64;
 
     let response = CitadelInquirer::get_merkle_opening(&client, pos).await?;
+    trace!("response={:?}", response);
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
+async fn call_get_session() -> Result<(), Error> {
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = RuskHttpClient::new(config.rusk_address);
+
+    let response = CitadelInquirer::get_session(
+        &client,
+        LicenseSessionId {
+            id: BlsScalar::one(),
+        },
+    )
+    .await?;
+    trace!("response={:?}", response);
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[cfg_attr(not(feature = "int_tests"), ignore)]
+async fn call_get_info() -> Result<(), Error> {
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config = BlockchainAccessConfig::load_path(config_path)?;
+
+    let client = RuskHttpClient::new(config.rusk_address);
+
+    let response = CitadelInquirer::get_info(&client).await?;
     trace!("response={:?}", response);
     Ok(())
 }

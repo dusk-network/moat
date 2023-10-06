@@ -4,7 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{BlsScalar, JubJubAffine, JubJubScalar};
+use dusk_bls12_381::BlsScalar;
+use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
@@ -62,7 +63,7 @@ impl LicenseIssuer {
             "sending issue license with license blob size={}",
             tuple.0.len()
         );
-        let tx_id = PayloadSender::send_to_contract_method(
+        let tx_id = PayloadSender::execute_contract_method(
             tuple,
             &self.config,
             &self.wallet_path,

@@ -97,3 +97,86 @@ This is a low-level crate which provides wallet (Blockchain) connectivity for fu
 Users of moat-core do not need to be aware of this crate, yet for maintainers and extenders, the crate
 provides a convenient low level interface between the higher-level moat-core library and the blockchain.
 Note that this crate deals only with contract method calling, it does not deal with contract queries.
+
+## moat-core
+
+### citadel requests
+
+Class: RequestCreator
+Methods: 
+    create, 
+    create_from_hex_args
+Both methods allow for creation of a request, given user's secret spend key and license provider's public spend key.
+The request can then be sent to license provider, off-chain or on-chain.
+
+Class: RequestSender
+Methods: send_request
+Submits the request into blockchain.
+It does so by calling a dummy contract method with request as an argument.
+
+Class: RequestScanner
+Methods:
+    scan_transactions,
+    scan_last_blocks, 
+    scan_block_range
+Scan requests in a given collection of transactions, 
+contained in a given range of blocks or in a given number of most recent blocks.
+
+### citadel queries
+
+Class: CitadelInquirer
+Methods: 
+    get_licenses, 
+    get_merkle_opening, 
+    get_session, 
+    get_info
+Execute citadel-specific query methods of the license contract method. 
+
+### blockchain payloads
+
+Class: PayloadExtractor
+Methods: payload_from_tx
+Extracts a payload from the given transaction,
+errors if payload of a given type is not present or the transaction is not a contract calling transaction.
+
+Class: PayloadRetriever
+Methods: retrieve_payload
+Retrieves payload of a given transaction id, 
+errors if transaction is not found, or it does not contain a payload
+(for example, given transaction is not a contract calling transaction)
+
+Class: PayloadSender
+Methods: execute_contract_method
+Executes given method of a given contract (identified by a contract id), passing to it the payload as an argument.
+
+### contract queries
+
+Class: ContractInquirer
+Methods: 
+    query_contract, 
+    query_contract_with_feeder
+query_contract - accepts a generic argument, contract id and contract query method name, returns a generic value result
+query_contract_with_feeder - accepts a generic argument, contract id and method name, returns result as a Stream of bytes
+
+### blockchain queries
+
+Class: BcInquirer
+Methods: 
+    gql_query, 
+    block_height
+gql_query - executes a GQL query and returns result as a vector of bytes
+block_height - returns the current block height as u64
+
+Class: TxAwaiter
+Methods: 
+    wait_for, 
+    wait_for_tx
+Waits for a transaction identified by transaction id to be confirmed on the blockchain.
+
+Class: TxInquirer
+Methods: 
+    txs_from_block, 
+    txs_from_block_range,
+    txs_from_last_n_blocks,
+    retrieve_tx
+Retrieve transaction identified by transaction id, or transactions contained in a given block, or a collection of blocks.
