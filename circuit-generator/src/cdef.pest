@@ -1,0 +1,10 @@
+WHITESPACE = _{ " " }
+char = { ASCII_ALPHANUMERIC | "." | "_" | "/" }
+name = { char+ }
+value = { char* }
+property = { name ~ ":" ~ value }
+file = {
+    SOI ~ "license" ~ "{" ~ NEWLINE ~
+    (property ~ NEWLINE)* ~ "}" ~ NEWLINE ~
+    EOI
+}
