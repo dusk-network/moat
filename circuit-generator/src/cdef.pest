@@ -4,7 +4,7 @@ name = { char+ }
 value = { char* }
 property = { name ~ ":" ~ value }
 file = {
-    SOI ~ "license" ~ "{" ~ NEWLINE ~
-    (property ~ NEWLINE)* ~ "}" ~ NEWLINE ~
+    SOI ~ "attributes" ~ "{" ~ NEWLINE? ~
+    (property ~ NEWLINE)* ~ "}" ~ NEWLINE? ~
     EOI
 }
