@@ -4,10 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-mod cdef_parser;
-mod error;
-mod types;
-
-pub use cdef_parser::parse_cdef;
-pub use error::Error;
-pub use types::UserAttributes;
+#[derive(Debug)]
+pub struct UserAttributes {
+    pub country_code: Option<u16>,
+    pub age: Option<u8>
+}

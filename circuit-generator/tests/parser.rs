@@ -4,7 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use circuit_generator::{parse_cdef, Error};
+use circuit_generator::{parse_cdef, Error, UserAttributes};
+
+fn assert_user_attributes(user_attributes: &UserAttributes) {
+    assert_eq!(user_attributes.country_code, Some(48));
+    assert_eq!(user_attributes.age, Some(21));
+}
 
 #[test]
 fn parse_country_age_valid() -> Result<(), Error> {
@@ -16,8 +21,8 @@ fn parse_country_age_valid() -> Result<(), Error> {
         env!("CARGO_MANIFEST_DIR"),
         "/tests/cdefs/country_age_valid2.cdef"
     );
-    parse_cdef(path_valid1)?;
-    parse_cdef(path_valid2)?;
+    assert_user_attributes(&parse_cdef(path_valid1)?);
+    assert_user_attributes(&parse_cdef(path_valid2)?);
     Ok(())
 }
 
