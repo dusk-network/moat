@@ -7,7 +7,9 @@
 use crate::blockchain_payloads::PayloadExtractor;
 use crate::error::Error;
 use crate::{Transactions, TxInquirer};
+use dusk_bls12_381::BlsScalar;
 use dusk_wallet::RuskHttpClient;
+use phoenix_core::Transaction;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
@@ -22,6 +24,34 @@ impl RequestScanner {
                 PayloadExtractor::payload_from_tx::<Request>(tx)
             {
                 requests.push(request)
+            }
+        }
+        requests
+    }
+
+    pub fn scan_transactions_related_to_notes(
+        txs: Transactions,
+        note_hashes: &[BlsScalar],
+    ) -> Vec<Request> {
+        let mut requests = Vec::new();
+        for tx in &txs.transactions {
+            if let Ok(request) =
+                PayloadExtractor::payload_from_tx::<Request>(tx)
+            {
+                let tx_raw = hex::decode(&tx.raw)
+                    .expect("Decoding raw transaction should succeed");
+                let ph_tx = Transaction::from_slice(&tx_raw)
+                    .expect("Transaction creation from slice should succeed");
+                for note_hash in note_hashes.iter() {
+                    if ph_tx
+                        .nullifiers()
+                        .iter()
+                        .any(|&nullifier| nullifier.eq(note_hash))
+                    {
+                        requests.push(request);
+                        break;
+                    }
+                }
             }
         }
         requests
@@ -50,6 +80,23 @@ impl RequestScanner {
             TxInquirer::txs_from_block_range(&client, height_beg, height_end)
                 .await?;
         let requests = RequestScanner::scan_transactions(txs);
+        Ok((requests, top))
+    }
+
+    pub async fn scan_related_to_notes_in_block_range(
+        height_beg: u64,
+        height_end: u64,
+        cfg: &BlockchainAccessConfig,
+        note_hashes: &[BlsScalar],
+    ) -> Result<(Vec<Request>, u64), Error> {
+        let client = RuskHttpClient::new(cfg.rusk_address.clone());
+        let (txs, top) =
+            TxInquirer::txs_from_block_range(&client, height_beg, height_end)
+                .await?;
+        let requests = RequestScanner::scan_transactions_related_to_notes(
+            txs,
+            note_hashes,
+        );
         Ok((requests, top))
     }
 }

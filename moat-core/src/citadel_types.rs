@@ -25,7 +25,7 @@ pub const GET_MERKLE_OPENING_METHOD_NAME: &str = "get_merkle_opening";
 pub const GET_SESSION_METHOD_NAME: &str = "get_session";
 pub const GET_INFO_METHOD_NAME: &str = "get_info";
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
 pub struct RequestJson {
     pub user_ssk: String,
     pub provider_psk: String,

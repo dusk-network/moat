@@ -6,8 +6,8 @@
 
 use crate::bc_types::*;
 use crate::error::Error;
+use crate::BcInquirer;
 use crate::Error::TransactionNotFound;
-use crate::{BcInquirer, QueryResult};
 use dusk_wallet::RuskHttpClient;
 
 pub struct TxInquirer;
@@ -31,11 +31,13 @@ impl TxInquirer {
     ) -> Result<(Transactions, u64), Error> {
         let mut transactions = Transactions::default();
         let range_str = format!("{},{}", height_beg, height_end);
-        let tx_query = "query { blockTxs(range: [####] ) { id, raw, tx { callData {contractId, fnName, data} } } }".replace("####", range_str.as_str());
+        let tx_query = "query { blockTxs(range: [####] ) { tx { id, raw, callData {contractId, fnName, data} } } }".replace("####", range_str.as_str());
         let tx_response =
             BcInquirer::gql_query(client, tx_query.as_str()).await?;
         let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
-        transactions.transactions.extend(tx_result.block_txs);
+        transactions
+            .transactions
+            .extend(tx_result.block_txs.into_iter().map(|t| t.tx));
         let height = BcInquirer::block_height(client).await?;
         Ok((transactions, height))
     }
@@ -46,11 +48,13 @@ impl TxInquirer {
     ) -> Result<Transactions, Error> {
         let mut transactions = Transactions::default();
         let n_str = format!("{}", n);
-        let tx_query = "query { blockTxs(last:####) { id, raw, tx { callData {contractId, fnName, data} } } }".replace("####", n_str.as_str());
+        let tx_query = "query { blockTxs(last:####) { tx { id, raw, callData {contractId, fnName, data} } } }".replace("####", n_str.as_str());
         let tx_response =
             BcInquirer::gql_query(client, tx_query.as_str()).await?;
         let tx_result = serde_json::from_slice::<QueryResult>(&tx_response)?;
-        transactions.transactions.extend(tx_result.block_txs);
+        transactions
+            .transactions
+            .extend(tx_result.block_txs.into_iter().map(|t| t.tx));
         Ok(transactions)
     }
 
