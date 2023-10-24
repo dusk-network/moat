@@ -22,7 +22,7 @@
 use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::{DeserializableSlice, Serializable};
+use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
@@ -142,12 +142,14 @@ async fn prove_and_send_use_license(
     verifier
         .verify(&proof, &public_inputs)
         .expect("Verifying the circuit should succeed");
+    info!("proof validated locally");
 
     let use_license_arg = UseLicenseArg {
         proof,
         public_inputs,
     };
 
+    info!("calling license contract's use_license");
     let tx_id = PayloadSender::execute_contract_method(
         use_license_arg,
         &blockchain_config,
@@ -243,10 +245,11 @@ async fn user_round_trip() -> Result<(), Error> {
     // initialize
     // NOTE: it is important that the seed is the same as in the recovery
     // PUB_PARAMS initialization code
-    let rng = &mut StdRng::seed_from_u64(0xbeef);
+    let mut rng = StdRng::seed_from_u64(0xbeef);
 
     info!("performing setup");
-    let pp = PublicParameters::setup(1 << CAPACITY, rng).unwrap();
+    let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
+        .expect("Initializing public parameters should succeed");
 
     info!("compiling circuit");
     let (prover, verifier) = Compiler::compile::<LicenseCircuit>(&pp, LABEL)
@@ -279,7 +282,7 @@ async fn user_round_trip() -> Result<(), Error> {
     let request = RequestCreator::create_from_hex_args(
         request_json.user_ssk,
         request_json.provider_psk,
-        rng,
+        &mut rng,
     )?;
 
     // as a User, submit request to blockchain
@@ -297,7 +300,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     // as a LP, retrieve request from blockchain
     info!("retrieving request from blockchain (as an LP)");
-    let tx_id = format!("{:X}", tx_id);
+    let tx_id = hex::encode(tx_id.to_bytes());
     let request: Request =
         PayloadRetriever::retrieve_payload(tx_id, &client).await?;
 
@@ -309,7 +312,7 @@ async fn user_round_trip() -> Result<(), Error> {
         &blockchain_config,
         &wallet_path,
         &request,
-        rng,
+        &mut rng,
     )
     .await?;
     show_state(&client, "after issue_license").await?;
@@ -358,7 +361,7 @@ async fn user_round_trip() -> Result<(), Error> {
         &verifier,
         &license,
         opening.unwrap(),
-        rng,
+        &mut rng,
         &challenge,
     )
     .await?;
