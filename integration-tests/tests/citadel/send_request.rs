@@ -70,7 +70,7 @@ async fn send_request() -> Result<(), Error> {
     let client = RuskHttpClient::new(config.rusk_address);
     TxAwaiter::wait_for(&client, tx_id).await?;
 
-    let tx_id_hex = format!("{:x}", tx_id);
+    let tx_id_hex = hex::encode(tx_id.to_bytes());
 
     let retrieved_request =
         get_request_from_blockchain(tx_id_hex, &client).await?;

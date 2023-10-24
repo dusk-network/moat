@@ -58,7 +58,7 @@ impl TxAwaiter {
         client: &RuskHttpClient,
         tx_id: BlsScalar,
     ) -> Result<(), Error> {
-        let tx_id = format!("{:x}", tx_id);
+        let tx_id = hex::encode(tx_id.to_bytes());
         Self::wait_for_tx(client, tx_id).await
     }
 
