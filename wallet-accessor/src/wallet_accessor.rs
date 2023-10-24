@@ -84,8 +84,9 @@ impl WalletAccessor {
                 },
             )
             .await?;
+        wallet.sync().await?;
 
-        assert!(wallet.is_online(), "Wallet should be online");
+        assert!(wallet.is_online().await, "Wallet should be online");
 
         debug!(
             "Sending tx with a call to method '{}' of contract='{}'",

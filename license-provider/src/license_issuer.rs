@@ -57,7 +57,7 @@ impl LicenseIssuer {
             .expect("License should serialize correctly")
             .to_vec();
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
-        let license_hash = sponge::hash(&[lpk.get_x(), lpk.get_y()]);
+        let license_hash = sponge::hash(&[lpk.get_u(), lpk.get_v()]);
         let tuple = (license_blob, license_hash);
         trace!(
             "sending issue license with license blob size={}",

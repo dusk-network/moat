@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = "0.18"
-dusk-wallet-core = "0.20.0-piecrust.0.6"
-phoenix-core = { version = "0.20.0-rc.0", features = ["alloc"] }
-dusk-bls12_381 = "0.11"
-rusk-abi = { version = "0.10.0-piecrust.0.6", default-features = false }
+dusk-wallet = "0.20.0-rc.0"
+dusk-wallet-core = "0.22.0-plonk.0.16"
+phoenix-core = { version = "0.21", features = ["alloc"] }
+dusk-bls12_381 = "0.12"
+rusk-abi = { version = "0.11", default-features = false }
 rkyv = { version = "=0.7.39" }
 tracing = "0.1"
 serde = { version = "1", features = ["derive"] }
