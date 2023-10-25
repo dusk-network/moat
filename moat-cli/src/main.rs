@@ -7,9 +7,11 @@
 mod args;
 mod interactive;
 mod menu;
+mod command;
 
 use crate::args::Args;
 use crate::menu::Menu;
+use crate::command::Command;
 
 use clap::Parser;
 

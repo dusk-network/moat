@@ -4,8 +4,14 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::Menu;
+use crate::{Command, Menu};
 use requestty::{ErrorKind, Question};
+
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+enum OpSelection {
+    Run(Box<Command>),
+    Exit,
+}
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 enum CommandMenuItem {
@@ -14,7 +20,7 @@ enum CommandMenuItem {
     Exit,
 }
 
-fn menu_operation() -> Result<(), ErrorKind> {
+fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd_menu = Menu::new()
         .add(CommandMenuItem::SubmitRequest, "Submit Request")
         .add(CommandMenuItem::ListRequests, "List Requests")
@@ -28,21 +34,23 @@ fn menu_operation() -> Result<(), ErrorKind> {
 
     let answer = requestty::prompt_one(q)?;
     let cmd = cmd_menu.answer(&answer).to_owned();
-    match cmd {
-        CommandMenuItem::SubmitRequest => println!("do submit request"),
-        CommandMenuItem::ListRequests => println!("do list requests"),
+    Ok(match cmd {
+        CommandMenuItem::SubmitRequest => {
+            OpSelection::Run(Box::from(Command::SubmitRequest { dummy: true }))
+        },
+        CommandMenuItem::ListRequests => {
+            OpSelection::Run(Box::from(Command::ListRequests { dummy: true }))
+        },
         CommandMenuItem::Exit => {
-            println!("do exit, bye bye");
-            return Err(ErrorKind::Aborted);
+            OpSelection::Exit
         }
-    };
-    Ok(())
+    })
 }
 
 pub async fn run_loop() -> Result<(), ErrorKind> {
     loop {
-        let op = menu_operation();
-        if op.is_err() {
+        let op = menu_operation()?;
+        if op == OpSelection::Exit {
             return Ok(());
         }
     }
