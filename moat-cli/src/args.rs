@@ -14,4 +14,28 @@ use clap::Parser;
 pub struct Args {
     /// Path of the JSON file to be processed
     pub json_path: PathBuf,
+
+    /// Wallet directory [default: `$HOME/.dusk/rusk-wallet`]
+    #[clap(short, long)]
+    pub wallet_path: PathBuf,
+
+    /// Config directory
+    #[clap(short, long)]
+    pub config_path: PathBuf,
+
+    /// Password for the wallet
+    #[clap(long, default_value_t = String::from(""), env = "RUSK_WALLET_PWD")]
+    pub password: String,
+
+    /// Hash of the password for the wallet [default: ``]
+    #[clap(short, long, default_value_t = String::from(""))]
+    pub pwd_hash: String,
+
+    /// Gas limit [default: `500000000`]
+    #[clap(long, default_value_t = 500000000)]
+    pub gas_limit: u64,
+
+    /// Gas price [default: `1`]
+    #[clap(long, default_value_t = 1)]
+    pub gas_price: u64,
 }

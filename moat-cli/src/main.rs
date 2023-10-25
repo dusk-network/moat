@@ -4,24 +4,61 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+#![feature(stmt_expr_attributes)]
+
 mod args;
+mod command;
 mod interactive;
 mod menu;
-mod command;
 
 use crate::args::Args;
-use crate::menu::Menu;
 use crate::command::Command;
+use crate::menu::Menu;
 
 use clap::Parser;
 
+use dusk_wallet::WalletPath;
+use moat_core::{JsonLoader, RequestJson};
+use rand::SeedableRng;
 use std::error::Error;
+use toml_base_config::BaseConfig;
+use wallet_accessor::BlockchainAccessConfig;
+use wallet_accessor::Password::{Pwd, PwdHash};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let cli = Args::parse();
-    let _json_path = cli.json_path.as_path();
-    interactive::run_loop().await?;
+
+    let json_path = cli.json_path.as_path();
+    let config_path = cli.config_path.as_path();
+    let wallet_path = cli.wallet_path.as_path();
+    let password = cli.password;
+    let pwd_hash = cli.pwd_hash;
+    let gas_limit = cli.gas_limit;
+    let gas_price = cli.gas_price;
+
+    let request_json: RequestJson = RequestJson::from_file(json_path)?;
+    let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
+    let blockchain_access_config =
+        BlockchainAccessConfig::load_path(config_path)?;
+    let psw = if pwd_hash.is_empty() {
+        Pwd(password)
+    } else {
+        PwdHash(pwd_hash)
+    };
+
+    interactive::run_loop(
+        &wallet_path,
+        &psw,
+        &blockchain_access_config,
+        gas_limit,
+        gas_price,
+        Some(request_json),
+    )
+    .await?;
+
+    #[rustfmt::skip]
+    // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-cli/request.json
 
     Ok(())
 }
