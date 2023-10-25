@@ -4,9 +4,22 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+mod args;
+mod interactive;
+mod menu;
+
+use crate::args::Args;
+use crate::menu::Menu;
+
+use clap::Parser;
+
 use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let cli = Args::parse();
+    let _json_path = cli.json_path.as_path();
+    interactive::run_loop().await?;
+
     Ok(())
 }
