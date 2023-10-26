@@ -67,15 +67,21 @@ impl Command {
                 println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
             }
             Command::ListRequests { dummy: true } => {
-                println!("got here - listing requests");
-                const LAST_N_BLOCKS: usize = 20000; // todo: temporary poc code
-                let requests = RequestScanner::scan_last_blocks(
-                    LAST_N_BLOCKS,
-                    blockchain_access_config,
-                )
-                .await?;
-                println!("scanned last {} blocks for requests, num requests found={}", LAST_N_BLOCKS, requests.len());
-                for request in requests.iter() {
+                let mut found_requests = vec![];
+                let mut height = 0;
+                loop {
+                    let height_end = height + 10000;
+                    let (requests, top) =
+                        RequestScanner::scan_block_range(height.clone(), height_end.clone(), &blockchain_access_config).await?;
+                    found_requests.extend(requests);
+                    if top <= height_end {
+                        height = top;
+                        break;
+                    }
+                    height = height_end;
+                }
+                println!("scanned {} blocks, found {} requests", height, found_requests.len());
+                for request in found_requests.iter() {
                     use dusk_bytes::Serializable;
                     use group::GroupEncoding;
                     println!(
