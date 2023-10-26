@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::error::CliError;
 use crate::{Command, Menu};
 use dusk_wallet::WalletPath;
 use moat_core::RequestJson;
@@ -48,30 +49,33 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     })
 }
 
-pub async fn run_loop(
-    wallet_path: &WalletPath,
-    psw: &Password,
-    blockchain_access_config: &BlockchainAccessConfig,
-    gas_limit: u64,
-    gas_price: u64,
-    request_json: Option<RequestJson>,
-) -> Result<(), moat_core::Error> {
-    // todo: error type
-    loop {
-        let request_json = request_json.clone(); // todo: introduce object with state here
-        let op = menu_operation().map_err(|_| moat_core::Error::Rkyv)?; // todo: change the bogus error here
-        match op {
-            OpSelection::Exit => return Ok(()),
-            OpSelection::Run(bx) => {
-                bx.run(
-                    wallet_path,
-                    psw,
-                    blockchain_access_config,
-                    gas_limit.clone(),
-                    gas_price.clone(),
-                    request_json,
-                )
-                .await?
+pub struct Interactor {
+    pub wallet_path: WalletPath,
+    pub psw: Password,
+    pub blockchain_access_config: BlockchainAccessConfig,
+    pub gas_limit: u64,
+    pub gas_price: u64,
+    pub request_json: Option<RequestJson>,
+}
+
+impl Interactor {
+    pub async fn run_loop(&self) -> Result<(), CliError> {
+        loop {
+            let op = menu_operation()?;
+            match op {
+                OpSelection::Exit => return Ok(()),
+                OpSelection::Run(command) => {
+                    command
+                        .run(
+                            &self.wallet_path,
+                            &self.psw,
+                            &self.blockchain_access_config,
+                            self.gas_limit,
+                            self.gas_price,
+                            self.request_json.clone(),
+                        )
+                        .await?
+                }
             }
         }
     }

@@ -8,7 +8,8 @@
 
 mod args;
 mod command;
-mod interactive;
+mod error;
+mod interactor;
 mod menu;
 
 use crate::args::Args;
@@ -17,16 +18,17 @@ use crate::menu::Menu;
 
 use clap::Parser;
 
+use crate::error::CliError;
+use crate::interactor::Interactor;
 use dusk_wallet::WalletPath;
 use moat_core::{JsonLoader, RequestJson};
 use rand::SeedableRng;
-use std::error::Error;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), CliError> {
     let cli = Args::parse();
 
     let json_path = cli.json_path.as_path();
@@ -47,15 +49,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
         PwdHash(pwd_hash)
     };
 
-    interactive::run_loop(
-        &wallet_path,
-        &psw,
-        &blockchain_access_config,
+    let interactor = Interactor {
+        wallet_path,
+        psw,
+        blockchain_access_config,
         gas_limit,
         gas_price,
-        Some(request_json),
-    )
-    .await?;
+        request_json: Some(request_json),
+    };
+
+    interactor.run_loop().await?;
 
     #[rustfmt::skip]
     // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-cli/request.json
