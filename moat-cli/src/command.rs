@@ -6,7 +6,10 @@
 
 use crate::SeedableRng;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{Error, RequestCreator, RequestJson, RequestSender, TxAwaiter};
+use moat_core::{
+    Error, RequestCreator, RequestJson, RequestScanner, RequestSender,
+    TxAwaiter,
+};
 use rand::rngs::StdRng;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 
@@ -63,7 +66,25 @@ impl Command {
                 TxAwaiter::wait_for(&client, tx_id).await?;
                 println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
             }
-            Command::ListRequests { dummy: true } => (),
+            Command::ListRequests { dummy: true } => {
+                println!("got here - listing requests");
+                const LAST_N_BLOCKS: usize = 20000; // todo: temporary poc code
+                let requests = RequestScanner::scan_last_blocks(
+                    LAST_N_BLOCKS,
+                    blockchain_access_config,
+                )
+                .await?;
+                println!("scanned last {} blocks for requests, num requests found={}", LAST_N_BLOCKS, requests.len());
+                for request in requests.iter() {
+                    use dusk_bytes::Serializable;
+                    use group::GroupEncoding;
+                    println!(
+                        "found request rsa={} {}",
+                        hex::encode(request.rsa.R().to_bytes()),
+                        hex::encode(request.rsa.pk_r().to_bytes())
+                    );
+                }
+            }
             _ => (),
         }
         Ok(())

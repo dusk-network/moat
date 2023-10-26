@@ -47,7 +47,7 @@ pub struct Block {
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct QueryResult {
     #[serde(alias = "blockTxs", default)]
-    pub block_txs: Vec<Tx>,
+    pub block_txs: Vec<SpentTx>,
 }
 
 // {"block":{"header":{"height":77065}}}
