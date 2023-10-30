@@ -19,9 +19,13 @@ pub struct Args {
     #[clap(short, long)]
     pub wallet_path: PathBuf,
 
-    /// Config directory
+    /// Blockchain access config directory
     #[clap(short, long)]
     pub config_path: PathBuf,
+
+    /// LP Config directory
+    #[clap(short, long)]
+    pub lp_config_path: PathBuf,
 
     /// Password for the wallet
     #[clap(long, default_value_t = String::from(""), env = "RUSK_WALLET_PWD")]

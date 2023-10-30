@@ -29,6 +29,7 @@ impl RequestScanner {
         requests
     }
 
+    /// Returns requests related to notes from a given list of note hashes.
     pub fn scan_transactions_related_to_notes(
         txs: Transactions,
         note_hashes: &[BlsScalar],
@@ -83,6 +84,7 @@ impl RequestScanner {
         Ok((requests, top))
     }
 
+    /// Scans requests related to notes from a given list of note hashes.
     pub async fn scan_related_to_notes_in_block_range(
         height_beg: u64,
         height_end: u64,

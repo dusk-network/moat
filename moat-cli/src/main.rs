@@ -15,6 +15,7 @@ mod menu;
 use crate::args::Args;
 use crate::command::Command;
 use crate::menu::Menu;
+use std::path::PathBuf;
 
 use clap::Parser;
 
@@ -33,6 +34,7 @@ async fn main() -> Result<(), CliError> {
 
     let json_path = cli.json_path.as_path();
     let config_path = cli.config_path.as_path();
+    let lp_config_path = PathBuf::from(cli.lp_config_path.as_path());
     let wallet_path = cli.wallet_path.as_path();
     let password = cli.password;
     let pwd_hash = cli.pwd_hash;
@@ -53,6 +55,7 @@ async fn main() -> Result<(), CliError> {
         wallet_path,
         psw,
         blockchain_access_config,
+        lp_config_path,
         gas_limit,
         gas_price,
         request_json: Some(request_json),
@@ -61,7 +64,7 @@ async fn main() -> Result<(), CliError> {
     interactor.run_loop().await?;
 
     #[rustfmt::skip]
-    // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-cli/request.json
+    // cargo r --release --bin moat-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli/config.toml --lp-config-path ./moat-cli/lp.json --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-cli/request.json
 
     Ok(())
 }

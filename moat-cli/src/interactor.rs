@@ -9,6 +9,7 @@ use crate::{Command, Menu};
 use dusk_wallet::WalletPath;
 use moat_core::RequestJson;
 use requestty::{ErrorKind, Question};
+use std::path::PathBuf;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
@@ -20,14 +21,16 @@ enum OpSelection {
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 enum CommandMenuItem {
     SubmitRequest,
-    ListRequests,
+    ListRequestsUser,
+    ListRequestsLP,
     Exit,
 }
 
 fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd_menu = Menu::new()
         .add(CommandMenuItem::SubmitRequest, "Submit Request")
-        .add(CommandMenuItem::ListRequests, "List Requests")
+        .add(CommandMenuItem::ListRequestsUser, "List Requests (User)")
+        .add(CommandMenuItem::ListRequestsLP, "List Requests (LP)")
         .separator()
         .add(CommandMenuItem::Exit, "Exit");
 
@@ -42,8 +45,13 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::SubmitRequest => {
             OpSelection::Run(Box::from(Command::SubmitRequest { dummy: true }))
         }
-        CommandMenuItem::ListRequests => {
-            OpSelection::Run(Box::from(Command::ListRequests { dummy: true }))
+        CommandMenuItem::ListRequestsUser => {
+            OpSelection::Run(Box::from(Command::ListRequestsUser {
+                dummy: true,
+            }))
+        }
+        CommandMenuItem::ListRequestsLP => {
+            OpSelection::Run(Box::from(Command::ListRequestsLP { dummy: true }))
         }
         CommandMenuItem::Exit => OpSelection::Exit,
     })
@@ -53,6 +61,7 @@ pub struct Interactor {
     pub wallet_path: WalletPath,
     pub psw: Password,
     pub blockchain_access_config: BlockchainAccessConfig,
+    pub lp_config_path: PathBuf,
     pub gas_limit: u64,
     pub gas_price: u64,
     pub request_json: Option<RequestJson>,
@@ -70,6 +79,7 @@ impl Interactor {
                             &self.wallet_path,
                             &self.psw,
                             &self.blockchain_access_config,
+                            &self.lp_config_path,
                             self.gas_limit,
                             self.gas_price,
                             self.request_json.clone(),

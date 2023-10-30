@@ -8,11 +8,13 @@ use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
 use dusk_wallet::{RuskHttpClient, WalletPath};
+use license_provider::ReferenceLP;
 use moat_core::{
     Error, RequestCreator, RequestJson, RequestScanner, RequestSender,
     TxAwaiter,
 };
 use rand::rngs::StdRng;
+use std::path::Path;
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 /// Commands that can be run against the Moat
@@ -20,16 +22,20 @@ use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 pub(crate) enum Command {
     /// Submit request
     SubmitRequest { dummy: bool },
-    /// List requests
-    ListRequests { dummy: bool },
+    /// List requests (User)
+    ListRequestsUser { dummy: bool },
+    /// List requests (LP)
+    ListRequestsLP { dummy: bool },
 }
 
 impl Command {
+    #[allow(clippy::too_many_arguments)]
     pub async fn run(
         self,
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
+        lp_config: &Path,
         gas_limit: u64,
         gas_price: u64,
         request_json: Option<RequestJson>,
@@ -68,7 +74,7 @@ impl Command {
                 TxAwaiter::wait_for(&client, tx_id).await?;
                 println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
             }
-            Command::ListRequests { dummy: true } => {
+            Command::ListRequestsUser { dummy: true } => {
                 let wallet_accessor =
                     WalletAccessor::new(wallet_path.clone(), psw.clone());
                 let note_hashes: Vec<BlsScalar> = wallet_accessor
@@ -85,12 +91,12 @@ impl Command {
                     let height_end = height + 10000;
                     let (requests, top) =
                         RequestScanner::scan_related_to_notes_in_block_range(
-                        height,
-                        height_end,
-                        blockchain_access_config,
+                            height,
+                            height_end,
+                            blockchain_access_config,
                             &note_hashes,
-                    )
-                    .await?;
+                        )
+                        .await?;
                     found_requests.extend(requests);
                     if top <= height_end {
                         height = top;
@@ -106,7 +112,24 @@ impl Command {
                 for request in found_requests.iter() {
                     use group::GroupEncoding;
                     println!(
-                        "found request rsa={} {}",
+                        "found request rsa={}-{}",
+                        hex::encode(request.rsa.R().to_bytes()),
+                        hex::encode(request.rsa.pk_r().to_bytes())
+                    );
+                }
+            }
+            Command::ListRequestsLP { dummy: true } => {
+                let mut reference_lp = ReferenceLP::create(lp_config)?;
+                let (total_count, this_lp_count) =
+                    reference_lp.scan(blockchain_access_config).await?;
+                println!(
+                    "found {} requests total, {} requests for this LP ",
+                    total_count, this_lp_count
+                );
+                for request in reference_lp.requests_to_process.iter() {
+                    use group::GroupEncoding;
+                    println!(
+                        "request to process by LP: rsa={}-{}",
                         hex::encode(request.rsa.R().to_bytes()),
                         hex::encode(request.rsa.pk_r().to_bytes())
                     );
