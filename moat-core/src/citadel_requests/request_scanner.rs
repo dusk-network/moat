@@ -29,15 +29,18 @@ impl RequestScanner {
         requests
     }
 
+    /// Returns requests related to notes from a given list of note hashes.
     pub fn scan_transactions_related_to_notes(
         txs: Transactions,
         note_hashes: &[BlsScalar],
-    ) -> Vec<Request> {
+    ) -> (usize, Vec<Request>) {
         let mut requests = Vec::new();
+        let mut total_count = 0usize;
         for tx in &txs.transactions {
             if let Ok(request) =
                 PayloadExtractor::payload_from_tx::<Request>(tx)
             {
+                total_count += 1;
                 let tx_raw = hex::decode(&tx.raw)
                     .expect("Decoding raw transaction should succeed");
                 let ph_tx = Transaction::from_slice(&tx_raw)
@@ -54,7 +57,7 @@ impl RequestScanner {
                 }
             }
         }
-        requests
+        (total_count, requests)
     }
 
     /// Returns collection of requests found withing n last blocks
@@ -83,20 +86,22 @@ impl RequestScanner {
         Ok((requests, top))
     }
 
+    /// Scans requests related to notes from a given list of note hashes.
     pub async fn scan_related_to_notes_in_block_range(
         height_beg: u64,
         height_end: u64,
         cfg: &BlockchainAccessConfig,
         note_hashes: &[BlsScalar],
-    ) -> Result<(Vec<Request>, u64), Error> {
+    ) -> Result<(Vec<Request>, u64, usize), Error> {
         let client = RuskHttpClient::new(cfg.rusk_address.clone());
         let (txs, top) =
             TxInquirer::txs_from_block_range(&client, height_beg, height_end)
                 .await?;
-        let requests = RequestScanner::scan_transactions_related_to_notes(
-            txs,
-            note_hashes,
-        );
-        Ok((requests, top))
+        let (total, requests) =
+            RequestScanner::scan_transactions_related_to_notes(
+                txs,
+                note_hashes,
+            );
+        Ok((requests, top, total))
     }
 }

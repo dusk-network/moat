@@ -199,8 +199,8 @@ async fn show_state(
 /// It searches in a reverse order to return a newest license.
 fn find_owned_license(
     ssk_user: SecretSpendKey,
-    stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
-        + std::marker::Unpin,
+    stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+              + std::marker::Unpin),
 ) -> Result<(u64, License), Error> {
     const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
     let (pos, lic_ser) = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
@@ -332,10 +332,10 @@ async fn user_round_trip() -> Result<(), Error> {
         "calling get_licenses with range {:?} (as a user)",
         block_heights
     );
-    let licenses_stream =
+    let mut licenses_stream =
         CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-    let (pos, license) = find_owned_license(ssk_user, licenses_stream)
+    let (pos, license) = find_owned_license(ssk_user, &mut licenses_stream)
         .expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening

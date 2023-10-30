@@ -72,9 +72,10 @@ impl ReferenceLP {
                     .await?;
             total += requests.len();
             let owned_requests = self.retain_owned_requests(requests);
-            total_owned += owned_requests.len();
             for owned_request in owned_requests {
-                self.insert_request(owned_request);
+                if self.insert_request(owned_request) {
+                    total_owned += 1;
+                }
             }
             if top <= height_end {
                 return Ok((total, total_owned));
@@ -96,9 +97,10 @@ impl ReferenceLP {
         let requests = RequestScanner::scan_last_blocks(n, cfg).await?;
         total += requests.len();
         let owned_requests = self.retain_owned_requests(requests);
-        total_owned += owned_requests.len();
         for owned_request in owned_requests {
-            self.insert_request(owned_request);
+            if self.insert_request(owned_request) {
+                total_owned += 1;
+            }
         }
         Ok((total, total_owned))
     }
@@ -117,15 +119,17 @@ impl ReferenceLP {
         self.vk_lp.owns(&request.rsa)
     }
 
-    fn insert_request(&mut self, request: Request) {
+    fn insert_request(&mut self, request: Request) -> bool {
         let hash = Self::hash_request(&request);
         if self.requests_hashes.insert(hash) {
             self.requests_to_process.push(request);
+            true
+        } else {
+            false
         }
     }
 
-    #[allow(dead_code)]
-    fn take_request(&mut self) -> Option<Request> {
+    pub fn take_request(&mut self) -> Option<Request> {
         self.requests_to_process.pop().map(|request| {
             self.requests_hashes.remove(&Self::hash_request(&request));
             request

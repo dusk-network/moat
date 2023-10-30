@@ -7,7 +7,10 @@ edition = "2021"
 dusk-wallet = "0.20.0-rc.0"
 wallet-accessor = { path = "../wallet-accessor" }
 moat-core = { path = "../moat-core" }
+license-provider = { path = "../license-provider" }
 zk-citadel = "0.5"
+dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
+rkyv = { version = "=0.7.39" }
 dusk-pki = "0.13"
 dusk-bls12_381 = "0.12"
 toml-base-config = "0.1"
@@ -20,3 +23,8 @@ requestty = "0.4.1"
 hex = "0.4"
 dusk-bytes = "0.1"
 group = "0.13"
+bytes = "1.4"
+futures-core = "0.3"
+reqwest = "0.11"
+bytecheck = "0.6"
+sha3 = "0.10"
