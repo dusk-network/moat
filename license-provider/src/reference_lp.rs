@@ -124,8 +124,7 @@ impl ReferenceLP {
         }
     }
 
-    #[allow(dead_code)]
-    fn take_request(&mut self) -> Option<Request> {
+    pub fn take_request(&mut self) -> Option<Request> {
         self.requests_to_process.pop().map(|request| {
             self.requests_hashes.remove(&Self::hash_request(&request));
             request

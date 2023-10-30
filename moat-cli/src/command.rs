@@ -8,7 +8,8 @@ use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use license_provider::ReferenceLP;
+use group::GroupEncoding;
+use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{
     Error, RequestCreator, RequestJson, RequestScanner, RequestSender,
     TxAwaiter,
@@ -26,6 +27,8 @@ pub(crate) enum Command {
     ListRequestsUser { dummy: bool },
     /// List requests (LP)
     ListRequestsLP { lp_config_path: Option<PathBuf> },
+    /// Issue license (LP)
+    IssueLicenseLP { lp_config_path: Option<PathBuf> },
 }
 
 impl Command {
@@ -119,9 +122,8 @@ impl Command {
                     height, all_found_requests,
                 );
                 for request in found_requests.iter() {
-                    use group::GroupEncoding;
                     println!(
-                        "found request rsa={}-{}",
+                        "request: rsa={}-{}",
                         hex::encode(request.rsa.R().to_bytes()),
                         hex::encode(request.rsa.pk_r().to_bytes())
                     );
@@ -141,13 +143,50 @@ impl Command {
                     total_count, this_lp_count
                 );
                 for request in reference_lp.requests_to_process.iter() {
-                    use group::GroupEncoding;
                     println!(
                         "request to process by LP: rsa={}-{}",
                         hex::encode(request.rsa.R().to_bytes()),
                         hex::encode(request.rsa.pk_r().to_bytes())
                     );
                 }
+            }
+            Command::IssueLicenseLP { lp_config_path } => {
+                let mut rng = StdRng::seed_from_u64(0xbeef);
+                println!("obtained LP config path={:?}", lp_config_path);
+                let lp_config_path = match lp_config_path {
+                    Some(lp_config_path) => lp_config_path,
+                    _ => PathBuf::from(lp_config),
+                };
+                let mut reference_lp = ReferenceLP::create(lp_config_path)?;
+                let (total_count, this_lp_count) =
+                    reference_lp.scan(blockchain_access_config).await?;
+                println!(
+                    "found {} requests total, {} requests for this LP ",
+                    total_count, this_lp_count
+                );
+                let request =
+                    reference_lp.take_request().expect("at least one request");
+
+                let license_issuer = LicenseIssuer::new(
+                    blockchain_access_config.clone(),
+                    wallet_path.clone(),
+                    psw.clone(),
+                    gas_limit,
+                    gas_price,
+                );
+
+                println!(
+                    "issuing license for request: {}-{}",
+                    hex::encode(request.rsa.R().to_bytes()),
+                    hex::encode(request.rsa.pk_r().to_bytes())
+                );
+                let tx_id = license_issuer
+                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
+                    .await?;
+                println!(
+                    "license issuing transaction {} submitted and confirmed",
+                    hex::encode(tx_id.to_bytes())
+                );
             }
             _ => (),
         }
