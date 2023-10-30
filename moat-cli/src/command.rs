@@ -14,7 +14,7 @@ use moat_core::{
     TxAwaiter,
 };
 use rand::rngs::StdRng;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 /// Commands that can be run against the Moat
@@ -25,7 +25,7 @@ pub(crate) enum Command {
     /// List requests (User)
     ListRequestsUser { dummy: bool },
     /// List requests (LP)
-    ListRequestsLP { dummy: bool },
+    ListRequestsLP { lp_config_path: Option<PathBuf> },
 }
 
 impl Command {
@@ -127,8 +127,13 @@ impl Command {
                     );
                 }
             }
-            Command::ListRequestsLP { dummy: true } => {
-                let mut reference_lp = ReferenceLP::create(lp_config)?;
+            Command::ListRequestsLP { lp_config_path } => {
+                println!("obtained LP config path={:?}", lp_config_path);
+                let lp_config_path = match lp_config_path {
+                    Some(lp_config_path) => lp_config_path,
+                    _ => PathBuf::from(lp_config),
+                };
+                let mut reference_lp = ReferenceLP::create(lp_config_path)?;
                 let (total_count, this_lp_count) =
                     reference_lp.scan(blockchain_access_config).await?;
                 println!(

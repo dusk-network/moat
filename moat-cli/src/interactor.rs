@@ -54,7 +54,11 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             }))
         }
         CommandMenuItem::ListRequestsLP => {
-            OpSelection::Run(Box::from(Command::ListRequestsLP { dummy: true }))
+            OpSelection::Run(Box::from(Command::ListRequestsLP {
+                lp_config_path: prompt::request_pathbuf(
+                    "LP config (e.g. moat-cli/lp2.json)",
+                )?,
+            }))
         }
         CommandMenuItem::Exit => OpSelection::Exit,
     })
