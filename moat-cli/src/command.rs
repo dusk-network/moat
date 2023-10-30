@@ -21,7 +21,7 @@ use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
     /// Submit request
-    SubmitRequest { dummy: bool },
+    SubmitRequest { provider_psk: String },
     /// List requests (User)
     ListRequestsUser { dummy: bool },
     /// List requests (LP)
@@ -41,7 +41,7 @@ impl Command {
         request_json: Option<RequestJson>,
     ) -> Result<(), Error> {
         match self {
-            Command::SubmitRequest { dummy: true } => {
+            Command::SubmitRequest { provider_psk } => {
                 let request_json =
                     request_json.expect("request should be provided"); // todo
                                                                        // todo - this request creation belongs somewhere else because
@@ -49,12 +49,21 @@ impl Command {
                                                                        // also want to create request on the fly, from data provided by
                                                                        // user interactively
                 let rng = &mut StdRng::seed_from_u64(0xcafe);
+                println!("obtained provider psk={}", provider_psk);
+                let provider_psk_str = if provider_psk.is_empty() {
+                    request_json.provider_psk
+                } else {
+                    provider_psk
+                };
                 let request = RequestCreator::create_from_hex_args(
                     request_json.user_ssk,
-                    request_json.provider_psk,
+                    provider_psk_str.clone(),
                     rng,
                 )?;
-                println!("submitting request");
+                println!(
+                    "submitting request to provider psk: {}",
+                    provider_psk_str
+                );
                 let tx_id = RequestSender::send_request(
                     request,
                     blockchain_access_config,

@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::CliError;
+use crate::prompt;
 use crate::{Command, Menu};
 use dusk_wallet::WalletPath;
 use moat_core::RequestJson;
@@ -43,7 +44,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd = cmd_menu.answer(&answer).to_owned();
     Ok(match cmd {
         CommandMenuItem::SubmitRequest => {
-            OpSelection::Run(Box::from(Command::SubmitRequest { dummy: true }))
+            OpSelection::Run(Box::from(Command::SubmitRequest {
+                provider_psk: prompt::request_provider_psk()?,
+            }))
         }
         CommandMenuItem::ListRequestsUser => {
             OpSelection::Run(Box::from(Command::ListRequestsUser {

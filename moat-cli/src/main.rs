@@ -11,6 +11,7 @@ mod command;
 mod error;
 mod interactor;
 mod menu;
+mod prompt;
 
 use crate::args::Args;
 use crate::command::Command;
