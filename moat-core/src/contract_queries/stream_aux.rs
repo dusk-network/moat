@@ -21,8 +21,8 @@ impl StreamAux {
     /// returns error if no such item was found
     pub fn find_item<R, const L: usize>(
         filter: impl Fn(&R) -> Result<bool, Error>,
-        mut stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
-            + std::marker::Unpin,
+        stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+                  + std::marker::Unpin),
     ) -> Result<R, Error>
     where
         R: Archive,

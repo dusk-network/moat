@@ -55,20 +55,28 @@ fn deserialise_license(v: &Vec<u8>) -> License {
 // todo: move this function somewhere else
 /// Finds owned license in a stream of licenses.
 /// It searches in a reverse order to return a newest license.
-fn find_owned_license(
+fn find_owned_licenses(
     ssk_user: SecretSpendKey,
-    stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
-        + std::marker::Unpin,
-) -> Result<(u64, License), Error> {
+    stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+              + std::marker::Unpin),
+) -> Result<Vec<(u64, License)>, Error> {
     const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
-    let (pos, lic_ser) = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
-        |(_, lic_vec)| {
-            let license = deserialise_license(lic_vec);
-            Ok(ssk_user.view_key().owns(&license.lsa))
-        },
-        stream,
-    )?;
-    Ok((pos, deserialise_license(&lic_ser)))
+    let mut pairs = vec![];
+    loop {
+        let r = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
+            |(_, lic_vec)| {
+                let license = deserialise_license(lic_vec);
+                Ok(ssk_user.view_key().owns(&license.lsa))
+            },
+            stream,
+        );
+        if r.is_err() {
+            break;
+        }
+        let (pos, lic_ser) = r?;
+        pairs.push((pos, deserialise_license(&lic_ser)))
+    }
+    Ok(pairs)
 }
 
 impl Command {
@@ -243,7 +251,7 @@ impl Command {
                 let block_heights = start_height..(end_height + 1);
 
                 println!("calling get_licenses with range {:?}", block_heights);
-                let licenses_stream =
+                let mut licenses_stream =
                     CitadelInquirer::get_licenses(&client, block_heights)
                         .await?;
 
@@ -256,16 +264,18 @@ impl Command {
                     .as_slice(),
                 )?;
 
-                let result = find_owned_license(ssk_user, licenses_stream);
-                if result.is_ok() {
-                    let (_, license) = result.unwrap();
-                    println!(
-                        "found license: {}-{}",
-                        hex::encode(license.lsa.R().to_bytes()),
-                        hex::encode(license.lsa.pk_r().to_bytes())
-                    )
-                } else {
+                let result =
+                    find_owned_licenses(ssk_user, &mut licenses_stream)?;
+                if result.is_empty() {
                     println!("license not found: {:?}", result);
+                } else {
+                    for (_, license) in result {
+                        println!(
+                            "license: {}-{}",
+                            hex::encode(license.lsa.R().to_bytes()),
+                            hex::encode(license.lsa.pk_r().to_bytes())
+                        )
+                    }
                 }
             }
             _ => (),
