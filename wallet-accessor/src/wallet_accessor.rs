@@ -8,7 +8,7 @@ use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use crate::BlockchainAccessConfig;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::gas::Gas;
-use dusk_wallet::{SecureWalletFile, Wallet, WalletPath};
+use dusk_wallet::{DecodedNote, SecureWalletFile, Wallet, WalletPath};
 use dusk_wallet_core::MAX_CALL_SIZE;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
@@ -58,6 +58,27 @@ impl WalletAccessor {
         }
     }
 
+    async fn get_wallet(
+        &self,
+        cfg: &BlockchainAccessConfig,
+    ) -> Result<Wallet<WalletAccessor>, dusk_wallet::Error> {
+        let wallet_accessor =
+            WalletAccessor::new(self.path.clone(), self.pwd.clone());
+        let mut wallet = Wallet::from_file(wallet_accessor)?;
+        wallet
+            .connect_with_status(
+                cfg.rusk_address.clone(),
+                cfg.prover_address.clone(),
+                |s| {
+                    debug!(target: "wallet", "{s}",);
+                },
+            )
+            .await?;
+        wallet.sync().await?;
+        assert!(wallet.is_online().await, "Wallet should be online");
+        Ok(wallet)
+    }
+
     /// submits a transaction which will execute a given method
     /// of a given contract
     pub async fn execute_contract_method<C>(
@@ -72,21 +93,7 @@ impl WalletAccessor {
     where
         C: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
     {
-        let wallet_accessor =
-            WalletAccessor::new(self.path.clone(), self.pwd.clone());
-        let mut wallet = Wallet::from_file(wallet_accessor)?;
-        wallet
-            .connect_with_status(
-                cfg.rusk_address.clone(),
-                cfg.prover_address.clone(),
-                |s| {
-                    debug!(target: "wallet", "{s}",);
-                },
-            )
-            .await?;
-        wallet.sync().await?;
-
-        assert!(wallet.is_online().await, "Wallet should be online");
+        let wallet = self.get_wallet(cfg).await?;
 
         debug!(
             "Sending tx with a call to method '{}' of contract='{}'",
@@ -103,5 +110,14 @@ impl WalletAccessor {
             .await?;
         let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
         Ok(tx_id)
+    }
+
+    /// provides hashes of all notes belonging to the default address
+    pub async fn get_notes(
+        &self,
+        cfg: &BlockchainAccessConfig,
+    ) -> Result<Vec<DecodedNote>, dusk_wallet::Error> {
+        let wallet = self.get_wallet(cfg).await?;
+        wallet.get_all_notes(wallet.default_address()).await
     }
 }

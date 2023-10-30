@@ -5,13 +5,15 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::SeedableRng;
+use dusk_bls12_381::BlsScalar;
+use dusk_bytes::Serializable;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{
     Error, RequestCreator, RequestJson, RequestScanner, RequestSender,
     TxAwaiter,
 };
 use rand::rngs::StdRng;
-use wallet_accessor::{BlockchainAccessConfig, Password};
+use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -67,14 +69,26 @@ impl Command {
                 println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
             }
             Command::ListRequests { dummy: true } => {
+                let wallet_accessor =
+                    WalletAccessor::new(wallet_path.clone(), psw.clone());
+                let note_hashes: Vec<BlsScalar> = wallet_accessor
+                    .get_notes(blockchain_access_config)
+                    .await?
+                    .iter()
+                    .flat_map(|n| n.nullified_by)
+                    .collect();
+                println!("current address has {} notes", note_hashes.len());
+
                 let mut found_requests = vec![];
                 let mut height = 0;
                 loop {
                     let height_end = height + 10000;
-                    let (requests, top) = RequestScanner::scan_block_range(
+                    let (requests, top) =
+                        RequestScanner::scan_related_to_notes_in_block_range(
                         height,
                         height_end,
                         blockchain_access_config,
+                            &note_hashes,
                     )
                     .await?;
                     found_requests.extend(requests);
@@ -84,13 +98,12 @@ impl Command {
                     }
                     height = height_end;
                 }
+                let all_found_requests = found_requests.len();
                 println!(
                     "scanned {} blocks, found {} requests",
-                    height,
-                    found_requests.len()
+                    height, all_found_requests,
                 );
                 for request in found_requests.iter() {
-                    use dusk_bytes::Serializable;
                     use group::GroupEncoding;
                     println!(
                         "found request rsa={} {}",
