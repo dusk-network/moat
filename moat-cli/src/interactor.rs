@@ -25,15 +25,17 @@ enum CommandMenuItem {
     ListRequestsUser,
     ListRequestsLP,
     IssueLicenseLP,
+    ListLicenses,
     Exit,
 }
 
 fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd_menu = Menu::new()
-        .add(CommandMenuItem::SubmitRequest, "Submit Request")
+        .add(CommandMenuItem::SubmitRequest, "Submit Request (User)")
         .add(CommandMenuItem::ListRequestsUser, "List Requests (User)")
         .add(CommandMenuItem::ListRequestsLP, "List Requests (LP)")
         .add(CommandMenuItem::IssueLicenseLP, "Issue License (LP)")
+        .add(CommandMenuItem::ListLicenses, "List Licenses (User)")
         .separator()
         .add(CommandMenuItem::Exit, "Exit");
 
@@ -68,6 +70,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
                     "LP config (e.g. moat-cli/lp2.json)",
                 )?,
             }))
+        }
+        CommandMenuItem::ListLicenses => {
+            OpSelection::Run(Box::from(Command::ListLicenses { dummy: true }))
         }
         CommandMenuItem::Exit => OpSelection::Exit,
     })

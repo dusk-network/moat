@@ -5,18 +5,23 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::SeedableRng;
+use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::Serializable;
+use dusk_bytes::{DeserializableSlice, Serializable};
+use dusk_pki::SecretSpendKey;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use group::GroupEncoding;
 use license_provider::{LicenseIssuer, ReferenceLP};
+use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
-    Error, RequestCreator, RequestJson, RequestScanner, RequestSender,
-    TxAwaiter,
+    BcInquirer, CitadelInquirer, Error, RequestCreator, RequestJson,
+    RequestScanner, RequestSender, StreamAux, TxAwaiter,
 };
 use rand::rngs::StdRng;
+use rkyv::{check_archived_root, Deserialize, Infallible};
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
+use zk_citadel::license::License;
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -29,6 +34,41 @@ pub(crate) enum Command {
     ListRequestsLP { lp_config_path: Option<PathBuf> },
     /// Issue license (LP)
     IssueLicenseLP { lp_config_path: Option<PathBuf> },
+    /// List licenses (User)
+    ListLicenses { dummy: bool },
+}
+
+// todo: move this function somewhere else
+/// Deserializes license, panics if deserialization fails.
+fn deserialise_license(v: &Vec<u8>) -> License {
+    let response_data = check_archived_root::<License>(v.as_slice())
+        .map_err(|_| {
+            InvalidQueryResponse(Box::from("rkyv deserialization error"))
+        })
+        .expect("License should deserialize correctly");
+    let license: License = response_data
+        .deserialize(&mut Infallible)
+        .expect("Infallible");
+    license
+}
+
+// todo: move this function somewhere else
+/// Finds owned license in a stream of licenses.
+/// It searches in a reverse order to return a newest license.
+fn find_owned_license(
+    ssk_user: SecretSpendKey,
+    stream: impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+        + std::marker::Unpin,
+) -> Result<(u64, License), Error> {
+    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
+    let (pos, lic_ser) = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
+        |(_, lic_vec)| {
+            let license = deserialise_license(lic_vec);
+            Ok(ssk_user.view_key().owns(&license.lsa))
+        },
+        stream,
+    )?;
+    Ok((pos, deserialise_license(&lic_ser)))
 }
 
 impl Command {
@@ -187,6 +227,46 @@ impl Command {
                     "license issuing transaction {} submitted and confirmed",
                     hex::encode(tx_id.to_bytes())
                 );
+            }
+            Command::ListLicenses { dummy: true } => {
+                let client = RuskHttpClient::new(
+                    blockchain_access_config.rusk_address.clone(),
+                );
+                let end_height = BcInquirer::block_height(&client).await?;
+                println!("end_height={}", end_height);
+                const BLOCK_RANGE: u64 = 10000;
+                let start_height = if end_height > BLOCK_RANGE {
+                    end_height - BLOCK_RANGE
+                } else {
+                    0u64
+                };
+                let block_heights = start_height..(end_height + 1);
+
+                println!("calling get_licenses with range {:?}", block_heights);
+                let licenses_stream =
+                    CitadelInquirer::get_licenses(&client, block_heights)
+                        .await?;
+
+                let ssk_user = SecretSpendKey::from_slice(
+                    hex::decode(
+                        request_json
+                            .expect("request should be provided")
+                            .user_ssk,
+                    )?
+                    .as_slice(),
+                )?;
+
+                let result = find_owned_license(ssk_user, licenses_stream);
+                if result.is_ok() {
+                    let (_, license) = result.unwrap();
+                    println!(
+                        "found license: {}-{}",
+                        hex::encode(license.lsa.R().to_bytes()),
+                        hex::encode(license.lsa.pk_r().to_bytes())
+                    )
+                } else {
+                    println!("license not found: {:?}", result);
+                }
             }
             _ => (),
         }
