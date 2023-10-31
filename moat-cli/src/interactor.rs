@@ -27,6 +27,7 @@ enum CommandMenuItem {
     IssueLicenseLP,
     ListLicenses,
     UseLicense,
+    GetSession,
     ShowState,
     Exit,
 }
@@ -39,6 +40,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         .add(CommandMenuItem::IssueLicenseLP, "Issue License (LP)")
         .add(CommandMenuItem::ListLicenses, "List Licenses")
         .add(CommandMenuItem::UseLicense, "Use License")
+        .add(CommandMenuItem::GetSession, "Get Session (SP)")
         .add(CommandMenuItem::ShowState, "Show state")
         .separator()
         .add(CommandMenuItem::Exit, "Exit");
@@ -80,6 +82,11 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         }
         CommandMenuItem::UseLicense => {
             OpSelection::Run(Box::from(Command::UseLicense { dummy: true }))
+        }
+        CommandMenuItem::GetSession => {
+            OpSelection::Run(Box::from(Command::GetSession {
+                session_id: prompt::request_session_id()?,
+            }))
         }
         CommandMenuItem::ShowState => {
             OpSelection::Run(Box::from(Command::ShowState { dummy: true }))

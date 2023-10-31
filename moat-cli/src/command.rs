@@ -16,9 +16,9 @@ use group::GroupEncoding;
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
-    BcInquirer, CitadelInquirer, Error, LicenseCircuit, PayloadSender,
-    RequestCreator, RequestJson, RequestScanner, RequestSender, StreamAux,
-    TxAwaiter, LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
+    BcInquirer, CitadelInquirer, Error, LicenseCircuit, LicenseSessionId,
+    PayloadSender, RequestCreator, RequestJson, RequestScanner, RequestSender,
+    StreamAux, TxAwaiter, LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
 };
 use rand::rngs::StdRng;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
@@ -41,6 +41,8 @@ pub(crate) enum Command {
     ListLicenses { dummy: bool },
     /// Use license (User)
     UseLicense { dummy: bool },
+    /// Get session (SP)
+    GetSession { session_id: String },
     /// Show state
     ShowState { dummy: bool },
 }
@@ -316,6 +318,29 @@ impl Command {
                         println!(
                             "No license available, please obtain a license"
                         );
+                    }
+                }
+                println!();
+            }
+            Command::GetSession { session_id } => {
+                let client = RuskHttpClient::new(
+                    blockchain_access_config.rusk_address.clone(),
+                );
+                let id = LicenseSessionId {
+                    id: BlsScalar::from_slice(
+                        hex::decode(session_id.clone())?.as_slice(),
+                    )?,
+                };
+                match CitadelInquirer::get_session(&client, id).await? {
+                    Some(session) => {
+                        println!("obtained session with id={}:", session_id);
+                        println!();
+                        for s in session.public_inputs.iter() {
+                            println!("{}", hex::encode(s.to_bytes()));
+                        }
+                    }
+                    _ => {
+                        println!("session not found");
                     }
                 }
                 println!();
