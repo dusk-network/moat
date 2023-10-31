@@ -365,13 +365,13 @@ impl Command {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let end_height = BcInquirer::block_height(&client).await?;
-        if ui {
-            println!("end_height={}", end_height);
-        }
         let block_heights = 0..(end_height + 1);
 
         if ui {
-            println!("calling get_licenses with range {:?}", block_heights);
+            println!(
+                "getting licenses within the block height range {:?}:",
+                block_heights
+            );
         }
         let mut licenses_stream =
             CitadelInquirer::get_licenses(&client, block_heights).await?;
@@ -389,7 +389,7 @@ impl Command {
         let pairs = find_owned_licenses(ssk_user, &mut licenses_stream)?;
         Ok(if pairs.is_empty() {
             if ui {
-                println!("license not found: {:?}", pairs);
+                println!("licenses not found");
             }
             None
         } else {
@@ -420,9 +420,9 @@ impl Command {
     ) -> Result<BlsScalar, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
-        let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
-        let challenge = JubJubScalar::from(num_sessions as u64 + 1);
-        // let challenge = JubJubScalar::from(0xcafebabeu64);
+        // let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
+        // let challenge = JubJubScalar::from(num_sessions as u64 + 1);
+        let challenge = JubJubScalar::from(0xcafebabeu64);
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         println!("performing setup");
