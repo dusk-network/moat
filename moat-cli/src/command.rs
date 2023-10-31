@@ -8,11 +8,10 @@ use crate::SeedableRng;
 use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::{DeserializableSlice, Serializable};
+use dusk_bytes::DeserializableSlice;
 use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use group::GroupEncoding;
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
@@ -22,7 +21,9 @@ use moat_core::{
     USE_LICENSE_METHOD_NAME,
 };
 use rand::rngs::StdRng;
+use rkyv::ser::serializers::AllocSerializer;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
+use sha3::{Digest, Sha3_256};
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 use zk_citadel::license::{CitadelProverParameters, License};
@@ -121,12 +122,13 @@ impl Command {
                     Some(request_path) => RequestJson::from_file(request_path)?,
                     _ => request_json.expect("request should be provided"),
                 };
-                let rng = &mut StdRng::seed_from_u64(0xcafe);
+                let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
                 let request = RequestCreator::create_from_hex_args(
                     request_json.user_ssk,
                     request_json.provider_psk.clone(),
                     rng,
                 )?;
+                let request_hash_hex = Self::to_hash_hex(&request);
                 println!(
                     "submitting request to provider psk: {}",
                     request_json.provider_psk
@@ -149,6 +151,7 @@ impl Command {
                 );
                 TxAwaiter::wait_for(&client, tx_id).await?;
                 println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
+                println!("request submitted: {}", request_hash_hex);
                 println!();
             }
             Command::ListRequestsUser { dummy: true } => {
@@ -189,16 +192,11 @@ impl Command {
                     height, total_requests, owned_requests,
                 );
                 for request in found_requests.iter() {
-                    println!(
-                        "request: rsa={}-{}",
-                        hex::encode(request.rsa.R().to_bytes()),
-                        hex::encode(request.rsa.pk_r().to_bytes())
-                    );
+                    println!("request: {}", Self::to_hash_hex(request));
                 }
                 println!();
             }
             Command::ListRequestsLP { lp_config_path } => {
-                println!("obtained LP config path={:?}", lp_config_path);
                 let lp_config_path = match lp_config_path {
                     Some(lp_config_path) => lp_config_path,
                     _ => PathBuf::from(lp_config),
@@ -212,27 +210,21 @@ impl Command {
                 );
                 for request in reference_lp.requests_to_process.iter() {
                     println!(
-                        "request to process by LP: rsa={}-{}",
-                        hex::encode(request.rsa.R().to_bytes()),
-                        hex::encode(request.rsa.pk_r().to_bytes())
+                        "request to process by LP: {}",
+                        Self::to_hash_hex(request)
                     );
                 }
                 println!();
             }
             Command::IssueLicenseLP { lp_config_path } => {
-                let mut rng = StdRng::seed_from_u64(0xbeef);
-                println!("obtained LP config path={:?}", lp_config_path);
+                let mut rng = StdRng::from_entropy(); // seed_from_u64(0xbeef);
                 let lp_config_path = match lp_config_path {
                     Some(lp_config_path) => lp_config_path,
                     _ => PathBuf::from(lp_config),
                 };
                 let mut reference_lp = ReferenceLP::create(lp_config_path)?;
-                let (total_count, this_lp_count) =
+                let (_total_count, _this_lp_count) =
                     reference_lp.scan(blockchain_access_config).await?;
-                println!(
-                    "found {} requests total, {} requests for this LP ",
-                    total_count, this_lp_count
-                );
                 let request =
                     reference_lp.take_request().expect("at least one request");
 
@@ -245,9 +237,8 @@ impl Command {
                 );
 
                 println!(
-                    "issuing license for request: {}-{}",
-                    hex::encode(request.rsa.R().to_bytes()),
-                    hex::encode(request.rsa.pk_r().to_bytes())
+                    "issuing license for request: {}",
+                    Self::to_hash_hex(&request)
                 );
                 let tx_id = license_issuer
                     .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
@@ -279,9 +270,8 @@ impl Command {
                 match pos_license {
                     Some((pos, license)) => {
                         println!(
-                            "using license: {}-{}",
-                            hex::encode(license.lsa.R().to_bytes()),
-                            hex::encode(license.lsa.pk_r().to_bytes())
+                            "using license: {}",
+                            Self::to_hash_hex(&license)
                         );
                         let ssk_user = SecretSpendKey::from_slice(
                             hex::decode(
@@ -395,11 +385,7 @@ impl Command {
         } else {
             if ui {
                 for (_, license) in pairs.iter() {
-                    println!(
-                        "license: {}-{}",
-                        hex::encode(license.lsa.R().to_bytes()),
-                        hex::encode(license.lsa.pk_r().to_bytes())
-                    )
+                    println!("license: {}", Self::to_hash_hex(license))
                 }
             }
             pairs.last().map(|(pos, license)| (*pos, license.clone()))
@@ -488,5 +474,18 @@ impl Command {
         TxAwaiter::wait_for(&client, tx_id).await?;
         println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
         Ok(session_id)
+    }
+
+    fn to_hash_hex<T>(object: &T) -> String
+    where
+        T: rkyv::Serialize<AllocSerializer<16386>>,
+    {
+        let blob = rkyv::to_bytes::<_, 16386>(object)
+            .expect("type should serialize correctly")
+            .to_vec();
+        let mut hasher = Sha3_256::new();
+        hasher.update(blob);
+        let result = hasher.finalize();
+        hex::encode(result)
     }
 }
