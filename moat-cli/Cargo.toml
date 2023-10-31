@@ -9,6 +9,7 @@ wallet-accessor = { path = "../wallet-accessor" }
 moat-core = { path = "../moat-core" }
 license-provider = { path = "../license-provider" }
 zk-citadel = "0.5"
+dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
 rkyv = { version = "=0.7.39" }
 dusk-pki = "0.13"
 dusk-bls12_381 = "0.12"
@@ -25,3 +26,4 @@ group = "0.13"
 bytes = "1.4"
 futures-core = "0.3"
 reqwest = "0.11"
+bytecheck = "0.6"

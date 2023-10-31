@@ -26,16 +26,18 @@ enum CommandMenuItem {
     ListRequestsLP,
     IssueLicenseLP,
     ListLicenses,
+    UseLicense,
     Exit,
 }
 
 fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd_menu = Menu::new()
-        .add(CommandMenuItem::SubmitRequest, "Submit Request (User)")
-        .add(CommandMenuItem::ListRequestsUser, "List Requests (User)")
+        .add(CommandMenuItem::SubmitRequest, "Submit Request")
+        .add(CommandMenuItem::ListRequestsUser, "List Requests")
         .add(CommandMenuItem::ListRequestsLP, "List Requests (LP)")
         .add(CommandMenuItem::IssueLicenseLP, "Issue License (LP)")
-        .add(CommandMenuItem::ListLicenses, "List Licenses (User)")
+        .add(CommandMenuItem::ListLicenses, "List Licenses")
+        .add(CommandMenuItem::UseLicense, "Use License")
         .separator()
         .add(CommandMenuItem::Exit, "Exit");
 
@@ -73,6 +75,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         }
         CommandMenuItem::ListLicenses => {
             OpSelection::Run(Box::from(Command::ListLicenses { dummy: true }))
+        }
+        CommandMenuItem::UseLicense => {
+            OpSelection::Run(Box::from(Command::UseLicense { dummy: true }))
         }
         CommandMenuItem::Exit => OpSelection::Exit,
     })
