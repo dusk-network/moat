@@ -168,9 +168,10 @@ impl Command {
 
                 let mut found_requests = vec![];
                 let mut height = 0;
+                let mut total_requests = 0usize;
                 loop {
                     let height_end = height + 10000;
-                    let (requests, top) =
+                    let (requests, top, total) =
                         RequestScanner::scan_related_to_notes_in_block_range(
                             height,
                             height_end,
@@ -179,16 +180,17 @@ impl Command {
                         )
                         .await?;
                     found_requests.extend(requests);
+                    total_requests += total;
                     if top <= height_end {
                         height = top;
                         break;
                     }
                     height = height_end;
                 }
-                let all_found_requests = found_requests.len();
+                let owned_requests = found_requests.len();
                 println!(
-                    "scanned {} blocks, found {} requests",
-                    height, all_found_requests,
+                    "scanned {} blocks, found {} requests, {} owned requests",
+                    height, total_requests, owned_requests,
                 );
                 for request in found_requests.iter() {
                     println!(
@@ -255,7 +257,7 @@ impl Command {
                     .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
                     .await?;
                 println!(
-                    "license issuing transaction {} submitted and confirmed",
+                    "license issuing transaction {} confirmed",
                     hex::encode(tx_id.to_bytes())
                 );
                 println!();
