@@ -55,7 +55,10 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     Ok(match cmd {
         CommandMenuItem::SubmitRequest => {
             OpSelection::Run(Box::from(Command::SubmitRequest {
-                provider_psk: prompt::request_provider_psk()?,
+                request_path: prompt::request_pathbuf(
+                    "request (e.g. moat-cli/request2.json)",
+                    "moat-cli/request2.json",
+                )?,
             }))
         }
         CommandMenuItem::ListRequestsUser => {
@@ -67,6 +70,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             OpSelection::Run(Box::from(Command::ListRequestsLP {
                 lp_config_path: prompt::request_pathbuf(
                     "LP config (e.g. moat-cli/lp2.json)",
+                    "moat-cli/lp2.json",
                 )?,
             }))
         }
@@ -74,6 +78,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             OpSelection::Run(Box::from(Command::IssueLicenseLP {
                 lp_config_path: prompt::request_pathbuf(
                     "LP config (e.g. moat-cli/lp2.json)",
+                    "moat-cli/lp2.json",
                 )?,
             }))
         }

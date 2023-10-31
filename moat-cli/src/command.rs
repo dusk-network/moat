@@ -16,9 +16,10 @@ use group::GroupEncoding;
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
-    BcInquirer, CitadelInquirer, Error, LicenseCircuit, LicenseSessionId,
-    PayloadSender, RequestCreator, RequestJson, RequestScanner, RequestSender,
-    StreamAux, TxAwaiter, LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
+    BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
+    LicenseSessionId, PayloadSender, RequestCreator, RequestJson,
+    RequestScanner, RequestSender, StreamAux, TxAwaiter, LICENSE_CONTRACT_ID,
+    USE_LICENSE_METHOD_NAME,
 };
 use rand::rngs::StdRng;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
@@ -30,7 +31,7 @@ use zk_citadel::license::{CitadelProverParameters, License};
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
     /// Submit request (User)
-    SubmitRequest { provider_psk: String },
+    SubmitRequest { request_path: Option<PathBuf> },
     /// List requests (User)
     ListRequestsUser { dummy: bool },
     /// List requests (LP)
@@ -114,28 +115,21 @@ impl Command {
         request_json: Option<RequestJson>,
     ) -> Result<(), Error> {
         match self {
-            Command::SubmitRequest { provider_psk } => {
-                let request_json =
-                    request_json.expect("request should be provided"); // todo
-                                                                       // todo - this request creation belongs somewhere else because
-                                                                       // we might
-                                                                       // also want to create request on the fly, from data provided by
-                                                                       // user interactively
-                let rng = &mut StdRng::seed_from_u64(0xcafe);
-                println!("obtained provider psk={}", provider_psk);
-                let provider_psk_str = if provider_psk.is_empty() {
-                    request_json.provider_psk
-                } else {
-                    provider_psk
+            Command::SubmitRequest { request_path } => {
+                println!("obtained request path={:?}", request_path);
+                let request_json = match request_path {
+                    Some(request_path) => RequestJson::from_file(request_path)?,
+                    _ => request_json.expect("request should be provided"),
                 };
+                let rng = &mut StdRng::seed_from_u64(0xcafe);
                 let request = RequestCreator::create_from_hex_args(
                     request_json.user_ssk,
-                    provider_psk_str.clone(),
+                    request_json.provider_psk.clone(),
                     rng,
                 )?;
                 println!(
                     "submitting request to provider psk: {}",
-                    provider_psk_str
+                    request_json.provider_psk
                 );
                 let tx_id = RequestSender::send_request(
                     request,
@@ -352,7 +346,7 @@ impl Command {
                 let (num_licenses, _, num_sessions) =
                     CitadelInquirer::get_info(&client).await?;
                 println!(
-                    "license contract state - licenses:{}, sessions:{}",
+                    "license contract state - licenses: {}, sessions: {}",
                     num_licenses, num_sessions
                 );
                 println!();
