@@ -41,6 +41,8 @@ pub(crate) enum Command {
     ListLicenses { dummy: bool },
     /// Use license (User)
     UseLicense { dummy: bool },
+    /// Show state
+    ShowState { dummy: bool },
 }
 
 // todo: move this function somewhere else
@@ -151,6 +153,7 @@ impl Command {
                 );
                 TxAwaiter::wait_for(&client, tx_id).await?;
                 println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
+                println!();
             }
             Command::ListRequestsUser { dummy: true } => {
                 let wallet_accessor =
@@ -194,6 +197,7 @@ impl Command {
                         hex::encode(request.rsa.pk_r().to_bytes())
                     );
                 }
+                println!();
             }
             Command::ListRequestsLP { lp_config_path } => {
                 println!("obtained LP config path={:?}", lp_config_path);
@@ -215,6 +219,7 @@ impl Command {
                         hex::encode(request.rsa.pk_r().to_bytes())
                     );
                 }
+                println!();
             }
             Command::IssueLicenseLP { lp_config_path } => {
                 let mut rng = StdRng::seed_from_u64(0xbeef);
@@ -253,6 +258,7 @@ impl Command {
                     "license issuing transaction {} submitted and confirmed",
                     hex::encode(tx_id.to_bytes())
                 );
+                println!();
             }
             Command::ListLicenses { dummy: true } => {
                 let _ = self
@@ -262,6 +268,7 @@ impl Command {
                         true,
                     )
                     .await?;
+                println!();
             }
             Command::UseLicense { dummy: true } => {
                 let pos_license = self
@@ -286,7 +293,7 @@ impl Command {
                             )?
                             .as_slice(),
                         )?;
-                        Self::prove_and_send_use_license(
+                        let session_id = Self::prove_and_send_use_license(
                             blockchain_access_config,
                             wallet_path,
                             psw,
@@ -298,6 +305,10 @@ impl Command {
                             gas_price,
                         )
                         .await?;
+                        println!(
+                            "license used, obtained session id: {}",
+                            hex::encode(session_id.to_bytes())
+                        );
                     }
                     _ => {
                         println!(
@@ -305,6 +316,19 @@ impl Command {
                         );
                     }
                 }
+                println!();
+            }
+            Command::ShowState { dummy: true } => {
+                let client = RuskHttpClient::new(
+                    blockchain_access_config.rusk_address.clone(),
+                );
+                let (num_licenses, _, num_sessions) =
+                    CitadelInquirer::get_info(&client).await?;
+                println!(
+                    "license contract state - licenses:{}, sessions:{}",
+                    num_licenses, num_sessions
+                );
+                println!();
             }
             _ => (),
         }
@@ -375,10 +399,9 @@ impl Command {
     ) -> Result<BlsScalar, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
-        // let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
-        let reference_lp = ReferenceLP::create(lp_config)?;
-        // let challenge = JubJubScalar::from(num_sessions as u64 + 1);
-        let challenge = JubJubScalar::from(0xcafebabeu64);
+        let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
+        let challenge = JubJubScalar::from(num_sessions as u64 + 1);
+        // let challenge = JubJubScalar::from(0xcafebabeu64);
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         println!("performing setup");
@@ -393,6 +416,8 @@ impl Command {
         let opening = CitadelInquirer::get_merkle_opening(&client, pos)
             .await?
             .expect("Opening obtained successfully");
+
+        let reference_lp = ReferenceLP::create(lp_config)?;
 
         let (cpp, sc) = CitadelProverParameters::compute_parameters(
             &ssk_user,

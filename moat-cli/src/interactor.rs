@@ -27,6 +27,7 @@ enum CommandMenuItem {
     IssueLicenseLP,
     ListLicenses,
     UseLicense,
+    ShowState,
     Exit,
 }
 
@@ -38,6 +39,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         .add(CommandMenuItem::IssueLicenseLP, "Issue License (LP)")
         .add(CommandMenuItem::ListLicenses, "List Licenses")
         .add(CommandMenuItem::UseLicense, "Use License")
+        .add(CommandMenuItem::ShowState, "Show state")
         .separator()
         .add(CommandMenuItem::Exit, "Exit");
 
@@ -78,6 +80,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         }
         CommandMenuItem::UseLicense => {
             OpSelection::Run(Box::from(Command::UseLicense { dummy: true }))
+        }
+        CommandMenuItem::ShowState => {
+            OpSelection::Run(Box::from(Command::ShowState { dummy: true }))
         }
         CommandMenuItem::Exit => OpSelection::Exit,
     })
