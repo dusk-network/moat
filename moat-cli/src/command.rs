@@ -144,6 +144,7 @@ impl Command {
         gas_limit: u64,
         gas_price: u64,
         request_json: Option<RequestJson>,
+        pp: &mut Option<PublicParameters>,
     ) -> Result<(), Error> {
         match self {
             Command::SubmitRequest { request_path } => {
@@ -345,6 +346,7 @@ impl Command {
                             pos,
                             gas_limit,
                             gas_price,
+                            pp,
                         )
                         .await?;
                         println!(
@@ -497,6 +499,7 @@ impl Command {
         pos: u64,
         gas_limit: u64,
         gas_price: u64,
+        pp_opt: &mut Option<PublicParameters>,
     ) -> Result<BlsScalar, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
@@ -506,13 +509,19 @@ impl Command {
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         println!("performing setup");
-        let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
-            .expect("Initializing public parameters should succeed");
+        let pp: &PublicParameters = match pp_opt {
+            Some(pp) => pp,
+            _ => {
+                let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
+                    .expect("Initializing public parameters should succeed");
+                *pp_opt = Some(pp);
+                pp_opt.as_ref().unwrap()
+            }
+        };
 
         println!("compiling circuit");
-        let (prover, verifier) =
-            Compiler::compile::<LicenseCircuit>(&pp, LABEL)
-                .expect("Compiling circuit should succeed");
+        let (prover, verifier) = Compiler::compile::<LicenseCircuit>(pp, LABEL)
+            .expect("Compiling circuit should succeed");
 
         let opening = CitadelInquirer::get_merkle_opening(&client, pos)
             .await?

@@ -7,6 +7,7 @@
 use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
+use dusk_plonk::prelude::PublicParameters;
 use dusk_wallet::WalletPath;
 use moat_core::RequestJson;
 use requestty::{ErrorKind, Question};
@@ -120,10 +121,11 @@ pub struct Interactor {
     pub gas_limit: u64,
     pub gas_price: u64,
     pub request_json: Option<RequestJson>,
+    pub pp: Option<PublicParameters>,
 }
 
 impl Interactor {
-    pub async fn run_loop(&self) -> Result<(), CliError> {
+    pub async fn run_loop(&mut self) -> Result<(), CliError> {
         loop {
             let op = menu_operation()?;
             match op {
@@ -138,6 +140,7 @@ impl Interactor {
                             self.gas_limit,
                             self.gas_price,
                             self.request_json.clone(),
+                            &mut self.pp,
                         )
                         .await?
                 }

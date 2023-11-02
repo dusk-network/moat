@@ -52,7 +52,7 @@ async fn main() -> Result<(), CliError> {
         PwdHash(pwd_hash)
     };
 
-    let interactor = Interactor {
+    let mut interactor = Interactor {
         wallet_path,
         psw,
         blockchain_access_config,
@@ -60,6 +60,7 @@ async fn main() -> Result<(), CliError> {
         gas_limit,
         gas_price,
         request_json: Some(request_json),
+        pp: None,
     };
 
     interactor.run_loop().await?;
