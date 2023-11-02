@@ -90,6 +90,30 @@ fn find_owned_licenses(
     Ok(pairs)
 }
 
+// todo: move this function somewhere else and possibly merge with
+// find_owned_licenses
+/// Finds owned license in a stream of licenses.
+/// It searches in a reverse order to return a newest license.
+fn find_all_licenses(
+    stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+              + std::marker::Unpin),
+) -> Result<Vec<(u64, License)>, Error> {
+    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
+    let mut pairs = vec![];
+    loop {
+        let r = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
+            |_| Ok(true),
+            stream,
+        );
+        if r.is_err() {
+            break;
+        }
+        let (pos, lic_ser) = r?;
+        pairs.push((pos, deserialise_license(&lic_ser)))
+    }
+    Ok(pairs)
+}
+
 // todo: move this struct to its proper place
 /// Use License Argument.
 #[derive(Debug, Clone, PartialEq, Archive, Serialize, Deserialize)]
@@ -371,12 +395,26 @@ impl Command {
             .as_slice(),
         )?;
 
-        let pairs = find_owned_licenses(ssk_user, &mut licenses_stream)?;
+        // let owned_pairs = find_owned_licenses(ssk_user, &mut
+        // licenses_stream)?; if owned_pairs.is_empty() {
+        //     println!("licenses not found");
+        // } else {
+        //     for (_pos, license) in owned_pairs.iter() {
+        //         println!("license: {}", Self::to_hash_hex(license))
+        //     }
+        // };
+        let pairs = find_all_licenses(&mut licenses_stream)?;
         if pairs.is_empty() {
             println!("licenses not found");
         } else {
+            let vk = ssk_user.view_key();
             for (_pos, license) in pairs.iter() {
-                println!("license: {}", Self::to_hash_hex(license))
+                let is_owned = vk.owns(&license.lsa);
+                println!(
+                    "license: {} {}",
+                    Self::to_hash_hex(license),
+                    if is_owned { "owned" } else { "" }
+                )
             }
         };
         Ok(())

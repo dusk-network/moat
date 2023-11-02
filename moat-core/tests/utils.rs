@@ -61,7 +61,7 @@ fn encode_password_old() -> Result<(), Error> {
 #[test]
 #[ignore]
 fn new_ssk() -> Result<(), Error> {
-    let rng = &mut StdRng::seed_from_u64(0xcafe);
+    let rng = &mut StdRng::from_entropy();
     let ssk = SecretSpendKey::random(rng);
     println!("ssk={}", hex::encode(ssk.to_bytes()));
     Ok(())
