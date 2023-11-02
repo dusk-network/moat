@@ -50,7 +50,7 @@ impl LicenseIssuer {
         rng: &mut R,
         request: &Request,
         ssk_lp: &SecretSpendKey,
-    ) -> Result<BlsScalar, Error> {
+    ) -> Result<(BlsScalar, Vec<u8>), Error> {
         let attr = JubJubScalar::from(USER_ATTRIBUTES);
         let license = License::new(&attr, ssk_lp, request, rng);
         let license_blob = rkyv::to_bytes::<_, MAX_LICENSE_SIZE>(&license)
@@ -58,7 +58,7 @@ impl LicenseIssuer {
             .to_vec();
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
         let license_hash = sponge::hash(&[lpk.get_u(), lpk.get_v()]);
-        let tuple = (license_blob, license_hash);
+        let tuple = (license_blob.clone(), license_hash);
         trace!(
             "sending issue license with license blob size={}",
             tuple.0.len()
@@ -76,6 +76,6 @@ impl LicenseIssuer {
         .await?;
         let client = RuskHttpClient::new(self.config.rusk_address.clone());
         TxAwaiter::wait_for(&client, tx_id).await?;
-        Ok(tx_id)
+        Ok((tx_id, license_blob))
     }
 }

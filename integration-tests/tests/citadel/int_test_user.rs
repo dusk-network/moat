@@ -101,9 +101,10 @@ async fn issue_license(
         GAS_PRICE,
     );
 
-    license_issuer
+    let (tx_id, _) = license_issuer
         .issue_license(rng, &request, &reference_lp.ssk_lp)
-        .await
+        .await?;
+    Ok(tx_id)
 }
 
 /// Calculates and verified proof, sends proof along with public parameters

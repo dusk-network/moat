@@ -9,7 +9,7 @@ use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
-use dusk_pki::SecretSpendKey;
+use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
@@ -38,11 +38,17 @@ pub(crate) enum Command {
     /// List requests (LP)
     ListRequestsLP { lp_config_path: Option<PathBuf> },
     /// Issue license (LP)
-    IssueLicenseLP { lp_config_path: Option<PathBuf> },
+    IssueLicenseLP {
+        lp_config_path: Option<PathBuf>,
+        request_hash: String,
+    },
     /// List licenses (User)
-    ListLicenses { dummy: bool },
+    ListLicenses { request_path: Option<PathBuf> },
     /// Use license (User)
-    UseLicense { dummy: bool },
+    UseLicense {
+        request_path: Option<PathBuf>,
+        license_hash: String,
+    },
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
@@ -90,6 +96,30 @@ fn find_owned_licenses(
     Ok(pairs)
 }
 
+// todo: move this function somewhere else and possibly merge with
+// find_owned_licenses
+/// Finds owned license in a stream of licenses.
+/// It searches in a reverse order to return a newest license.
+fn find_all_licenses(
+    stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+              + std::marker::Unpin),
+) -> Result<Vec<(u64, License)>, Error> {
+    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
+    let mut pairs = vec![];
+    loop {
+        let r = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
+            |_| Ok(true),
+            stream,
+        );
+        if r.is_err() {
+            break;
+        }
+        let (pos, lic_ser) = r?;
+        pairs.push((pos, deserialise_license(&lic_ser)))
+    }
+    Ok(pairs)
+}
+
 // todo: move this struct to its proper place
 /// Use License Argument.
 #[derive(Debug, Clone, PartialEq, Archive, Serialize, Deserialize)]
@@ -114,10 +144,10 @@ impl Command {
         gas_limit: u64,
         gas_price: u64,
         request_json: Option<RequestJson>,
+        pp: &mut Option<PublicParameters>,
     ) -> Result<(), Error> {
         match self {
             Command::SubmitRequest { request_path } => {
-                println!("obtained request path={:?}", request_path);
                 let request_json = match request_path {
                     Some(request_path) => RequestJson::from_file(request_path)?,
                     _ => request_json.expect("request should be provided"),
@@ -142,15 +172,14 @@ impl Command {
                     gas_price,
                 )
                 .await?;
-                println!(
-                    "tx {} submitted, waiting for confirmation",
-                    hex::encode(tx_id.to_bytes())
-                );
                 let client = RuskHttpClient::new(
                     blockchain_access_config.rusk_address.clone(),
                 );
                 TxAwaiter::wait_for(&client, tx_id).await?;
-                println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
+                println!(
+                    "request submitting transaction {} confirmed",
+                    hex::encode(tx_id.to_bytes())
+                );
                 println!("request submitted: {}", request_hash_hex);
                 println!();
             }
@@ -216,7 +245,10 @@ impl Command {
                 }
                 println!();
             }
-            Command::IssueLicenseLP { lp_config_path } => {
+            Command::IssueLicenseLP {
+                lp_config_path,
+                request_hash,
+            } => {
                 let mut rng = StdRng::from_entropy(); // seed_from_u64(0xbeef);
                 let lp_config_path = match lp_config_path {
                     Some(lp_config_path) => lp_config_path,
@@ -225,83 +257,106 @@ impl Command {
                 let mut reference_lp = ReferenceLP::create(lp_config_path)?;
                 let (_total_count, _this_lp_count) =
                     reference_lp.scan(blockchain_access_config).await?;
-                let request =
-                    reference_lp.take_request().expect("at least one request");
 
-                let license_issuer = LicenseIssuer::new(
-                    blockchain_access_config.clone(),
-                    wallet_path.clone(),
-                    psw.clone(),
-                    gas_limit,
-                    gas_price,
-                );
+                let request = reference_lp.get_request(&request_hash);
+                match request {
+                    Some(request) => {
+                        let license_issuer = LicenseIssuer::new(
+                            blockchain_access_config.clone(),
+                            wallet_path.clone(),
+                            psw.clone(),
+                            gas_limit,
+                            gas_price,
+                        );
 
-                println!(
-                    "issuing license for request: {}",
-                    Self::to_hash_hex(&request)
-                );
-                let tx_id = license_issuer
-                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
-                    .await?;
-                println!(
-                    "license issuing transaction {} confirmed",
-                    hex::encode(tx_id.to_bytes())
-                );
+                        println!(
+                            "issuing license for request: {}",
+                            Self::to_hash_hex(&request)
+                        );
+                        let (tx_id, license_blob) = license_issuer
+                            .issue_license(
+                                &mut rng,
+                                &request,
+                                &reference_lp.ssk_lp,
+                            )
+                            .await?;
+                        println!(
+                            "license issuing transaction {} confirmed",
+                            hex::encode(tx_id.to_bytes())
+                        );
+                        println!(
+                            "issued license: {}",
+                            Self::blob_to_hash_hex(license_blob.as_slice())
+                        );
+                    }
+                    _ => {
+                        println!("Request not found");
+                    }
+                }
+
                 println!();
             }
-            Command::ListLicenses { dummy: true } => {
-                let _ = self
-                    .list_licenses(
-                        blockchain_access_config,
-                        request_json.as_ref(),
-                        true,
-                    )
-                    .await?;
+            Command::ListLicenses { request_path } => {
+                let request_json = match request_path {
+                    Some(request_path) => RequestJson::from_file(request_path)?,
+                    _ => request_json.expect("request should be provided"),
+                };
+                Self::list_licenses(
+                    blockchain_access_config,
+                    Some(&request_json),
+                )
+                .await?;
                 println!();
             }
-            Command::UseLicense { dummy: true } => {
-                let pos_license = self
-                    .list_licenses(
-                        blockchain_access_config,
-                        request_json.as_ref(),
-                        false,
-                    )
-                    .await?;
+            Command::UseLicense {
+                request_path,
+                license_hash,
+            } => {
+                let request_json = match request_path {
+                    Some(request_path) => RequestJson::from_file(request_path)?,
+                    _ => request_json.expect("request should be provided"),
+                };
+                let pos_license = Self::get_license_to_use(
+                    blockchain_access_config,
+                    Some(&request_json),
+                    license_hash.clone(),
+                )
+                .await?;
                 match pos_license {
                     Some((pos, license)) => {
                         println!(
                             "using license: {}",
                             Self::to_hash_hex(&license)
                         );
+                        println!("user_ssk={}", request_json.user_ssk);
+                        println!("lp_psk={}", request_json.provider_psk);
                         let ssk_user = SecretSpendKey::from_slice(
-                            hex::decode(
-                                request_json
-                                    .expect("request should be provided")
-                                    .user_ssk,
-                            )?
-                            .as_slice(),
+                            hex::decode(request_json.user_ssk)?.as_slice(),
+                        )?;
+                        let psk_lp = PublicSpendKey::from_slice(
+                            hex::decode(request_json.provider_psk)?.as_slice(),
                         )?;
                         let session_id = Self::prove_and_send_use_license(
                             blockchain_access_config,
                             wallet_path,
                             psw,
-                            lp_config,
+                            psk_lp,
                             ssk_user,
                             &license,
                             pos,
                             gas_limit,
                             gas_price,
+                            pp,
                         )
                         .await?;
                         println!(
-                            "license used, obtained session id: {}",
+                            "license {} used, obtained session id: {}",
+                            Self::to_hash_hex(&license),
                             hex::encode(session_id.to_bytes())
                         );
                     }
                     _ => {
-                        println!(
-                            "No license available, please obtain a license"
-                        );
+                        println!("Please obtain a license");
                     }
                 }
                 println!();
@@ -347,22 +402,66 @@ impl Command {
     }
 
     async fn list_licenses(
-        self,
         blockchain_access_config: &BlockchainAccessConfig,
         request_json: Option<&RequestJson>,
-        ui: bool,
+    ) -> Result<(), Error> {
+        let client =
+            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let end_height = BcInquirer::block_height(&client).await?;
+        let block_heights = 0..(end_height + 1);
+
+        println!(
+            "getting licenses within the block height range {:?}:",
+            block_heights
+        );
+        let mut licenses_stream =
+            CitadelInquirer::get_licenses(&client, block_heights).await?;
+
+        let ssk_user = SecretSpendKey::from_slice(
+            hex::decode(
+                request_json
+                    .expect("request should be provided")
+                    .user_ssk
+                    .clone(),
+            )?
+            .as_slice(),
+        )?;
+
+        // let owned_pairs = find_owned_licenses(ssk_user, &mut
+        // licenses_stream)?; if owned_pairs.is_empty() {
+        //     println!("licenses not found");
+        // } else {
+        //     for (_pos, license) in owned_pairs.iter() {
+        //         println!("license: {}", Self::to_hash_hex(license))
+        //     }
+        // };
+        let pairs = find_all_licenses(&mut licenses_stream)?;
+        if pairs.is_empty() {
+            println!("licenses not found");
+        } else {
+            let vk = ssk_user.view_key();
+            for (_pos, license) in pairs.iter() {
+                let is_owned = vk.owns(&license.lsa);
+                println!(
+                    "license: {} {}",
+                    Self::to_hash_hex(license),
+                    if is_owned { "owned" } else { "" }
+                )
+            }
+        };
+        Ok(())
+    }
+
+    async fn get_license_to_use(
+        blockchain_access_config: &BlockchainAccessConfig,
+        request_json: Option<&RequestJson>,
+        license_hash: String,
     ) -> Result<Option<(u64, License)>, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let end_height = BcInquirer::block_height(&client).await?;
         let block_heights = 0..(end_height + 1);
 
-        if ui {
-            println!(
-                "getting licenses within the block height range {:?}:",
-                block_heights
-            );
-        }
         let mut licenses_stream =
             CitadelInquirer::get_licenses(&client, block_heights).await?;
 
@@ -378,17 +477,14 @@ impl Command {
 
         let pairs = find_owned_licenses(ssk_user, &mut licenses_stream)?;
         Ok(if pairs.is_empty() {
-            if ui {
-                println!("licenses not found");
-            }
             None
         } else {
-            if ui {
-                for (_, license) in pairs.iter() {
-                    println!("license: {}", Self::to_hash_hex(license))
+            for (pos, license) in pairs.iter() {
+                if license_hash == Self::to_hash_hex(license) {
+                    return Ok(Some((*pos, license.clone())));
                 }
             }
-            pairs.last().map(|(pos, license)| (*pos, license.clone()))
+            None
         })
     }
 
@@ -397,12 +493,13 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         wallet_path: &WalletPath,
         psw: &Password,
-        lp_config: &Path,
+        psk_lp: PublicSpendKey,
         ssk_user: SecretSpendKey,
         license: &License,
         pos: u64,
         gas_limit: u64,
         gas_price: u64,
+        pp_opt: &mut Option<PublicParameters>,
     ) -> Result<BlsScalar, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
@@ -412,28 +509,26 @@ impl Command {
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         println!("performing setup");
-        let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
-            .expect("Initializing public parameters should succeed");
+        let pp: &PublicParameters = match pp_opt {
+            Some(pp) => pp,
+            _ => {
+                let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
+                    .expect("Initializing public parameters should succeed");
+                *pp_opt = Some(pp);
+                pp_opt.as_ref().unwrap()
+            }
+        };
 
         println!("compiling circuit");
-        let (prover, verifier) =
-            Compiler::compile::<LicenseCircuit>(&pp, LABEL)
-                .expect("Compiling circuit should succeed");
+        let (prover, verifier) = Compiler::compile::<LicenseCircuit>(pp, LABEL)
+            .expect("Compiling circuit should succeed");
 
         let opening = CitadelInquirer::get_merkle_opening(&client, pos)
             .await?
             .expect("Opening obtained successfully");
 
-        let reference_lp = ReferenceLP::create(lp_config)?;
-
         let (cpp, sc) = CitadelProverParameters::compute_parameters(
-            &ssk_user,
-            license,
-            &reference_lp.psk_lp,
-            &reference_lp.psk_lp,
-            &challenge,
-            &mut rng,
-            opening,
+            &ssk_user, license, &psk_lp, &psk_lp, &challenge, &mut rng, opening,
         );
         let circuit = LicenseCircuit::new(&cpp, &sc);
 
@@ -467,12 +562,11 @@ impl Command {
             USE_LICENSE_METHOD_NAME,
         )
         .await?;
+        TxAwaiter::wait_for(&client, tx_id).await?;
         println!(
-            "tx {} submitted, waiting for confirmation",
+            "use license executing transaction {} confirmed",
             hex::encode(tx_id.to_bytes())
         );
-        TxAwaiter::wait_for(&client, tx_id).await?;
-        println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
         Ok(session_id)
     }
 
@@ -483,6 +577,10 @@ impl Command {
         let blob = rkyv::to_bytes::<_, 16386>(object)
             .expect("type should serialize correctly")
             .to_vec();
+        Self::blob_to_hash_hex(blob.as_slice())
+    }
+
+    fn blob_to_hash_hex(blob: &[u8]) -> String {
         let mut hasher = Sha3_256::new();
         hasher.update(blob);
         let result = hasher.finalize();
