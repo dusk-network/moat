@@ -42,7 +42,7 @@ pub(crate) enum Command {
     /// List licenses (User)
     ListLicenses { dummy: bool },
     /// Use license (User)
-    UseLicense { dummy: bool },
+    UseLicense { license_hash: String },
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
@@ -253,23 +253,20 @@ impl Command {
                 println!();
             }
             Command::ListLicenses { dummy: true } => {
-                let _ = self
-                    .list_licenses(
-                        blockchain_access_config,
-                        request_json.as_ref(),
-                        true,
-                    )
-                    .await?;
+                Self::list_licenses(
+                    blockchain_access_config,
+                    request_json.as_ref(),
+                )
+                .await?;
                 println!();
             }
-            Command::UseLicense { dummy: true } => {
-                let pos_license = self
-                    .list_licenses(
-                        blockchain_access_config,
-                        request_json.as_ref(),
-                        false,
-                    )
-                    .await?;
+            Command::UseLicense { license_hash } => {
+                let pos_license = Self::get_license_to_use(
+                    blockchain_access_config,
+                    request_json.as_ref(),
+                    license_hash.clone(),
+                )
+                .await?;
                 match pos_license {
                     Some((pos, license)) => {
                         println!(
@@ -297,14 +294,13 @@ impl Command {
                         )
                         .await?;
                         println!(
-                            "license used, obtained session id: {}",
+                            "license {} used, obtained session id: {}",
+                            Self::to_hash_hex(&license),
                             hex::encode(session_id.to_bytes())
                         );
                     }
                     _ => {
-                        println!(
-                            "No license available, please obtain a license"
-                        );
+                        println!("Please obtain a license");
                     }
                 }
                 println!();
@@ -350,22 +346,52 @@ impl Command {
     }
 
     async fn list_licenses(
-        self,
         blockchain_access_config: &BlockchainAccessConfig,
         request_json: Option<&RequestJson>,
-        ui: bool,
+    ) -> Result<(), Error> {
+        let client =
+            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let end_height = BcInquirer::block_height(&client).await?;
+        let block_heights = 0..(end_height + 1);
+
+        println!(
+            "getting licenses within the block height range {:?}:",
+            block_heights
+        );
+        let mut licenses_stream =
+            CitadelInquirer::get_licenses(&client, block_heights).await?;
+
+        let ssk_user = SecretSpendKey::from_slice(
+            hex::decode(
+                request_json
+                    .expect("request should be provided")
+                    .user_ssk
+                    .clone(),
+            )?
+            .as_slice(),
+        )?;
+
+        let pairs = find_owned_licenses(ssk_user, &mut licenses_stream)?;
+        if pairs.is_empty() {
+            println!("licenses not found");
+        } else {
+            for (_pos, license) in pairs.iter() {
+                println!("license: {}", Self::to_hash_hex(license))
+            }
+        };
+        Ok(())
+    }
+
+    async fn get_license_to_use(
+        blockchain_access_config: &BlockchainAccessConfig,
+        request_json: Option<&RequestJson>,
+        license_hash: String,
     ) -> Result<Option<(u64, License)>, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let end_height = BcInquirer::block_height(&client).await?;
         let block_heights = 0..(end_height + 1);
 
-        if ui {
-            println!(
-                "getting licenses within the block height range {:?}:",
-                block_heights
-            );
-        }
         let mut licenses_stream =
             CitadelInquirer::get_licenses(&client, block_heights).await?;
 
@@ -381,17 +407,14 @@ impl Command {
 
         let pairs = find_owned_licenses(ssk_user, &mut licenses_stream)?;
         Ok(if pairs.is_empty() {
-            if ui {
-                println!("licenses not found");
-            }
             None
         } else {
-            if ui {
-                for (_, license) in pairs.iter() {
-                    println!("license: {}", Self::to_hash_hex(license))
+            for (pos, license) in pairs.iter() {
+                if license_hash == Self::to_hash_hex(license) {
+                    return Ok(Some((*pos, license.clone())));
                 }
             }
-            pairs.last().map(|(pos, license)| (*pos, license.clone()))
+            None
         })
     }
 

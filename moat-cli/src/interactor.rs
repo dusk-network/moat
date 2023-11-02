@@ -86,7 +86,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             OpSelection::Run(Box::from(Command::ListLicenses { dummy: true }))
         }
         CommandMenuItem::UseLicense => {
-            OpSelection::Run(Box::from(Command::UseLicense { dummy: true }))
+            OpSelection::Run(Box::from(Command::UseLicense {
+                license_hash: prompt::request_license_hash()?,
+            }))
         }
         CommandMenuItem::GetSession => {
             OpSelection::Run(Box::from(Command::GetSession {
