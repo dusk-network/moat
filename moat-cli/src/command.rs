@@ -40,7 +40,7 @@ pub(crate) enum Command {
     /// Issue license (LP)
     IssueLicenseLP { lp_config_path: Option<PathBuf> },
     /// List licenses (User)
-    ListLicenses { dummy: bool },
+    ListLicenses { request_path: Option<PathBuf> },
     /// Use license (User)
     UseLicense { license_hash: String },
     /// Get session (SP)
@@ -141,7 +141,6 @@ impl Command {
     ) -> Result<(), Error> {
         match self {
             Command::SubmitRequest { request_path } => {
-                println!("obtained request path={:?}", request_path);
                 let request_json = match request_path {
                     Some(request_path) => RequestJson::from_file(request_path)?,
                     _ => request_json.expect("request should be provided"),
@@ -276,10 +275,14 @@ impl Command {
                 );
                 println!();
             }
-            Command::ListLicenses { dummy: true } => {
+            Command::ListLicenses { request_path } => {
+                let request_json = match request_path {
+                    Some(request_path) => RequestJson::from_file(request_path)?,
+                    _ => request_json.expect("request should be provided"),
+                };
                 Self::list_licenses(
                     blockchain_access_config,
-                    request_json.as_ref(),
+                    Some(&request_json),
                 )
                 .await?;
                 println!();

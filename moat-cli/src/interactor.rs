@@ -83,7 +83,12 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             }))
         }
         CommandMenuItem::ListLicenses => {
-            OpSelection::Run(Box::from(Command::ListLicenses { dummy: true }))
+            OpSelection::Run(Box::from(Command::ListLicenses {
+                request_path: prompt::request_pathbuf(
+                    "request (e.g. moat-cli/request2.json)",
+                    "moat-cli/request2.json",
+                )?,
+            }))
         }
         CommandMenuItem::UseLicense => {
             OpSelection::Run(Box::from(Command::UseLicense {
