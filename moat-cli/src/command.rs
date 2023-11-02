@@ -142,15 +142,14 @@ impl Command {
                     gas_price,
                 )
                 .await?;
-                println!(
-                    "tx {} submitted, waiting for confirmation",
-                    hex::encode(tx_id.to_bytes())
-                );
                 let client = RuskHttpClient::new(
                     blockchain_access_config.rusk_address.clone(),
                 );
                 TxAwaiter::wait_for(&client, tx_id).await?;
-                println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
+                println!(
+                    "request submitting transaction {} confirmed",
+                    hex::encode(tx_id.to_bytes())
+                );
                 println!("request submitted: {}", request_hash_hex);
                 println!();
             }
@@ -240,12 +239,16 @@ impl Command {
                     "issuing license for request: {}",
                     Self::to_hash_hex(&request)
                 );
-                let tx_id = license_issuer
+                let (tx_id, license_blob) = license_issuer
                     .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
                     .await?;
                 println!(
                     "license issuing transaction {} confirmed",
                     hex::encode(tx_id.to_bytes())
+                );
+                println!(
+                    "issued license: {}",
+                    Self::blob_to_hash_hex(license_blob.as_slice())
                 );
                 println!();
             }
@@ -467,12 +470,11 @@ impl Command {
             USE_LICENSE_METHOD_NAME,
         )
         .await?;
+        TxAwaiter::wait_for(&client, tx_id).await?;
         println!(
-            "tx {} submitted, waiting for confirmation",
+            "use license executing transaction {} confirmed",
             hex::encode(tx_id.to_bytes())
         );
-        TxAwaiter::wait_for(&client, tx_id).await?;
-        println!("tx {} confirmed", hex::encode(tx_id.to_bytes()));
         Ok(session_id)
     }
 
@@ -483,6 +485,10 @@ impl Command {
         let blob = rkyv::to_bytes::<_, 16386>(object)
             .expect("type should serialize correctly")
             .to_vec();
+        Self::blob_to_hash_hex(blob.as_slice())
+    }
+
+    fn blob_to_hash_hex(blob: &[u8]) -> String {
         let mut hasher = Sha3_256::new();
         hasher.update(blob);
         let result = hasher.finalize();
