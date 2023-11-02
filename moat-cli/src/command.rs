@@ -38,7 +38,10 @@ pub(crate) enum Command {
     /// List requests (LP)
     ListRequestsLP { lp_config_path: Option<PathBuf> },
     /// Issue license (LP)
-    IssueLicenseLP { lp_config_path: Option<PathBuf> },
+    IssueLicenseLP {
+        lp_config_path: Option<PathBuf>,
+        request_hash: String,
+    },
     /// List licenses (User)
     ListLicenses { request_path: Option<PathBuf> },
     /// Use license (User)
@@ -238,7 +241,10 @@ impl Command {
                 }
                 println!();
             }
-            Command::IssueLicenseLP { lp_config_path } => {
+            Command::IssueLicenseLP {
+                lp_config_path,
+                request_hash,
+            } => {
                 let mut rng = StdRng::from_entropy(); // seed_from_u64(0xbeef);
                 let lp_config_path = match lp_config_path {
                     Some(lp_config_path) => lp_config_path,
@@ -247,32 +253,43 @@ impl Command {
                 let mut reference_lp = ReferenceLP::create(lp_config_path)?;
                 let (_total_count, _this_lp_count) =
                     reference_lp.scan(blockchain_access_config).await?;
-                let request =
-                    reference_lp.take_request().expect("at least one request");
 
-                let license_issuer = LicenseIssuer::new(
-                    blockchain_access_config.clone(),
-                    wallet_path.clone(),
-                    psw.clone(),
-                    gas_limit,
-                    gas_price,
-                );
+                let request = reference_lp.get_request(&request_hash);
+                match request {
+                    Some(request) => {
+                        let license_issuer = LicenseIssuer::new(
+                            blockchain_access_config.clone(),
+                            wallet_path.clone(),
+                            psw.clone(),
+                            gas_limit,
+                            gas_price,
+                        );
 
-                println!(
-                    "issuing license for request: {}",
-                    Self::to_hash_hex(&request)
-                );
-                let (tx_id, license_blob) = license_issuer
-                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
-                    .await?;
-                println!(
-                    "license issuing transaction {} confirmed",
-                    hex::encode(tx_id.to_bytes())
-                );
-                println!(
-                    "issued license: {}",
-                    Self::blob_to_hash_hex(license_blob.as_slice())
-                );
+                        println!(
+                            "issuing license for request: {}",
+                            Self::to_hash_hex(&request)
+                        );
+                        let (tx_id, license_blob) = license_issuer
+                            .issue_license(
+                                &mut rng,
+                                &request,
+                                &reference_lp.ssk_lp,
+                            )
+                            .await?;
+                        println!(
+                            "license issuing transaction {} confirmed",
+                            hex::encode(tx_id.to_bytes())
+                        );
+                        println!(
+                            "issued license: {}",
+                            Self::blob_to_hash_hex(license_blob.as_slice())
+                        );
+                    }
+                    _ => {
+                        println!("Request not found");
+                    }
+                }
+
                 println!();
             }
             Command::ListLicenses { request_path } => {

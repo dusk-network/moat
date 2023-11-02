@@ -80,6 +80,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
                     "LP config (e.g. moat-cli/lp2.json)",
                     "moat-cli/lp2.json",
                 )?,
+                request_hash: prompt::request_request_hash()?,
             }))
         }
         CommandMenuItem::ListLicenses => {

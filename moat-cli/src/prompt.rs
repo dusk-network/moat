@@ -27,6 +27,20 @@ pub(crate) fn request_session_id() -> Result<String, ErrorKind> {
     Ok(a_str)
 }
 
+pub(crate) fn request_request_hash() -> Result<String, ErrorKind> {
+    let q = Question::input("request_hash")
+        .message("Please enter request hash:".to_string())
+        .validate_on_key(|_, _| {
+            true // todo: add some validation of the request hash
+        })
+        .validate(|_, _| Ok(()))
+        .build();
+
+    let a = requestty::prompt_one(q)?;
+    let a_str = a.as_string().expect("answer to be a string").to_string();
+    Ok(a_str)
+}
+
 pub(crate) fn request_license_hash() -> Result<String, ErrorKind> {
     let q = Question::input("license_hash")
         .message("Please enter license hash:".to_string())
