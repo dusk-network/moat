@@ -9,7 +9,7 @@ use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
-use dusk_pki::SecretSpendKey;
+use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
@@ -45,7 +45,10 @@ pub(crate) enum Command {
     /// List licenses (User)
     ListLicenses { request_path: Option<PathBuf> },
     /// Use license (User)
-    UseLicense { license_hash: String },
+    UseLicense {
+        request_path: Option<PathBuf>,
+        license_hash: String,
+    },
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
@@ -304,10 +307,17 @@ impl Command {
                 .await?;
                 println!();
             }
-            Command::UseLicense { license_hash } => {
+            Command::UseLicense {
+                request_path,
+                license_hash,
+            } => {
+                let request_json = match request_path {
+                    Some(request_path) => RequestJson::from_file(request_path)?,
+                    _ => request_json.expect("request should be provided"),
+                };
                 let pos_license = Self::get_license_to_use(
                     blockchain_access_config,
-                    request_json.as_ref(),
+                    Some(&request_json),
                     license_hash.clone(),
                 )
                 .await?;
@@ -317,19 +327,19 @@ impl Command {
                             "using license: {}",
                             Self::to_hash_hex(&license)
                         );
+                        println!("user_ssk={}", request_json.user_ssk);
+                        println!("lp_psk={}", request_json.provider_psk);
                         let ssk_user = SecretSpendKey::from_slice(
-                            hex::decode(
-                                request_json
-                                    .expect("request should be provided")
-                                    .user_ssk,
-                            )?
-                            .as_slice(),
+                            hex::decode(request_json.user_ssk)?.as_slice(),
+                        )?;
+                        let psk_lp = PublicSpendKey::from_slice(
+                            hex::decode(request_json.provider_psk)?.as_slice(),
                         )?;
                         let session_id = Self::prove_and_send_use_license(
                             blockchain_access_config,
                             wallet_path,
                             psw,
-                            lp_config,
+                            psk_lp,
                             ssk_user,
                             &license,
                             pos,
@@ -481,7 +491,7 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         wallet_path: &WalletPath,
         psw: &Password,
-        lp_config: &Path,
+        psk_lp: PublicSpendKey,
         ssk_user: SecretSpendKey,
         license: &License,
         pos: u64,
@@ -508,16 +518,8 @@ impl Command {
             .await?
             .expect("Opening obtained successfully");
 
-        let reference_lp = ReferenceLP::create(lp_config)?;
-
         let (cpp, sc) = CitadelProverParameters::compute_parameters(
-            &ssk_user,
-            license,
-            &reference_lp.psk_lp,
-            &reference_lp.psk_lp,
-            &challenge,
-            &mut rng,
-            opening,
+            &ssk_user, license, &psk_lp, &psk_lp, &challenge, &mut rng, opening,
         );
         let circuit = LicenseCircuit::new(&cpp, &sc);
 

@@ -93,6 +93,10 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         }
         CommandMenuItem::UseLicense => {
             OpSelection::Run(Box::from(Command::UseLicense {
+                request_path: prompt::request_pathbuf(
+                    "request (e.g. moat-cli/request2.json)",
+                    "moat-cli/request2.json",
+                )?,
                 license_hash: prompt::request_license_hash()?,
             }))
         }
