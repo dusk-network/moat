@@ -9,7 +9,7 @@ use crate::prompt;
 use crate::{Command, Menu};
 use dusk_plonk::prelude::PublicParameters;
 use dusk_wallet::WalletPath;
-use moat_core::RequestJson;
+use moat_core::{Error, RequestJson};
 use requestty::{ErrorKind, Question};
 use std::path::PathBuf;
 use wallet_accessor::{BlockchainAccessConfig, Password};
@@ -42,7 +42,10 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         .add(CommandMenuItem::IssueLicenseLP, "Issue License (LP)")
         .add(CommandMenuItem::ListLicenses, "List Licenses")
         .add(CommandMenuItem::UseLicense, "Use License")
-        .add(CommandMenuItem::RequestService, "Request Service (Off-Chain)")
+        .add(
+            CommandMenuItem::RequestService,
+            "Request Service (Off-Chain)",
+        )
         .add(CommandMenuItem::GetSession, "Get Session (SP)")
         .add(CommandMenuItem::ShowState, "Show state")
         .separator()
@@ -138,7 +141,7 @@ impl Interactor {
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    command
+                    let result = command
                         .run(
                             &self.wallet_path,
                             &self.psw,
@@ -149,7 +152,22 @@ impl Interactor {
                             self.request_json.clone(),
                             &mut self.pp,
                         )
-                        .await?
+                        .await;
+                    if result.is_err() {
+                        let error = result.unwrap_err();
+                        match error {
+                            Error::IO(arc) => {
+                                println!("{}", arc.as_ref().to_string());
+                            }
+                            Error::Transaction(bx) => {
+                                println!("{}", bx.as_ref().to_string());
+                            }
+                            _ => {
+                                println!("{:?}", error);
+                            }
+                        }
+                    }
+                    continue;
                 }
             }
         }

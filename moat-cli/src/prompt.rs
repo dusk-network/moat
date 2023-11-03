@@ -53,7 +53,13 @@ pub(crate) fn request_request_hash() -> Result<String, ErrorKind> {
         .validate_on_key(|_, _| {
             true // todo: add some validation of the request hash
         })
-        .validate(|_, _| Ok(()))
+        .validate(|request_hash, _| {
+            if request_hash.is_empty() {
+                Err("Please enter a valid request hash".to_string())
+            } else {
+                Ok(())
+            }
+        })
         .build();
 
     let a = requestty::prompt_one(q)?;
@@ -67,7 +73,13 @@ pub(crate) fn request_license_hash() -> Result<String, ErrorKind> {
         .validate_on_key(|_, _| {
             true // todo: add some validation of the license hash
         })
-        .validate(|_, _| Ok(()))
+        .validate(|license_hash, _| {
+            if license_hash.is_empty() {
+                Err("Please enter a valid license hash".to_string())
+            } else {
+                Ok(())
+            }
+        })
         .build();
 
     let a = requestty::prompt_one(q)?;

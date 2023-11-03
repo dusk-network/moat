@@ -194,7 +194,7 @@ impl Command {
                     .iter()
                     .flat_map(|n| n.nullified_by)
                     .collect();
-                println!("current address has {} notes", note_hashes.len());
+                // println!("current address has {} notes", note_hashes.len());
 
                 let mut found_requests = vec![];
                 let mut height = 0;
@@ -219,7 +219,7 @@ impl Command {
                 }
                 let owned_requests = found_requests.len();
                 println!(
-                    "scanned {} blocks, found {} requests, {} owned requests",
+                    "scanned {} blocks, found {} requests, {} owned requests:",
                     height, total_requests, owned_requests,
                 );
                 for request in found_requests.iter() {
@@ -236,7 +236,7 @@ impl Command {
                 let (total_count, this_lp_count) =
                     reference_lp.scan(blockchain_access_config).await?;
                 println!(
-                    "found {} requests total, {} requests for this LP ",
+                    "found {} requests total, {} requests for this LP:",
                     total_count, this_lp_count
                 );
                 for request in reference_lp.requests_to_process.iter() {
