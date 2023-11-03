@@ -7,9 +7,9 @@
 use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
-use dusk_plonk::prelude::PublicParameters;
+use dusk_plonk::prelude::{Prover, PublicParameters, Verifier};
 use dusk_wallet::WalletPath;
-use moat_core::RequestJson;
+use moat_core::{Error, RequestJson};
 use requestty::{ErrorKind, Question};
 use std::path::PathBuf;
 use wallet_accessor::{BlockchainAccessConfig, Password};
@@ -28,6 +28,7 @@ enum CommandMenuItem {
     IssueLicenseLP,
     ListLicenses,
     UseLicense,
+    RequestService,
     GetSession,
     ShowState,
     Exit,
@@ -41,6 +42,10 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         .add(CommandMenuItem::IssueLicenseLP, "Issue License (LP)")
         .add(CommandMenuItem::ListLicenses, "List Licenses")
         .add(CommandMenuItem::UseLicense, "Use License")
+        .add(
+            CommandMenuItem::RequestService,
+            "Request Service (Off-Chain)",
+        )
         .add(CommandMenuItem::GetSession, "Get Session (SP)")
         .add(CommandMenuItem::ShowState, "Show state")
         .separator()
@@ -57,7 +62,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::SubmitRequest => {
             OpSelection::Run(Box::from(Command::SubmitRequest {
                 request_path: prompt::request_pathbuf(
-                    "request (e.g. moat-cli/request2.json)",
+                    "request",
                     "moat-cli/request2.json",
                 )?,
             }))
@@ -70,7 +75,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::ListRequestsLP => {
             OpSelection::Run(Box::from(Command::ListRequestsLP {
                 lp_config_path: prompt::request_pathbuf(
-                    "LP config (e.g. moat-cli/lp2.json)",
+                    "LP config",
                     "moat-cli/lp2.json",
                 )?,
             }))
@@ -78,7 +83,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::IssueLicenseLP => {
             OpSelection::Run(Box::from(Command::IssueLicenseLP {
                 lp_config_path: prompt::request_pathbuf(
-                    "LP config (e.g. moat-cli/lp2.json)",
+                    "LP config",
                     "moat-cli/lp2.json",
                 )?,
                 request_hash: prompt::request_request_hash()?,
@@ -87,7 +92,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::ListLicenses => {
             OpSelection::Run(Box::from(Command::ListLicenses {
                 request_path: prompt::request_pathbuf(
-                    "request (e.g. moat-cli/request2.json)",
+                    "request",
                     "moat-cli/request2.json",
                 )?,
             }))
@@ -95,10 +100,15 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::UseLicense => {
             OpSelection::Run(Box::from(Command::UseLicense {
                 request_path: prompt::request_pathbuf(
-                    "request (e.g. moat-cli/request2.json)",
+                    "request",
                     "moat-cli/request2.json",
                 )?,
                 license_hash: prompt::request_license_hash()?,
+            }))
+        }
+        CommandMenuItem::RequestService => {
+            OpSelection::Run(Box::from(Command::RequestService {
+                session_cookie: prompt::request_session_cookie()?,
             }))
         }
         CommandMenuItem::GetSession => {
@@ -113,6 +123,12 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     })
 }
 
+pub struct SetupHolder {
+    pub pp: PublicParameters,
+    pub prover: Prover,
+    pub verifier: Verifier,
+}
+
 pub struct Interactor {
     pub wallet_path: WalletPath,
     pub psw: Password,
@@ -121,7 +137,7 @@ pub struct Interactor {
     pub gas_limit: u64,
     pub gas_price: u64,
     pub request_json: Option<RequestJson>,
-    pub pp: Option<PublicParameters>,
+    pub setup_holder: Option<SetupHolder>,
 }
 
 impl Interactor {
@@ -131,7 +147,7 @@ impl Interactor {
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    command
+                    let result = command
                         .run(
                             &self.wallet_path,
                             &self.psw,
@@ -140,9 +156,24 @@ impl Interactor {
                             self.gas_limit,
                             self.gas_price,
                             self.request_json.clone(),
-                            &mut self.pp,
+                            &mut self.setup_holder,
                         )
-                        .await?
+                        .await;
+                    if result.is_err() {
+                        let error = result.unwrap_err();
+                        match error {
+                            Error::IO(arc) => {
+                                println!("{}", arc.as_ref().to_string());
+                            }
+                            Error::Transaction(bx) => {
+                                println!("{}", bx.as_ref().to_string());
+                            }
+                            _ => {
+                                println!("{:?}", error);
+                            }
+                        }
+                    }
+                    continue;
                 }
             }
         }

@@ -9,6 +9,7 @@ use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 use crate::bc_types::Tx;
 use crate::error::Error;
 use crate::Error::PayloadNotPresent;
+use crate::NOOP_METHOD_NAME;
 use bytecheck::CheckBytes;
 use rkyv::validation::validators::DefaultValidator;
 
@@ -21,6 +22,13 @@ impl PayloadExtractor {
         P::Archived: Deserialize<P, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
+        if let Some(call_info) = tx.call_data.as_ref() {
+            if call_info.fn_name != NOOP_METHOD_NAME {
+                return Err(Error::PayloadNotPresent(Box::from(
+                    "fn name not noop",
+                )));
+            }
+        }
         let r = tx
             .call_data
             .as_ref()

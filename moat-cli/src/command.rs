@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::interactor::SetupHolder;
 use crate::SeedableRng;
 use bytecheck::CheckBytes;
 use bytes::Bytes;
@@ -49,6 +50,8 @@ pub(crate) enum Command {
         request_path: Option<PathBuf>,
         license_hash: String,
     },
+    /// Request Service (User)
+    RequestService { session_cookie: String },
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
@@ -144,7 +147,7 @@ impl Command {
         gas_limit: u64,
         gas_price: u64,
         request_json: Option<RequestJson>,
-        pp: &mut Option<PublicParameters>,
+        setup_holder: &mut Option<SetupHolder>,
     ) -> Result<(), Error> {
         match self {
             Command::SubmitRequest { request_path } => {
@@ -192,7 +195,7 @@ impl Command {
                     .iter()
                     .flat_map(|n| n.nullified_by)
                     .collect();
-                println!("current address has {} notes", note_hashes.len());
+                // println!("current address has {} notes", note_hashes.len());
 
                 let mut found_requests = vec![];
                 let mut height = 0;
@@ -217,7 +220,7 @@ impl Command {
                 }
                 let owned_requests = found_requests.len();
                 println!(
-                    "scanned {} blocks, found {} requests, {} owned requests",
+                    "scanned {} blocks, found {} requests, {} owned requests:",
                     height, total_requests, owned_requests,
                 );
                 for request in found_requests.iter() {
@@ -234,7 +237,7 @@ impl Command {
                 let (total_count, this_lp_count) =
                     reference_lp.scan(blockchain_access_config).await?;
                 println!(
-                    "found {} requests total, {} requests for this LP ",
+                    "found {} requests total, {} requests for this LP:",
                     total_count, this_lp_count
                 );
                 for request in reference_lp.requests_to_process.iter() {
@@ -328,15 +331,15 @@ impl Command {
                             "using license: {}",
                             Self::to_hash_hex(&license)
                         );
-                        println!("user_ssk={}", request_json.user_ssk);
-                        println!("lp_psk={}", request_json.provider_psk);
+                        // println!("user_ssk={}", request_json.user_ssk);
+                        // println!("lp_psk={}", request_json.provider_psk);
                         let ssk_user = SecretSpendKey::from_slice(
                             hex::decode(request_json.user_ssk)?.as_slice(),
                         )?;
                         let psk_lp = PublicSpendKey::from_slice(
                             hex::decode(request_json.provider_psk)?.as_slice(),
                         )?;
-                        let session_id = Self::prove_and_send_use_license(
+                        let _session_id = Self::prove_and_send_use_license(
                             blockchain_access_config,
                             wallet_path,
                             psw,
@@ -346,19 +349,18 @@ impl Command {
                             pos,
                             gas_limit,
                             gas_price,
-                            pp,
+                            setup_holder,
                         )
                         .await?;
-                        println!(
-                            "license {} used, obtained session id: {}",
-                            Self::to_hash_hex(&license),
-                            hex::encode(session_id.to_bytes())
-                        );
                     }
                     _ => {
                         println!("Please obtain a license");
                     }
                 }
+                println!();
+            }
+            Command::RequestService { session_cookie: _ } => {
+                println!("Off-chain request service to be placed here");
                 println!();
             }
             Command::GetSession { session_id } => {
@@ -499,7 +501,7 @@ impl Command {
         pos: u64,
         gas_limit: u64,
         gas_price: u64,
-        pp_opt: &mut Option<PublicParameters>,
+        sh_opt: &mut Option<SetupHolder>,
     ) -> Result<BlsScalar, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
@@ -508,20 +510,25 @@ impl Command {
         let challenge = JubJubScalar::from(0xcafebabeu64);
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
-        println!("performing setup");
-        let pp: &PublicParameters = match pp_opt {
-            Some(pp) => pp,
+        let setup_holder = match sh_opt {
+            Some(sh) => sh,
             _ => {
+                println!("performing setup");
                 let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
                     .expect("Initializing public parameters should succeed");
-                *pp_opt = Some(pp);
-                pp_opt.as_ref().unwrap()
+                println!("compiling circuit");
+                let (prover, verifier) =
+                    Compiler::compile::<LicenseCircuit>(&pp, LABEL)
+                        .expect("Compiling circuit should succeed");
+                let sh = SetupHolder {
+                    pp,
+                    prover,
+                    verifier,
+                };
+                *sh_opt = Some(sh);
+                sh_opt.as_ref().unwrap()
             }
         };
-
-        println!("compiling circuit");
-        let (prover, verifier) = Compiler::compile::<LicenseCircuit>(pp, LABEL)
-            .expect("Compiling circuit should succeed");
 
         let opening = CitadelInquirer::get_merkle_opening(&client, pos)
             .await?
@@ -533,14 +540,15 @@ impl Command {
         let circuit = LicenseCircuit::new(&cpp, &sc);
 
         println!("calculating proof");
-        let (proof, public_inputs) = prover
+        let (proof, public_inputs) = setup_holder
+            .prover
             .prove(&mut rng, &circuit)
             .expect("Proving should succeed");
 
         assert!(!public_inputs.is_empty());
         let session_id = public_inputs[0];
 
-        verifier
+        setup_holder.verifier
             .verify(&proof, &public_inputs)
             .expect("Verifying the circuit should succeed");
         println!("proof validated locally");
@@ -567,6 +575,13 @@ impl Command {
             "use license executing transaction {} confirmed",
             hex::encode(tx_id.to_bytes())
         );
+        println!();
+        println!("license {} used", Self::to_hash_hex(license),);
+        println!();
+        println!("session cookie: {}", Self::to_blob_hex(&sc));
+        println!();
+        println!("user attributes: {}", hex::encode(sc.attr.to_bytes()));
+        println!("session id: {}", hex::encode(sc.session_id.to_bytes()));
         Ok(session_id)
     }
 
@@ -585,5 +600,15 @@ impl Command {
         hasher.update(blob);
         let result = hasher.finalize();
         hex::encode(result)
+    }
+
+    fn to_blob_hex<T>(object: &T) -> String
+    where
+        T: rkyv::Serialize<AllocSerializer<16386>>,
+    {
+        let blob = rkyv::to_bytes::<_, 16386>(object)
+            .expect("type should serialize correctly")
+            .to_vec();
+        hex::encode(blob)
     }
 }
