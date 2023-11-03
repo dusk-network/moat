@@ -570,7 +570,9 @@ impl Command {
         );
         println!();
         println!("license {} used", Self::to_hash_hex(license),);
+        println!();
         println!("session cookie: {}", Self::to_blob_hex(&sc));
+        println!();
         println!("user attributes: {}", hex::encode(sc.attr.to_bytes()));
         println!("session id: {}", hex::encode(sc.session_id.to_bytes()));
         Ok(session_id)
