@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::interactor::SetupHolder;
 use crate::SeedableRng;
 use bytecheck::CheckBytes;
 use bytes::Bytes;
@@ -146,7 +147,7 @@ impl Command {
         gas_limit: u64,
         gas_price: u64,
         request_json: Option<RequestJson>,
-        pp: &mut Option<PublicParameters>,
+        setup_holder: &mut Option<SetupHolder>,
     ) -> Result<(), Error> {
         match self {
             Command::SubmitRequest { request_path } => {
@@ -348,7 +349,7 @@ impl Command {
                             pos,
                             gas_limit,
                             gas_price,
-                            pp,
+                            setup_holder,
                         )
                         .await?;
                     }
@@ -500,7 +501,7 @@ impl Command {
         pos: u64,
         gas_limit: u64,
         gas_price: u64,
-        pp_opt: &mut Option<PublicParameters>,
+        sh_opt: &mut Option<SetupHolder>,
     ) -> Result<BlsScalar, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
@@ -509,20 +510,25 @@ impl Command {
         let challenge = JubJubScalar::from(0xcafebabeu64);
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
-        println!("performing setup");
-        let pp: &PublicParameters = match pp_opt {
-            Some(pp) => pp,
+        let setup_holder = match sh_opt {
+            Some(sh) => sh,
             _ => {
+                println!("performing setup");
                 let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
                     .expect("Initializing public parameters should succeed");
-                *pp_opt = Some(pp);
-                pp_opt.as_ref().unwrap()
+                println!("compiling circuit");
+                let (prover, verifier) =
+                    Compiler::compile::<LicenseCircuit>(&pp, LABEL)
+                        .expect("Compiling circuit should succeed");
+                let sh = SetupHolder {
+                    pp,
+                    prover,
+                    verifier,
+                };
+                *sh_opt = Some(sh);
+                sh_opt.as_ref().unwrap()
             }
         };
-
-        println!("compiling circuit");
-        let (prover, verifier) = Compiler::compile::<LicenseCircuit>(pp, LABEL)
-            .expect("Compiling circuit should succeed");
 
         let opening = CitadelInquirer::get_merkle_opening(&client, pos)
             .await?
@@ -534,14 +540,15 @@ impl Command {
         let circuit = LicenseCircuit::new(&cpp, &sc);
 
         println!("calculating proof");
-        let (proof, public_inputs) = prover
+        let (proof, public_inputs) = setup_holder
+            .prover
             .prove(&mut rng, &circuit)
             .expect("Proving should succeed");
 
         assert!(!public_inputs.is_empty());
         let session_id = public_inputs[0];
 
-        verifier
+        setup_holder.verifier
             .verify(&proof, &public_inputs)
             .expect("Verifying the circuit should succeed");
         println!("proof validated locally");

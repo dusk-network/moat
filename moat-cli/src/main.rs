@@ -60,7 +60,7 @@ async fn main() -> Result<(), CliError> {
         gas_limit,
         gas_price,
         request_json: Some(request_json),
-        pp: None,
+        setup_holder: None,
     };
 
     interactor.run_loop().await?;

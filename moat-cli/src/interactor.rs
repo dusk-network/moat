@@ -7,7 +7,7 @@
 use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
-use dusk_plonk::prelude::PublicParameters;
+use dusk_plonk::prelude::{Prover, PublicParameters, Verifier};
 use dusk_wallet::WalletPath;
 use moat_core::{Error, RequestJson};
 use requestty::{ErrorKind, Question};
@@ -62,7 +62,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::SubmitRequest => {
             OpSelection::Run(Box::from(Command::SubmitRequest {
                 request_path: prompt::request_pathbuf(
-                    "request (e.g. moat-cli/request2.json)",
+                    "request",
                     "moat-cli/request2.json",
                 )?,
             }))
@@ -75,7 +75,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::ListRequestsLP => {
             OpSelection::Run(Box::from(Command::ListRequestsLP {
                 lp_config_path: prompt::request_pathbuf(
-                    "LP config (e.g. moat-cli/lp2.json)",
+                    "LP config",
                     "moat-cli/lp2.json",
                 )?,
             }))
@@ -83,7 +83,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::IssueLicenseLP => {
             OpSelection::Run(Box::from(Command::IssueLicenseLP {
                 lp_config_path: prompt::request_pathbuf(
-                    "LP config (e.g. moat-cli/lp2.json)",
+                    "LP config",
                     "moat-cli/lp2.json",
                 )?,
                 request_hash: prompt::request_request_hash()?,
@@ -92,7 +92,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::ListLicenses => {
             OpSelection::Run(Box::from(Command::ListLicenses {
                 request_path: prompt::request_pathbuf(
-                    "request (e.g. moat-cli/request2.json)",
+                    "request",
                     "moat-cli/request2.json",
                 )?,
             }))
@@ -100,7 +100,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::UseLicense => {
             OpSelection::Run(Box::from(Command::UseLicense {
                 request_path: prompt::request_pathbuf(
-                    "request (e.g. moat-cli/request2.json)",
+                    "request",
                     "moat-cli/request2.json",
                 )?,
                 license_hash: prompt::request_license_hash()?,
@@ -123,6 +123,12 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     })
 }
 
+pub struct SetupHolder {
+    pub pp: PublicParameters,
+    pub prover: Prover,
+    pub verifier: Verifier,
+}
+
 pub struct Interactor {
     pub wallet_path: WalletPath,
     pub psw: Password,
@@ -131,7 +137,7 @@ pub struct Interactor {
     pub gas_limit: u64,
     pub gas_price: u64,
     pub request_json: Option<RequestJson>,
-    pub pp: Option<PublicParameters>,
+    pub setup_holder: Option<SetupHolder>,
 }
 
 impl Interactor {
@@ -150,7 +156,7 @@ impl Interactor {
                             self.gas_limit,
                             self.gas_price,
                             self.request_json.clone(),
-                            &mut self.pp,
+                            &mut self.setup_holder,
                         )
                         .await;
                     if result.is_err() {
