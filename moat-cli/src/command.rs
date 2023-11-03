@@ -328,15 +328,15 @@ impl Command {
                             "using license: {}",
                             Self::to_hash_hex(&license)
                         );
-                        println!("user_ssk={}", request_json.user_ssk);
-                        println!("lp_psk={}", request_json.provider_psk);
+                        // println!("user_ssk={}", request_json.user_ssk);
+                        // println!("lp_psk={}", request_json.provider_psk);
                         let ssk_user = SecretSpendKey::from_slice(
                             hex::decode(request_json.user_ssk)?.as_slice(),
                         )?;
                         let psk_lp = PublicSpendKey::from_slice(
                             hex::decode(request_json.provider_psk)?.as_slice(),
                         )?;
-                        let session_id = Self::prove_and_send_use_license(
+                        let _session_id = Self::prove_and_send_use_license(
                             blockchain_access_config,
                             wallet_path,
                             psw,
@@ -349,11 +349,6 @@ impl Command {
                             pp,
                         )
                         .await?;
-                        println!(
-                            "license {} used, obtained session id: {}",
-                            Self::to_hash_hex(&license),
-                            hex::encode(session_id.to_bytes())
-                        );
                     }
                     _ => {
                         println!("Please obtain a license");
@@ -567,6 +562,11 @@ impl Command {
             "use license executing transaction {} confirmed",
             hex::encode(tx_id.to_bytes())
         );
+        println!();
+        println!("license {} used", Self::to_hash_hex(license),);
+        println!("session cookie: {}", Self::to_blob_hex(&sc));
+        println!("user attributes: {}", hex::encode(sc.attr.to_bytes()));
+        println!("session id: {}", hex::encode(sc.session_id.to_bytes()));
         Ok(session_id)
     }
 
@@ -585,5 +585,15 @@ impl Command {
         hasher.update(blob);
         let result = hasher.finalize();
         hex::encode(result)
+    }
+
+    fn to_blob_hex<T>(object: &T) -> String
+    where
+        T: rkyv::Serialize<AllocSerializer<16386>>,
+    {
+        let blob = rkyv::to_bytes::<_, 16386>(object)
+            .expect("type should serialize correctly")
+            .to_vec();
+        hex::encode(blob)
     }
 }
