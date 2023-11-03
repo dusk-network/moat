@@ -28,6 +28,7 @@ enum CommandMenuItem {
     IssueLicenseLP,
     ListLicenses,
     UseLicense,
+    RequestService,
     GetSession,
     ShowState,
     Exit,
@@ -41,6 +42,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         .add(CommandMenuItem::IssueLicenseLP, "Issue License (LP)")
         .add(CommandMenuItem::ListLicenses, "List Licenses")
         .add(CommandMenuItem::UseLicense, "Use License")
+        .add(CommandMenuItem::RequestService, "Request Service (Off-Chain)")
         .add(CommandMenuItem::GetSession, "Get Session (SP)")
         .add(CommandMenuItem::ShowState, "Show state")
         .separator()
@@ -99,6 +101,11 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
                     "moat-cli/request2.json",
                 )?,
                 license_hash: prompt::request_license_hash()?,
+            }))
+        }
+        CommandMenuItem::RequestService => {
+            OpSelection::Run(Box::from(Command::RequestService {
+                session_cookie: prompt::request_session_cookie()?,
             }))
         }
         CommandMenuItem::GetSession => {

@@ -49,6 +49,8 @@ pub(crate) enum Command {
         request_path: Option<PathBuf>,
         license_hash: String,
     },
+    /// Request Service (User)
+    RequestService { session_cookie: String },
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
@@ -354,6 +356,10 @@ impl Command {
                         println!("Please obtain a license");
                     }
                 }
+                println!();
+            }
+            Command::RequestService { session_cookie: _ } => {
+                println!("Off-chain request service to be placed here");
                 println!();
             }
             Command::GetSession { session_id } => {
