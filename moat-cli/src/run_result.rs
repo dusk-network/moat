@@ -10,15 +10,28 @@ use zk_citadel::license::Request;
 // use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
 use sha3::{Digest, Sha3_256};
 
+pub struct SubmitRequestSummary {
+    pub psk_lp: String,
+    pub tx_id: String,
+    pub request_hash: String,
+}
+
 pub struct RequestsSummary {
     pub height: u64,
     pub found_total: usize,
     pub found_owned: usize,
 }
 
+pub struct RequestsLPSummary {
+    pub found_total: usize,
+    pub found_owned: usize,
+}
+
 /// Possible results of running a command in interactive mode
 pub enum RunResult {
+    SubmitRequest(SubmitRequestSummary),
     Requests(RequestsSummary, Vec<Request>),
+    RequestsLP(RequestsLPSummary, Vec<Request>),
     Empty,
 }
 
@@ -26,6 +39,20 @@ impl fmt::Display for RunResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use RunResult::*;
         match self {
+            SubmitRequest(summary) => {
+                writeln!(
+                    f,
+                    "submitting request to provider psk: {}",
+                    summary.psk_lp
+                )?;
+                writeln!(
+                    f,
+                    "request submitting transaction {} confirmed",
+                    summary.tx_id
+                )?;
+                writeln!(f, "request submitted: {}", summary.request_hash)?;
+                Ok(())
+            }
             Requests(summary, requests) => {
                 writeln!(
                     f,
@@ -34,6 +61,21 @@ impl fmt::Display for RunResult {
                 )?;
                 for request in requests.iter() {
                     writeln!(f, "request: {}", Self::to_hash_hex(request))?;
+                }
+                Ok(())
+            }
+            RequestsLP(summary, requests) => {
+                writeln!(
+                    f,
+                    "found {} requests total, {} requests for this LP:",
+                    summary.found_total, summary.found_owned
+                )?;
+                for request in requests.iter() {
+                    writeln!(
+                        f,
+                        "request to process by LP: {}",
+                        RunResult::to_hash_hex(request)
+                    )?;
                 }
                 Ok(())
             }

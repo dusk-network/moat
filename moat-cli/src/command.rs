@@ -5,9 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::interactor::SetupHolder;
-use crate::run_result::{RequestsSummary, RunResult};
+use crate::run_result::{
+    RequestsLPSummary, RequestsSummary, RunResult, SubmitRequestSummary,
+};
 use crate::SeedableRng;
-use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
@@ -22,7 +23,7 @@ use moat_core::{
     RequestSender, StreamAux, TxAwaiter,
 };
 use rand::rngs::StdRng;
-use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
+use rkyv::{check_archived_root, Deserialize, Infallible};
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 use zk_citadel::license::License;
@@ -238,11 +239,7 @@ impl Command {
             request_json.provider_psk.clone(),
             rng,
         )?;
-        let request_hash_hex = RunResult::to_hash_hex(&request);
-        println!(
-            "submitting request to provider psk: {}",
-            request_json.provider_psk
-        );
+        let request_hash = RunResult::to_hash_hex(&request);
         let tx_id = RequestSender::send_request(
             request,
             blockchain_access_config,
@@ -255,12 +252,12 @@ impl Command {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         TxAwaiter::wait_for(&client, tx_id).await?;
-        println!(
-            "request submitting transaction {} confirmed",
-            hex::encode(tx_id.to_bytes())
-        );
-        println!("request submitted: {}", request_hash_hex);
-        Ok(RunResult::Empty)
+        let summary = SubmitRequestSummary {
+            psk_lp: request_json.provider_psk,
+            tx_id: hex::encode(tx_id.to_bytes()),
+            request_hash,
+        };
+        Ok(RunResult::SubmitRequest(summary))
     }
 
     /// Command: List Requests
@@ -319,21 +316,17 @@ impl Command {
             Some(lp_config_path) => lp_config_path,
             _ => PathBuf::from(lp_config),
         };
-        println!("lpcp={:?}", lp_config_path);
         let mut reference_lp = ReferenceLP::create(lp_config_path)?;
-        let (total_count, this_lp_count) =
+        let (found_total, found_owned) =
             reference_lp.scan(blockchain_access_config).await?;
-        println!(
-            "found {} requests total, {} requests for this LP:",
-            total_count, this_lp_count
-        );
-        for request in reference_lp.requests_to_process.iter() {
-            println!(
-                "request to process by LP: {}",
-                RunResult::to_hash_hex(request)
-            );
-        }
-        Ok(RunResult::Empty)
+        let summary = RequestsLPSummary {
+            found_total,
+            found_owned,
+        };
+        Ok(RunResult::RequestsLP(
+            summary,
+            reference_lp.requests_to_process,
+        ))
     }
 
     #[allow(clippy::too_many_arguments)]
