@@ -260,7 +260,7 @@ async fn user_round_trip() -> Result<(), Error> {
     let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
     let challenge = JubJubScalar::from(num_sessions as u64 + 1);
     info!("proving license and calling use_license (as a user)");
-    let (session_id, tx_id) = LicenseUser::prove_and_use_license(
+    let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
         &blockchain_config,
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
@@ -279,7 +279,9 @@ async fn user_round_trip() -> Result<(), Error> {
     TxAwaiter::wait_for(&client, tx_id).await?;
 
     show_state(&client, "after use_license").await?;
-    let session_id = LicenseSessionId { id: session_id };
+    let session_id = LicenseSessionId {
+        id: session_cookie.session_id,
+    };
 
     // as an SP, call get_session
     info!("calling get_session (as an SP)");

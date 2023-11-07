@@ -19,7 +19,7 @@ use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
 use rkyv::{Archive, Deserialize, Serialize};
 use wallet_accessor::{BlockchainAccessConfig, Password};
-use zk_citadel::license::{CitadelProverParameters, License};
+use zk_citadel::license::{CitadelProverParameters, License, SessionCookie};
 
 /// Use License Argument.
 #[derive(Debug, Clone, PartialEq, Archive, Serialize, Deserialize)]
@@ -35,7 +35,7 @@ impl LicenseUser {
     #[allow(clippy::too_many_arguments)]
     /// Calculates and verified proof, sends proof along with public parameters
     /// as arguments to the license contract's use_license method.
-    /// Awaits for confirmation of the contract-calling transaction.
+    /// Returns transaction id and a session cookie.
     pub async fn prove_and_use_license(
         blockchain_config: &BlockchainAccessConfig,
         wallet_path: &WalletPath,
@@ -50,7 +50,7 @@ impl LicenseUser {
         challenge: &JubJubScalar,
         gas_limit: u64,
         gas_price: u64,
-    ) -> Result<(BlsScalar, BlsScalar), Error> {
+    ) -> Result<(BlsScalar, SessionCookie), Error> {
         let (cpp, sc) = CitadelProverParameters::compute_parameters(
             ssk_user, license, psk_lp, psk_lp, challenge, rng, opening,
         );
@@ -60,7 +60,6 @@ impl LicenseUser {
             prover.prove(rng, &circuit).expect("Proving should succeed");
 
         assert!(!public_inputs.is_empty());
-        let session_id = public_inputs[0];
 
         verifier
             .verify(&proof, &public_inputs)
@@ -82,6 +81,6 @@ impl LicenseUser {
             USE_LICENSE_METHOD_NAME,
         )
         .await?;
-        Ok((session_id, tx_id))
+        Ok((tx_id, sc))
     }
 }

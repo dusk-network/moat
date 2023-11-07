@@ -17,9 +17,8 @@ use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
-    LicenseSessionId, PayloadSender, RequestCreator, RequestJson,
-    RequestScanner, RequestSender, StreamAux, TxAwaiter, LICENSE_CONTRACT_ID,
-    USE_LICENSE_METHOD_NAME,
+    LicenseSessionId, LicenseUser, RequestCreator, RequestJson, RequestScanner,
+    RequestSender, StreamAux, TxAwaiter,
 };
 use rand::rngs::StdRng;
 use rkyv::ser::serializers::AllocSerializer;
@@ -27,7 +26,7 @@ use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
 use sha3::{Digest, Sha3_256};
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
-use zk_citadel::license::{CitadelProverParameters, License};
+use zk_citadel::license::License;
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -534,41 +533,23 @@ impl Command {
             .await?
             .expect("Opening obtained successfully");
 
-        let (cpp, sc) = CitadelProverParameters::compute_parameters(
-            &ssk_user, license, &psk_lp, &psk_lp, &challenge, &mut rng, opening,
+        println!(
+            "calculating proof and calling license contract's use_license"
         );
-        let circuit = LicenseCircuit::new(&cpp, &sc);
-
-        println!("calculating proof");
-        let (proof, public_inputs) = setup_holder
-            .prover
-            .prove(&mut rng, &circuit)
-            .expect("Proving should succeed");
-
-        assert!(!public_inputs.is_empty());
-        let session_id = public_inputs[0];
-
-        setup_holder
-            .verifier
-            .verify(&proof, &public_inputs)
-            .expect("Verifying the circuit should succeed");
-        println!("proof validated locally");
-
-        let use_license_arg = UseLicenseArg {
-            proof,
-            public_inputs,
-        };
-
-        println!("calling license contract's use_license");
-        let tx_id = PayloadSender::execute_contract_method(
-            use_license_arg,
+        let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
             blockchain_access_config,
             wallet_path,
             psw,
+            &ssk_user,
+            &psk_lp,
+            &setup_holder.prover,
+            &setup_holder.verifier,
+            license,
+            opening,
+            &mut rng,
+            &challenge,
             gas_limit,
             gas_price,
-            LICENSE_CONTRACT_ID,
-            USE_LICENSE_METHOD_NAME,
         )
         .await?;
         TxAwaiter::wait_for(&client, tx_id).await?;
@@ -579,11 +560,17 @@ impl Command {
         println!();
         println!("license {} used", Self::to_hash_hex(license),);
         println!();
-        println!("session cookie: {}", Self::to_blob_hex(&sc));
+        println!("session cookie: {}", Self::to_blob_hex(&session_cookie));
         println!();
-        println!("user attributes: {}", hex::encode(sc.attr.to_bytes()));
-        println!("session id: {}", hex::encode(sc.session_id.to_bytes()));
-        Ok(session_id)
+        println!(
+            "user attributes: {}",
+            hex::encode(session_cookie.attr.to_bytes())
+        );
+        println!(
+            "session id: {}",
+            hex::encode(session_cookie.session_id.to_bytes())
+        );
+        Ok(session_cookie.session_id)
     }
 
     fn to_hash_hex<T>(object: &T) -> String
