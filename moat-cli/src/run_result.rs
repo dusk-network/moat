@@ -6,7 +6,8 @@
 
 use rkyv::ser::serializers::AllocSerializer;
 use std::fmt;
-use zk_citadel::license::Request;
+use std::ops::Range;
+use zk_citadel::license::{License, Request};
 // use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
 use sha3::{Digest, Sha3_256};
 
@@ -40,6 +41,7 @@ pub enum RunResult {
     Requests(RequestsSummary, Vec<Request>),
     RequestsLP(RequestsLPSummary, Vec<Request>),
     IssueLicense(Option<IssueLicenseSummary>),
+    ListLicenses(Range<u64>, Vec<(License, bool)>),
     Empty,
 }
 
@@ -113,6 +115,26 @@ impl fmt::Display for RunResult {
                     Ok(())
                 }
             },
+            ListLicenses(block_range, licenses) => {
+                writeln!(
+                    f,
+                    "getting licenses within the block height range {:?}:",
+                    block_range
+                )?;
+                if licenses.is_empty() {
+                    writeln!(f, "licenses not found")?;
+                } else {
+                    for (license, is_owned) in licenses.iter() {
+                        writeln!(
+                            f,
+                            "license: {} {}",
+                            RunResult::to_hash_hex(license),
+                            if *is_owned { "owned" } else { "" }
+                        )?;
+                    }
+                }
+                Ok(())
+            }
             Empty => Ok(()),
         }
     }

@@ -389,34 +389,23 @@ impl Command {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let end_height = BcInquirer::block_height(&client).await?;
-        let block_heights = 0..(end_height + 1);
+        let block_range = 0..(end_height + 1);
 
-        println!(
-            "getting licenses within the block height range {:?}:",
-            block_heights
-        );
         let mut licenses_stream =
-            CitadelInquirer::get_licenses(&client, block_heights).await?;
+            CitadelInquirer::get_licenses(&client, block_range.clone()).await?;
 
         let ssk_user = SecretSpendKey::from_slice(
             hex::decode(request_json.user_ssk.clone())?.as_slice(),
         )?;
 
         let pairs = find_all_licenses(&mut licenses_stream)?;
-        if pairs.is_empty() {
-            println!("licenses not found");
-        } else {
-            let vk = ssk_user.view_key();
-            for (_pos, license) in pairs.iter() {
-                let is_owned = vk.owns(&license.lsa);
-                println!(
-                    "license: {} {}",
-                    RunResult::to_hash_hex(license),
-                    if is_owned { "owned" } else { "" }
-                )
-            }
-        };
-        Ok(RunResult::Empty)
+        let vk = ssk_user.view_key();
+        let mut licenses = vec![];
+        for (_pos, license) in pairs.into_iter() {
+            let is_owned = vk.owns(&license.lsa);
+            licenses.push((license, is_owned));
+        }
+        Ok(RunResult::ListLicenses(block_range, licenses))
     }
 
     #[allow(clippy::too_many_arguments)]
