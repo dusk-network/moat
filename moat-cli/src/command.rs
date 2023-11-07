@@ -54,7 +54,7 @@ pub(crate) enum Command {
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
-    ShowState { dummy: bool },
+    ShowState,
 }
 
 // todo: move this function somewhere else
@@ -219,41 +219,11 @@ impl Command {
                 println!();
             }
             Command::GetSession { session_id } => {
-                let client = RuskHttpClient::new(
-                    blockchain_access_config.rusk_address.clone(),
-                );
-                let id = LicenseSessionId {
-                    id: BlsScalar::from_slice(
-                        hex::decode(session_id.clone())?.as_slice(),
-                    )?,
-                };
-                match CitadelInquirer::get_session(&client, id).await? {
-                    Some(session) => {
-                        println!("obtained session with id={}:", session_id);
-                        println!();
-                        for s in session.public_inputs.iter() {
-                            println!("{}", hex::encode(s.to_bytes()));
-                        }
-                    }
-                    _ => {
-                        println!("session not found");
-                    }
-                }
-                println!();
+                Self::get_session(blockchain_access_config, session_id).await?
             }
-            Command::ShowState { dummy: true } => {
-                let client = RuskHttpClient::new(
-                    blockchain_access_config.rusk_address.clone(),
-                );
-                let (num_licenses, _, num_sessions) =
-                    CitadelInquirer::get_info(&client).await?;
-                println!(
-                    "license contract state - licenses: {}, sessions: {}",
-                    num_licenses, num_sessions
-                );
-                println!();
+            Command::ShowState => {
+                Self::show_state(blockchain_access_config).await?
             }
-            _ => (),
         }
         Ok(())
     }
@@ -534,6 +504,50 @@ impl Command {
                 println!("Please obtain a license");
             }
         }
+        println!();
+        Ok(())
+    }
+
+    /// Command: Get Session
+    async fn get_session(
+        blockchain_access_config: &BlockchainAccessConfig,
+        session_id: String,
+    ) -> Result<(), Error> {
+        let client =
+            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let id = LicenseSessionId {
+            id: BlsScalar::from_slice(
+                hex::decode(session_id.clone())?.as_slice(),
+            )?,
+        };
+        match CitadelInquirer::get_session(&client, id).await? {
+            Some(session) => {
+                println!("obtained session with id={}:", session_id);
+                println!();
+                for s in session.public_inputs.iter() {
+                    println!("{}", hex::encode(s.to_bytes()));
+                }
+            }
+            _ => {
+                println!("session not found");
+            }
+        }
+        println!();
+        Ok(())
+    }
+
+    /// Command: Show State
+    async fn show_state(
+        blockchain_access_config: &BlockchainAccessConfig,
+    ) -> Result<(), Error> {
+        let client =
+            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let (num_licenses, _, num_sessions) =
+            CitadelInquirer::get_info(&client).await?;
+        println!(
+            "license contract state - licenses: {}, sessions: {}",
+            num_licenses, num_sessions
+        );
         println!();
         Ok(())
     }

@@ -115,7 +115,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             }))
         }
         CommandMenuItem::ShowState => {
-            OpSelection::Run(Box::from(Command::ShowState { dummy: true }))
+            OpSelection::Run(Box::from(Command::ShowState))
         }
         CommandMenuItem::Exit => OpSelection::Exit,
     })
