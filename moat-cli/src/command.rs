@@ -56,7 +56,6 @@ pub(crate) enum Command {
     ShowState,
 }
 
-// todo: move these consts to their proper place
 static LABEL: &[u8] = b"dusk-network";
 const CAPACITY: usize = 17; // capacity required for the setup
 
