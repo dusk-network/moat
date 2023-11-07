@@ -68,9 +68,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             }))
         }
         CommandMenuItem::ListRequestsUser => {
-            OpSelection::Run(Box::from(Command::ListRequestsUser {
-                dummy: true,
-            }))
+            OpSelection::Run(Box::from(Command::ListRequestsUser))
         }
         CommandMenuItem::ListRequestsLP => {
             OpSelection::Run(Box::from(Command::ListRequestsLP {

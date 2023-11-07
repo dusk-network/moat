@@ -34,7 +34,7 @@ pub(crate) enum Command {
     /// Submit request (User)
     SubmitRequest { request_path: Option<PathBuf> },
     /// List requests (User)
-    ListRequestsUser { dummy: bool },
+    ListRequestsUser,
     /// List requests (LP)
     ListRequestsLP { lp_config_path: Option<PathBuf> },
     /// Issue license (LP)
@@ -149,84 +149,10 @@ impl Command {
         setup_holder: &mut Option<SetupHolder>,
     ) -> Result<(), Error> {
         match self {
-            Command::SubmitRequest { request_path } => {
-                let request_json = match request_path {
-                    Some(request_path) => RequestJson::from_file(request_path)?,
-                    _ => request_json.expect("request should be provided"),
-                };
-                let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
-                let request = RequestCreator::create_from_hex_args(
-                    request_json.user_ssk,
-                    request_json.provider_psk.clone(),
-                    rng,
-                )?;
-                let request_hash_hex = Self::to_hash_hex(&request);
-                println!(
-                    "submitting request to provider psk: {}",
-                    request_json.provider_psk
-                );
-                let tx_id = RequestSender::send_request(
-                    request,
-                    blockchain_access_config,
-                    wallet_path,
-                    psw,
-                    gas_limit,
-                    gas_price,
-                )
-                .await?;
-                let client = RuskHttpClient::new(
-                    blockchain_access_config.rusk_address.clone(),
-                );
-                TxAwaiter::wait_for(&client, tx_id).await?;
-                println!(
-                    "request submitting transaction {} confirmed",
-                    hex::encode(tx_id.to_bytes())
-                );
-                println!("request submitted: {}", request_hash_hex);
-                println!();
-            }
-            Command::ListRequestsUser { dummy: true } => {
-                let wallet_accessor =
-                    WalletAccessor::new(wallet_path.clone(), psw.clone());
-                let note_hashes: Vec<BlsScalar> = wallet_accessor
-                    .get_notes(blockchain_access_config)
-                    .await?
-                    .iter()
-                    .flat_map(|n| n.nullified_by)
-                    .collect();
-                // println!("current address has {} notes", note_hashes.len());
-
-                let mut found_requests = vec![];
-                let mut height = 0;
-                let mut total_requests = 0usize;
-                loop {
-                    let height_end = height + 10000;
-                    let (requests, top, total) =
-                        RequestScanner::scan_related_to_notes_in_block_range(
-                            height,
-                            height_end,
-                            blockchain_access_config,
-                            &note_hashes,
-                        )
-                        .await?;
-                    found_requests.extend(requests);
-                    total_requests += total;
-                    if top <= height_end {
-                        height = top;
-                        break;
-                    }
-                    height = height_end;
-                }
-                let owned_requests = found_requests.len();
-                println!(
-                    "scanned {} blocks, found {} requests, {} owned requests:",
-                    height, total_requests, owned_requests,
-                );
-                for request in found_requests.iter() {
-                    println!("request: {}", Self::to_hash_hex(request));
-                }
-                println!();
-            }
+            Command::SubmitRequest { request_path } =>
+                Self::submit_request(wallet_path, psw, blockchain_access_config, gas_limit, gas_price, request_json, request_path).await?,
+            Command::ListRequestsUser =>
+                Self::list_requests(wallet_path, psw, blockchain_access_config).await?,
             Command::ListRequestsLP { lp_config_path } => {
                 let lp_config_path = match lp_config_path {
                     Some(lp_config_path) => lp_config_path,
@@ -399,6 +325,102 @@ impl Command {
             }
             _ => (),
         }
+        Ok(())
+    }
+
+    /// Command: Submit Request
+    async fn submit_request(
+        wallet_path: &WalletPath,
+        psw: &Password,
+        blockchain_access_config: &BlockchainAccessConfig,
+        gas_limit: u64,
+        gas_price: u64,
+        request_json: Option<RequestJson>,
+        request_path: Option<PathBuf>,
+    ) -> Result<(), Error> {
+        let request_json = match request_path {
+            Some(request_path) => RequestJson::from_file(request_path)?,
+            _ => request_json.expect("request should be provided"),
+        };
+        let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
+        let request = RequestCreator::create_from_hex_args(
+            request_json.user_ssk,
+            request_json.provider_psk.clone(),
+            rng,
+        )?;
+        let request_hash_hex = Self::to_hash_hex(&request);
+        println!(
+            "submitting request to provider psk: {}",
+            request_json.provider_psk
+        );
+        let tx_id = RequestSender::send_request(
+            request,
+            blockchain_access_config,
+            wallet_path,
+            psw,
+            gas_limit,
+            gas_price,
+        )
+        .await?;
+        let client = RuskHttpClient::new(
+            blockchain_access_config.rusk_address.clone(),
+        );
+        TxAwaiter::wait_for(&client, tx_id).await?;
+        println!(
+            "request submitting transaction {} confirmed",
+            hex::encode(tx_id.to_bytes())
+        );
+        println!("request submitted: {}", request_hash_hex);
+        println!();
+        Ok(())
+    }
+
+    /// Command: List Requests
+    async fn list_requests(
+        wallet_path: &WalletPath,
+        psw: &Password,
+        blockchain_access_config: &BlockchainAccessConfig,
+    ) -> Result<(), Error>{
+        let wallet_accessor =
+            WalletAccessor::new(wallet_path.clone(), psw.clone());
+        let note_hashes: Vec<BlsScalar> = wallet_accessor
+            .get_notes(blockchain_access_config)
+            .await?
+            .iter()
+            .flat_map(|n| n.nullified_by)
+            .collect();
+        // println!("current address has {} notes", note_hashes.len());
+
+        let mut found_requests = vec![];
+        let mut height = 0;
+        let mut total_requests = 0usize;
+        loop {
+            let height_end = height + 10000;
+            let (requests, top, total) =
+                RequestScanner::scan_related_to_notes_in_block_range(
+                    height,
+                    height_end,
+                    blockchain_access_config,
+                    &note_hashes,
+                )
+                    .await?;
+            found_requests.extend(requests);
+            total_requests += total;
+            if top <= height_end {
+                height = top;
+                break;
+            }
+            height = height_end;
+        }
+        let owned_requests = found_requests.len();
+        println!(
+            "scanned {} blocks, found {} requests, {} owned requests:",
+            height, total_requests, owned_requests,
+        );
+        for request in found_requests.iter() {
+            println!("request: {}", Self::to_hash_hex(request));
+        }
+        println!();
         Ok(())
     }
 
