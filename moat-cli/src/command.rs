@@ -149,29 +149,29 @@ impl Command {
         setup_holder: &mut Option<SetupHolder>,
     ) -> Result<(), Error> {
         match self {
-            Command::SubmitRequest { request_path } =>
-                Self::submit_request(wallet_path, psw, blockchain_access_config, gas_limit, gas_price, request_json, request_path).await?,
-            Command::ListRequestsUser =>
-                Self::list_requests(wallet_path, psw, blockchain_access_config).await?,
+            Command::SubmitRequest { request_path } => {
+                Self::submit_request(
+                    wallet_path,
+                    psw,
+                    blockchain_access_config,
+                    gas_limit,
+                    gas_price,
+                    request_json,
+                    request_path,
+                )
+                .await?
+            }
+            Command::ListRequestsUser => {
+                Self::list_requests(wallet_path, psw, blockchain_access_config)
+                    .await?
+            }
             Command::ListRequestsLP { lp_config_path } => {
-                let lp_config_path = match lp_config_path {
-                    Some(lp_config_path) => lp_config_path,
-                    _ => PathBuf::from(lp_config),
-                };
-                let mut reference_lp = ReferenceLP::create(lp_config_path)?;
-                let (total_count, this_lp_count) =
-                    reference_lp.scan(blockchain_access_config).await?;
-                println!(
-                    "found {} requests total, {} requests for this LP:",
-                    total_count, this_lp_count
-                );
-                for request in reference_lp.requests_to_process.iter() {
-                    println!(
-                        "request to process by LP: {}",
-                        Self::to_hash_hex(request)
-                    );
-                }
-                println!();
+                Self::list_requests_lp(
+                    blockchain_access_config,
+                    lp_config,
+                    lp_config_path,
+                )
+                .await?
             }
             Command::IssueLicenseLP {
                 lp_config_path,
@@ -362,9 +362,8 @@ impl Command {
             gas_price,
         )
         .await?;
-        let client = RuskHttpClient::new(
-            blockchain_access_config.rusk_address.clone(),
-        );
+        let client =
+            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         TxAwaiter::wait_for(&client, tx_id).await?;
         println!(
             "request submitting transaction {} confirmed",
@@ -380,7 +379,7 @@ impl Command {
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
-    ) -> Result<(), Error>{
+    ) -> Result<(), Error> {
         let wallet_accessor =
             WalletAccessor::new(wallet_path.clone(), psw.clone());
         let note_hashes: Vec<BlsScalar> = wallet_accessor
@@ -403,7 +402,7 @@ impl Command {
                     blockchain_access_config,
                     &note_hashes,
                 )
-                    .await?;
+                .await?;
             found_requests.extend(requests);
             total_requests += total;
             if top <= height_end {
@@ -419,6 +418,34 @@ impl Command {
         );
         for request in found_requests.iter() {
             println!("request: {}", Self::to_hash_hex(request));
+        }
+        println!();
+        Ok(())
+    }
+
+    /// Command: List Requests LP
+    async fn list_requests_lp(
+        blockchain_access_config: &BlockchainAccessConfig,
+        lp_config: &Path,
+        lp_config_path: Option<PathBuf>,
+    ) -> Result<(), Error> {
+        let lp_config_path = match lp_config_path {
+            Some(lp_config_path) => lp_config_path,
+            _ => PathBuf::from(lp_config),
+        };
+        println!("lpcp={:?}", lp_config_path);
+        let mut reference_lp = ReferenceLP::create(lp_config_path)?;
+        let (total_count, this_lp_count) =
+            reference_lp.scan(blockchain_access_config).await?;
+        println!(
+            "found {} requests total, {} requests for this LP:",
+            total_count, this_lp_count
+        );
+        for request in reference_lp.requests_to_process.iter() {
+            println!(
+                "request to process by LP: {}",
+                Self::to_hash_hex(request)
+            );
         }
         println!();
         Ok(())
