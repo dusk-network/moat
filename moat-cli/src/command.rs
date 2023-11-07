@@ -8,6 +8,7 @@ use crate::interactor::SetupHolder;
 use crate::run_result::{
     IssueLicenseSummary, LicenseContractSummary, RequestsLPSummary,
     RequestsSummary, RunResult, SessionSummary, SubmitRequestSummary,
+    UseLicenseSummary,
 };
 use crate::SeedableRng;
 use bytes::Bytes;
@@ -27,7 +28,7 @@ use rand::rngs::StdRng;
 use rkyv::{check_archived_root, Deserialize, Infallible};
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
-use zk_citadel::license::License;
+use zk_citadel::license::{License, SessionCookie};
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -431,7 +432,7 @@ impl Command {
             license_hash.clone(),
         )
         .await?;
-        match pos_license {
+        Ok(match pos_license {
             Some((pos, license)) => {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
                 let ssk_user = SecretSpendKey::from_slice(
@@ -440,7 +441,7 @@ impl Command {
                 let psk_lp = PublicSpendKey::from_slice(
                     hex::decode(request_json.provider_psk)?.as_slice(),
                 )?;
-                let _session_id = Self::prove_and_send_use_license(
+                let (tx_id, session_cookie) = Self::prove_and_send_use_license(
                     blockchain_access_config,
                     wallet_path,
                     psw,
@@ -453,12 +454,19 @@ impl Command {
                     setup_holder,
                 )
                 .await?;
+                let summary = UseLicenseSummary {
+                    license_blob: RunResult::to_blob(&license),
+                    tx_id: hex::encode(tx_id.to_bytes()),
+                    user_attr: hex::encode(session_cookie.attr.to_bytes()),
+                    session_id: hex::encode(
+                        session_cookie.session_id.to_bytes(),
+                    ),
+                    session_cookie: RunResult::to_blob_hex(&session_cookie),
+                };
+                RunResult::UseLicense(Some(summary))
             }
-            _ => {
-                println!("Please obtain a license");
-            }
-        }
-        Ok(RunResult::Empty)
+            _ => RunResult::UseLicense(None),
+        })
     }
 
     /// Command: Get Session
@@ -551,7 +559,7 @@ impl Command {
         gas_limit: u64,
         gas_price: u64,
         sh_opt: &mut Option<SetupHolder>,
-    ) -> Result<BlsScalar, Error> {
+    ) -> Result<(BlsScalar, SessionCookie), Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         // let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
@@ -603,26 +611,6 @@ impl Command {
         )
         .await?;
         TxAwaiter::wait_for(&client, tx_id).await?;
-        println!(
-            "use license executing transaction {} confirmed",
-            hex::encode(tx_id.to_bytes())
-        );
-        println!();
-        println!("license {} used", RunResult::to_hash_hex(license),);
-        println!();
-        println!(
-            "session cookie: {}",
-            RunResult::to_blob_hex(&session_cookie)
-        );
-        println!();
-        println!(
-            "user attributes: {}",
-            hex::encode(session_cookie.attr.to_bytes())
-        );
-        println!(
-            "session id: {}",
-            hex::encode(session_cookie.session_id.to_bytes())
-        );
-        Ok(session_cookie.session_id)
+        Ok((tx_id, session_cookie))
     }
 }

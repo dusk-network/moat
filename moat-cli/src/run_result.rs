@@ -34,6 +34,14 @@ pub struct IssueLicenseSummary {
     pub license_blob: Vec<u8>,
 }
 
+pub struct UseLicenseSummary {
+    pub license_blob: Vec<u8>,
+    pub tx_id: String,
+    pub session_cookie: String,
+    pub user_attr: String,
+    pub session_id: String,
+}
+
 pub struct SessionSummary {
     pub session_id: String,
     pub session: Vec<String>,
@@ -52,6 +60,7 @@ pub enum RunResult {
     RequestsLP(RequestsLPSummary, Vec<Request>),
     IssueLicense(Option<IssueLicenseSummary>),
     ListLicenses(Range<u64>, Vec<(License, bool)>),
+    UseLicense(Option<UseLicenseSummary>),
     GetSession(Option<SessionSummary>),
     ShowState(LicenseContractSummary),
     Empty,
@@ -147,6 +156,45 @@ impl fmt::Display for RunResult {
                 }
                 Ok(())
             }
+            UseLicense(summary) => {
+                match summary {
+                    Some(summary) => {
+                        writeln!(
+                            f,
+                            "using license: {}",
+                            Self::blob_to_hash_hex(
+                                summary.license_blob.as_slice()
+                            )
+                        )?;
+                        writeln!(
+                            f,
+                            "use license executing transaction {} confirmed",
+                            summary.tx_id
+                        )?;
+                        writeln!(f)?;
+                        writeln!(
+                            f,
+                            "license {} used",
+                            Self::blob_to_hash_hex(
+                                summary.license_blob.as_slice()
+                            ),
+                        )?;
+                        writeln!(f)?;
+                        writeln!(
+                            f,
+                            "session cookie: {}",
+                            summary.session_cookie
+                        )?;
+                        writeln!(f)?;
+                        writeln!(f, "user attributes: {}", summary.user_attr)?;
+                        writeln!(f, "session id: {}", summary.session_id)?;
+                    }
+                    _ => {
+                        writeln!(f, "Please obtain a license")?;
+                    }
+                }
+                Ok(())
+            }
             GetSession(summary) => {
                 match summary {
                     Some(summary) => {
@@ -200,9 +248,16 @@ impl RunResult {
     where
         T: rkyv::Serialize<AllocSerializer<16386>>,
     {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
-            .expect("type should serialize correctly")
-            .to_vec();
+        let blob = Self::to_blob(object);
         hex::encode(blob)
+    }
+
+    pub fn to_blob<T>(object: &T) -> Vec<u8>
+    where
+        T: rkyv::Serialize<AllocSerializer<16386>>,
+    {
+        rkyv::to_bytes::<_, 16386>(object)
+            .expect("type should serialize correctly")
+            .to_vec()
     }
 }
