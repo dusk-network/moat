@@ -201,49 +201,18 @@ impl Command {
                 request_path,
                 license_hash,
             } => {
-                let request_json = match request_path {
-                    Some(request_path) => RequestJson::from_file(request_path)?,
-                    _ => request_json.expect("request should be provided"),
-                };
-                let pos_license = Self::get_license_to_use(
+                Self::use_license(
+                    wallet_path,
+                    psw,
                     blockchain_access_config,
-                    Some(&request_json),
-                    license_hash.clone(),
+                    gas_limit,
+                    gas_price,
+                    request_json,
+                    setup_holder,
+                    request_path,
+                    license_hash,
                 )
-                .await?;
-                match pos_license {
-                    Some((pos, license)) => {
-                        println!(
-                            "using license: {}",
-                            Self::to_hash_hex(&license)
-                        );
-                        // println!("user_ssk={}", request_json.user_ssk);
-                        // println!("lp_psk={}", request_json.provider_psk);
-                        let ssk_user = SecretSpendKey::from_slice(
-                            hex::decode(request_json.user_ssk)?.as_slice(),
-                        )?;
-                        let psk_lp = PublicSpendKey::from_slice(
-                            hex::decode(request_json.provider_psk)?.as_slice(),
-                        )?;
-                        let _session_id = Self::prove_and_send_use_license(
-                            blockchain_access_config,
-                            wallet_path,
-                            psw,
-                            psk_lp,
-                            ssk_user,
-                            &license,
-                            pos,
-                            gas_limit,
-                            gas_price,
-                            setup_holder,
-                        )
-                        .await?;
-                    }
-                    _ => {
-                        println!("Please obtain a license");
-                    }
-                }
-                println!();
+                .await?
             }
             Command::RequestService { session_cookie: _ } => {
                 println!("Off-chain request service to be placed here");
@@ -511,6 +480,60 @@ impl Command {
                 )
             }
         };
+        println!();
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    /// Command: Use License
+    async fn use_license(
+        wallet_path: &WalletPath,
+        psw: &Password,
+        blockchain_access_config: &BlockchainAccessConfig,
+        gas_limit: u64,
+        gas_price: u64,
+        request_json: Option<RequestJson>,
+        setup_holder: &mut Option<SetupHolder>,
+        request_path: Option<PathBuf>,
+        license_hash: String,
+    ) -> Result<(), Error> {
+        let request_json = match request_path {
+            Some(request_path) => RequestJson::from_file(request_path)?,
+            _ => request_json.expect("request should be provided"),
+        };
+        let pos_license = Self::get_license_to_use(
+            blockchain_access_config,
+            Some(&request_json),
+            license_hash.clone(),
+        )
+        .await?;
+        match pos_license {
+            Some((pos, license)) => {
+                println!("using license: {}", Self::to_hash_hex(&license));
+                let ssk_user = SecretSpendKey::from_slice(
+                    hex::decode(request_json.user_ssk)?.as_slice(),
+                )?;
+                let psk_lp = PublicSpendKey::from_slice(
+                    hex::decode(request_json.provider_psk)?.as_slice(),
+                )?;
+                let _session_id = Self::prove_and_send_use_license(
+                    blockchain_access_config,
+                    wallet_path,
+                    psw,
+                    psk_lp,
+                    ssk_user,
+                    &license,
+                    pos,
+                    gas_limit,
+                    gas_price,
+                    setup_holder,
+                )
+                .await?;
+            }
+            _ => {
+                println!("Please obtain a license");
+            }
+        }
         println!();
         Ok(())
     }
