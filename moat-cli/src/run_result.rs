@@ -34,6 +34,16 @@ pub struct IssueLicenseSummary {
     pub license_blob: Vec<u8>,
 }
 
+pub struct SessionSummary {
+    pub session_id: String,
+    pub session: Vec<String>,
+}
+
+pub struct LicenseContractSummary {
+    pub num_licenses: u32,
+    pub num_sessions: u32,
+}
+
 #[allow(clippy::large_enum_variant)]
 /// Possible results of running a command in interactive mode
 pub enum RunResult {
@@ -42,6 +52,8 @@ pub enum RunResult {
     RequestsLP(RequestsLPSummary, Vec<Request>),
     IssueLicense(Option<IssueLicenseSummary>),
     ListLicenses(Range<u64>, Vec<(License, bool)>),
+    GetSession(Option<SessionSummary>),
+    ShowState(LicenseContractSummary),
     Empty,
 }
 
@@ -133,6 +145,32 @@ impl fmt::Display for RunResult {
                         )?;
                     }
                 }
+                Ok(())
+            }
+            GetSession(summary) => {
+                match summary {
+                    Some(summary) => {
+                        writeln!(
+                            f,
+                            "obtained session with id={}:",
+                            summary.session_id
+                        )?;
+                        for s in summary.session.iter() {
+                            writeln!(f, "{}", s)?;
+                        }
+                    }
+                    _ => {
+                        writeln!(f, "session not found")?;
+                    }
+                }
+                Ok(())
+            }
+            ShowState(summary) => {
+                writeln!(
+                    f,
+                    "license contract state - licenses: {}, sessions: {}",
+                    summary.num_licenses, summary.num_sessions
+                )?;
                 Ok(())
             }
             Empty => Ok(()),

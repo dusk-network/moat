@@ -6,8 +6,8 @@
 
 use crate::interactor::SetupHolder;
 use crate::run_result::{
-    IssueLicenseSummary, RequestsLPSummary, RequestsSummary, RunResult,
-    SubmitRequestSummary,
+    IssueLicenseSummary, LicenseContractSummary, RequestsLPSummary,
+    RequestsSummary, RunResult, SessionSummary, SubmitRequestSummary,
 };
 use crate::SeedableRng;
 use bytes::Bytes;
@@ -473,19 +473,19 @@ impl Command {
                 hex::decode(session_id.clone())?.as_slice(),
             )?,
         };
-        match CitadelInquirer::get_session(&client, id).await? {
+        Ok(match CitadelInquirer::get_session(&client, id).await? {
             Some(session) => {
-                println!("obtained session with id={}:", session_id);
-                println!();
+                let mut summary = SessionSummary {
+                    session_id,
+                    session: vec![],
+                };
                 for s in session.public_inputs.iter() {
-                    println!("{}", hex::encode(s.to_bytes()));
+                    summary.session.push(hex::encode(s.to_bytes()));
                 }
+                RunResult::GetSession(Some(summary))
             }
-            _ => {
-                println!("session not found");
-            }
-        }
-        Ok(RunResult::Empty)
+            _ => RunResult::GetSession(None),
+        })
     }
 
     /// Command: Show State
@@ -496,11 +496,11 @@ impl Command {
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let (num_licenses, _, num_sessions) =
             CitadelInquirer::get_info(&client).await?;
-        println!(
-            "license contract state - licenses: {}, sessions: {}",
-            num_licenses, num_sessions
-        );
-        Ok(RunResult::Empty)
+        let summary = LicenseContractSummary {
+            num_licenses,
+            num_sessions,
+        };
+        Ok(RunResult::ShowState(summary))
     }
 
     async fn get_license_to_use(
