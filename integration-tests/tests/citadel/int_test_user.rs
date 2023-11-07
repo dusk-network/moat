@@ -19,28 +19,25 @@
 //!     nullifier (or session id) in a collection which stops us from double
 //!     usage of the license)
 
-use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, LicenseUser, PayloadRetriever, RequestCreator,
-    RequestJson, RequestSender, StreamAux, TxAwaiter,
+    RequestJson, RequestSender, TxAwaiter,
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use rkyv::{check_archived_root, Deserialize, Infallible};
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use tracing::{info, Level};
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::PwdHash;
-use zk_citadel::license::{License, Request};
+use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -74,19 +71,6 @@ async fn issue_license(
     Ok(tx_id)
 }
 
-/// Deserializes license, panics if deserialization fails.
-fn deserialise_license(v: &Vec<u8>) -> License {
-    let response_data = check_archived_root::<License>(v.as_slice())
-        .map_err(|_| {
-            InvalidQueryResponse(Box::from("rkyv deserialization error"))
-        })
-        .expect("License should deserialize correctly");
-    let license: License = response_data
-        .deserialize(&mut Infallible)
-        .expect("Infallible");
-    license
-}
-
 /// Displays license contract current state summary.
 async fn show_state(
     client: &RuskHttpClient,
@@ -102,24 +86,6 @@ async fn show_state(
         num_sessions
     );
     Ok(())
-}
-
-/// Finds owned license in a stream of licenses.
-/// It searches in a reverse order to return a newest license.
-fn find_owned_license(
-    ssk_user: SecretSpendKey,
-    stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
-              + std::marker::Unpin),
-) -> Result<(u64, License), Error> {
-    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
-    let (pos, lic_ser) = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
-        |(_, lic_vec)| {
-            let license = deserialise_license(lic_vec);
-            Ok(ssk_user.view_key().owns(&license.lsa))
-        },
-        stream,
-    )?;
-    Ok((pos, deserialise_license(&lic_ser)))
 }
 
 ///
@@ -244,8 +210,9 @@ async fn user_round_trip() -> Result<(), Error> {
     let mut licenses_stream =
         CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-    let (pos, license) = find_owned_license(ssk_user, &mut licenses_stream)
-        .expect("owned license found");
+    let owned_licenses =
+        CitadelInquirer::find_owned_licenses(ssk_user, &mut licenses_stream)?;
+    let (pos, license) = owned_licenses.last().expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
     info!("calling get_merkle_opening (as a user)");

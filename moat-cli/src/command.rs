@@ -11,21 +11,18 @@ use crate::run_result::{
     UseLicenseSummary,
 };
 use crate::SeedableRng;
-use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, LicenseUser, RequestCreator, RequestJson, RequestScanner,
-    RequestSender, StreamAux, TxAwaiter,
+    RequestSender, TxAwaiter,
 };
 use rand::rngs::StdRng;
-use rkyv::{check_archived_root, Deserialize, Infallible};
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 use zk_citadel::license::{License, SessionCookie};
@@ -57,71 +54,6 @@ pub(crate) enum Command {
     GetSession { session_id: String },
     /// Show state
     ShowState,
-}
-
-// todo: move this function somewhere else
-/// Deserializes license, panics if deserialization fails.
-fn deserialise_license(v: &Vec<u8>) -> License {
-    let response_data = check_archived_root::<License>(v.as_slice())
-        .map_err(|_| {
-            InvalidQueryResponse(Box::from("rkyv deserialization error"))
-        })
-        .expect("License should deserialize correctly");
-    let license: License = response_data
-        .deserialize(&mut Infallible)
-        .expect("Infallible");
-    license
-}
-
-// todo: move this function somewhere else
-/// Finds owned license in a stream of licenses.
-/// It searches in a reverse order to return a newest license.
-fn find_owned_licenses(
-    ssk_user: SecretSpendKey,
-    stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
-              + std::marker::Unpin),
-) -> Result<Vec<(u64, License)>, Error> {
-    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
-    let mut pairs = vec![];
-    loop {
-        let r = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
-            |(_, lic_vec)| {
-                let license = deserialise_license(lic_vec);
-                Ok(ssk_user.view_key().owns(&license.lsa))
-            },
-            stream,
-        );
-        if r.is_err() {
-            break;
-        }
-        let (pos, lic_ser) = r?;
-        pairs.push((pos, deserialise_license(&lic_ser)))
-    }
-    Ok(pairs)
-}
-
-// todo: move this function somewhere else and possibly merge with
-// find_owned_licenses
-/// Finds owned license in a stream of licenses.
-/// It searches in a reverse order to return a newest license.
-fn find_all_licenses(
-    stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
-              + std::marker::Unpin),
-) -> Result<Vec<(u64, License)>, Error> {
-    const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
-    let mut pairs = vec![];
-    loop {
-        let r = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
-            |_| Ok(true),
-            stream,
-        );
-        if r.is_err() {
-            break;
-        }
-        let (pos, lic_ser) = r?;
-        pairs.push((pos, deserialise_license(&lic_ser)))
-    }
-    Ok(pairs)
 }
 
 // todo: move these consts to their proper place
@@ -399,7 +331,7 @@ impl Command {
             hex::decode(request_json.user_ssk.clone())?.as_slice(),
         )?;
 
-        let pairs = find_all_licenses(&mut licenses_stream)?;
+        let pairs = CitadelInquirer::find_all_licenses(&mut licenses_stream)?;
         let vk = ssk_user.view_key();
         let mut licenses = vec![];
         for (_pos, license) in pairs.into_iter() {
@@ -534,7 +466,10 @@ impl Command {
             .as_slice(),
         )?;
 
-        let pairs = find_owned_licenses(ssk_user, &mut licenses_stream)?;
+        let pairs = CitadelInquirer::find_owned_licenses(
+            ssk_user,
+            &mut licenses_stream,
+        )?;
         Ok(if pairs.is_empty() {
             None
         } else {
