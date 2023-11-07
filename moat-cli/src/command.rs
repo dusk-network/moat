@@ -177,52 +177,17 @@ impl Command {
                 lp_config_path,
                 request_hash,
             } => {
-                let mut rng = StdRng::from_entropy(); // seed_from_u64(0xbeef);
-                let lp_config_path = match lp_config_path {
-                    Some(lp_config_path) => lp_config_path,
-                    _ => PathBuf::from(lp_config),
-                };
-                let mut reference_lp = ReferenceLP::create(lp_config_path)?;
-                let (_total_count, _this_lp_count) =
-                    reference_lp.scan(blockchain_access_config).await?;
-
-                let request = reference_lp.get_request(&request_hash);
-                match request {
-                    Some(request) => {
-                        let license_issuer = LicenseIssuer::new(
-                            blockchain_access_config.clone(),
-                            wallet_path.clone(),
-                            psw.clone(),
-                            gas_limit,
-                            gas_price,
-                        );
-
-                        println!(
-                            "issuing license for request: {}",
-                            Self::to_hash_hex(&request)
-                        );
-                        let (tx_id, license_blob) = license_issuer
-                            .issue_license(
-                                &mut rng,
-                                &request,
-                                &reference_lp.ssk_lp,
-                            )
-                            .await?;
-                        println!(
-                            "license issuing transaction {} confirmed",
-                            hex::encode(tx_id.to_bytes())
-                        );
-                        println!(
-                            "issued license: {}",
-                            Self::blob_to_hash_hex(license_blob.as_slice())
-                        );
-                    }
-                    _ => {
-                        println!("Request not found");
-                    }
-                }
-
-                println!();
+                Self::issue_license_lp(
+                    wallet_path,
+                    psw,
+                    blockchain_access_config,
+                    lp_config,
+                    gas_limit,
+                    gas_price,
+                    lp_config_path,
+                    request_hash,
+                )
+                .await?
             }
             Command::ListLicenses { request_path } => {
                 let request_json = match request_path {
@@ -448,6 +413,64 @@ impl Command {
             );
         }
         println!();
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    /// Command: Issue License LP
+    async fn issue_license_lp(
+        wallet_path: &WalletPath,
+        psw: &Password,
+        blockchain_access_config: &BlockchainAccessConfig,
+        lp_config: &Path,
+        gas_limit: u64,
+        gas_price: u64,
+        lp_config_path: Option<PathBuf>,
+        request_hash: String,
+    ) -> Result<(), Error> {
+        let mut rng = StdRng::from_entropy(); // seed_from_u64(0xbeef);
+        let lp_config_path = match lp_config_path {
+            Some(lp_config_path) => lp_config_path,
+            _ => PathBuf::from(lp_config),
+        };
+        let mut reference_lp = ReferenceLP::create(lp_config_path)?;
+        let (_total_count, _this_lp_count) =
+            reference_lp.scan(blockchain_access_config).await?;
+
+        let request = reference_lp.get_request(&request_hash);
+        match request {
+            Some(request) => {
+                let license_issuer = LicenseIssuer::new(
+                    blockchain_access_config.clone(),
+                    wallet_path.clone(),
+                    psw.clone(),
+                    gas_limit,
+                    gas_price,
+                );
+
+                println!(
+                    "issuing license for request: {}",
+                    Self::to_hash_hex(&request)
+                );
+                let (tx_id, license_blob) = license_issuer
+                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
+                    .await?;
+                println!(
+                    "license issuing transaction {} confirmed",
+                    hex::encode(tx_id.to_bytes())
+                );
+                println!(
+                    "issued license: {}",
+                    Self::blob_to_hash_hex(license_blob.as_slice())
+                );
+            }
+            _ => {
+                println!("Request not found");
+            }
+        }
+
+        println!();
+
         Ok(())
     }
 
