@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::interactor::SetupHolder;
+use crate::run_result::{RequestsSummary, RunResult};
 use crate::SeedableRng;
 use bytecheck::CheckBytes;
 use bytes::Bytes;
@@ -21,9 +22,7 @@ use moat_core::{
     RequestSender, StreamAux, TxAwaiter,
 };
 use rand::rngs::StdRng;
-use rkyv::ser::serializers::AllocSerializer;
 use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
-use sha3::{Digest, Sha3_256};
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 use zk_citadel::license::License;
@@ -122,15 +121,6 @@ fn find_all_licenses(
     Ok(pairs)
 }
 
-// todo: move this struct to its proper place
-/// Use License Argument.
-#[derive(Debug, Clone, PartialEq, Archive, Serialize, Deserialize)]
-#[archive_attr(derive(CheckBytes))]
-pub struct UseLicenseArg {
-    pub proof: Proof,
-    pub public_inputs: Vec<BlsScalar>,
-}
-
 // todo: move these consts to their proper place
 static LABEL: &[u8] = b"dusk-network";
 const CAPACITY: usize = 17; // capacity required for the setup
@@ -147,8 +137,8 @@ impl Command {
         gas_price: u64,
         request_json: Option<RequestJson>,
         setup_holder: &mut Option<SetupHolder>,
-    ) -> Result<(), Error> {
-        match self {
+    ) -> Result<RunResult, Error> {
+        let run_result = match self {
             Command::SubmitRequest { request_path } => {
                 Self::submit_request(
                     wallet_path,
@@ -216,7 +206,7 @@ impl Command {
             }
             Command::RequestService { session_cookie: _ } => {
                 println!("Off-chain request service to be placed here");
-                println!();
+                RunResult::Empty
             }
             Command::GetSession { session_id } => {
                 Self::get_session(blockchain_access_config, session_id).await?
@@ -224,8 +214,8 @@ impl Command {
             Command::ShowState => {
                 Self::show_state(blockchain_access_config).await?
             }
-        }
-        Ok(())
+        };
+        Ok(run_result)
     }
 
     /// Command: Submit Request
@@ -237,7 +227,7 @@ impl Command {
         gas_price: u64,
         request_json: Option<RequestJson>,
         request_path: Option<PathBuf>,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let request_json = match request_path {
             Some(request_path) => RequestJson::from_file(request_path)?,
             _ => request_json.expect("request should be provided"),
@@ -248,7 +238,7 @@ impl Command {
             request_json.provider_psk.clone(),
             rng,
         )?;
-        let request_hash_hex = Self::to_hash_hex(&request);
+        let request_hash_hex = RunResult::to_hash_hex(&request);
         println!(
             "submitting request to provider psk: {}",
             request_json.provider_psk
@@ -270,8 +260,7 @@ impl Command {
             hex::encode(tx_id.to_bytes())
         );
         println!("request submitted: {}", request_hash_hex);
-        println!();
-        Ok(())
+        Ok(RunResult::Empty)
     }
 
     /// Command: List Requests
@@ -279,7 +268,7 @@ impl Command {
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let wallet_accessor =
             WalletAccessor::new(wallet_path.clone(), psw.clone());
         let note_hashes: Vec<BlsScalar> = wallet_accessor
@@ -288,11 +277,10 @@ impl Command {
             .iter()
             .flat_map(|n| n.nullified_by)
             .collect();
-        // println!("current address has {} notes", note_hashes.len());
 
         let mut found_requests = vec![];
         let mut height = 0;
-        let mut total_requests = 0usize;
+        let mut found_total = 0usize;
         loop {
             let height_end = height + 10000;
             let (requests, top, total) =
@@ -304,23 +292,21 @@ impl Command {
                 )
                 .await?;
             found_requests.extend(requests);
-            total_requests += total;
+            found_total += total;
             if top <= height_end {
                 height = top;
                 break;
             }
             height = height_end;
         }
-        let owned_requests = found_requests.len();
-        println!(
-            "scanned {} blocks, found {} requests, {} owned requests:",
-            height, total_requests, owned_requests,
-        );
-        for request in found_requests.iter() {
-            println!("request: {}", Self::to_hash_hex(request));
-        }
-        println!();
-        Ok(())
+        let found_owned = found_requests.len();
+        let summary = RequestsSummary {
+            height,
+            found_total,
+            found_owned,
+        };
+        let run_result = RunResult::Requests(summary, found_requests);
+        Ok(run_result)
     }
 
     /// Command: List Requests LP
@@ -328,7 +314,7 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         lp_config: &Path,
         lp_config_path: Option<PathBuf>,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let lp_config_path = match lp_config_path {
             Some(lp_config_path) => lp_config_path,
             _ => PathBuf::from(lp_config),
@@ -344,11 +330,10 @@ impl Command {
         for request in reference_lp.requests_to_process.iter() {
             println!(
                 "request to process by LP: {}",
-                Self::to_hash_hex(request)
+                RunResult::to_hash_hex(request)
             );
         }
-        println!();
-        Ok(())
+        Ok(RunResult::Empty)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -362,7 +347,7 @@ impl Command {
         gas_price: u64,
         lp_config_path: Option<PathBuf>,
         request_hash: String,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let mut rng = StdRng::from_entropy(); // seed_from_u64(0xbeef);
         let lp_config_path = match lp_config_path {
             Some(lp_config_path) => lp_config_path,
@@ -385,7 +370,7 @@ impl Command {
 
                 println!(
                     "issuing license for request: {}",
-                    Self::to_hash_hex(&request)
+                    RunResult::to_hash_hex(&request)
                 );
                 let (tx_id, license_blob) = license_issuer
                     .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
@@ -396,17 +381,14 @@ impl Command {
                 );
                 println!(
                     "issued license: {}",
-                    Self::blob_to_hash_hex(license_blob.as_slice())
+                    RunResult::blob_to_hash_hex(license_blob.as_slice())
                 );
             }
             _ => {
                 println!("Request not found");
             }
         }
-
-        println!();
-
-        Ok(())
+        Ok(RunResult::Empty)
     }
 
     /// Command: List Licenses
@@ -414,7 +396,7 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         request_json: Option<RequestJson>,
         request_path: Option<PathBuf>,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let request_json = match request_path {
             Some(request_path) => RequestJson::from_file(request_path)?,
             _ => request_json.expect("request should be provided"),
@@ -445,13 +427,12 @@ impl Command {
                 let is_owned = vk.owns(&license.lsa);
                 println!(
                     "license: {} {}",
-                    Self::to_hash_hex(license),
+                    RunResult::to_hash_hex(license),
                     if is_owned { "owned" } else { "" }
                 )
             }
         };
-        println!();
-        Ok(())
+        Ok(RunResult::Empty)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -466,7 +447,7 @@ impl Command {
         setup_holder: &mut Option<SetupHolder>,
         request_path: Option<PathBuf>,
         license_hash: String,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let request_json = match request_path {
             Some(request_path) => RequestJson::from_file(request_path)?,
             _ => request_json.expect("request should be provided"),
@@ -479,7 +460,7 @@ impl Command {
         .await?;
         match pos_license {
             Some((pos, license)) => {
-                println!("using license: {}", Self::to_hash_hex(&license));
+                println!("using license: {}", RunResult::to_hash_hex(&license));
                 let ssk_user = SecretSpendKey::from_slice(
                     hex::decode(request_json.user_ssk)?.as_slice(),
                 )?;
@@ -504,15 +485,14 @@ impl Command {
                 println!("Please obtain a license");
             }
         }
-        println!();
-        Ok(())
+        Ok(RunResult::Empty)
     }
 
     /// Command: Get Session
     async fn get_session(
         blockchain_access_config: &BlockchainAccessConfig,
         session_id: String,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let id = LicenseSessionId {
@@ -532,14 +512,13 @@ impl Command {
                 println!("session not found");
             }
         }
-        println!();
-        Ok(())
+        Ok(RunResult::Empty)
     }
 
     /// Command: Show State
     async fn show_state(
         blockchain_access_config: &BlockchainAccessConfig,
-    ) -> Result<(), Error> {
+    ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let (num_licenses, _, num_sessions) =
@@ -548,8 +527,7 @@ impl Command {
             "license contract state - licenses: {}, sessions: {}",
             num_licenses, num_sessions
         );
-        println!();
-        Ok(())
+        Ok(RunResult::Empty)
     }
 
     async fn get_license_to_use(
@@ -580,7 +558,7 @@ impl Command {
             None
         } else {
             for (pos, license) in pairs.iter() {
-                if license_hash == Self::to_hash_hex(license) {
+                if license_hash == RunResult::to_hash_hex(license) {
                     return Ok(Some((*pos, license.clone())));
                 }
             }
@@ -657,9 +635,12 @@ impl Command {
             hex::encode(tx_id.to_bytes())
         );
         println!();
-        println!("license {} used", Self::to_hash_hex(license),);
+        println!("license {} used", RunResult::to_hash_hex(license),);
         println!();
-        println!("session cookie: {}", Self::to_blob_hex(&session_cookie));
+        println!(
+            "session cookie: {}",
+            RunResult::to_blob_hex(&session_cookie)
+        );
         println!();
         println!(
             "user attributes: {}",
@@ -670,32 +651,5 @@ impl Command {
             hex::encode(session_cookie.session_id.to_bytes())
         );
         Ok(session_cookie.session_id)
-    }
-
-    fn to_hash_hex<T>(object: &T) -> String
-    where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
-    {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
-            .expect("type should serialize correctly")
-            .to_vec();
-        Self::blob_to_hash_hex(blob.as_slice())
-    }
-
-    fn blob_to_hash_hex(blob: &[u8]) -> String {
-        let mut hasher = Sha3_256::new();
-        hasher.update(blob);
-        let result = hasher.finalize();
-        hex::encode(result)
-    }
-
-    fn to_blob_hex<T>(object: &T) -> String
-    where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
-    {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
-            .expect("type should serialize correctly")
-            .to_vec();
-        hex::encode(blob)
     }
 }

@@ -157,9 +157,11 @@ impl Interactor {
                             &mut self.setup_holder,
                         )
                         .await;
-                    if result.is_err() {
-                        let error = result.unwrap_err();
-                        match error {
+                    match result {
+                        Ok(run_result) => {
+                            println!("{}", run_result);
+                        }
+                        Err(error) => match error {
                             Error::IO(arc) => {
                                 println!("{}", arc.as_ref().to_string());
                             }
@@ -169,7 +171,7 @@ impl Interactor {
                             _ => {
                                 println!("{:?}", error);
                             }
-                        }
+                        },
                     }
                     continue;
                 }

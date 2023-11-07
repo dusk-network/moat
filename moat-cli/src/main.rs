@@ -12,6 +12,7 @@ mod error;
 mod interactor;
 mod menu;
 mod prompt;
+mod run_result;
 
 use crate::args::Args;
 use crate::command::Command;
