@@ -68,9 +68,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             }))
         }
         CommandMenuItem::ListRequestsUser => {
-            OpSelection::Run(Box::from(Command::ListRequestsUser {
-                dummy: true,
-            }))
+            OpSelection::Run(Box::from(Command::ListRequestsUser))
         }
         CommandMenuItem::ListRequestsLP => {
             OpSelection::Run(Box::from(Command::ListRequestsLP {
@@ -117,7 +115,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             }))
         }
         CommandMenuItem::ShowState => {
-            OpSelection::Run(Box::from(Command::ShowState { dummy: true }))
+            OpSelection::Run(Box::from(Command::ShowState))
         }
         CommandMenuItem::Exit => OpSelection::Exit,
     })
@@ -159,9 +157,11 @@ impl Interactor {
                             &mut self.setup_holder,
                         )
                         .await;
-                    if result.is_err() {
-                        let error = result.unwrap_err();
-                        match error {
+                    match result {
+                        Ok(run_result) => {
+                            println!("{}", run_result);
+                        }
+                        Err(error) => match error {
                             Error::IO(arc) => {
                                 println!("{}", arc.as_ref().to_string());
                             }
@@ -171,7 +171,7 @@ impl Interactor {
                             _ => {
                                 println!("{:?}", error);
                             }
-                        }
+                        },
                     }
                     continue;
                 }

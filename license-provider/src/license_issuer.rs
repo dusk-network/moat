@@ -26,7 +26,7 @@ pub struct LicenseIssuer {
     gas_price: u64,
 }
 
-const USER_ATTRIBUTES: u64 = 1 << 17;
+const ATTRIBUTE_DATA: u64 = 1 << 17;
 
 impl LicenseIssuer {
     pub fn new(
@@ -51,7 +51,7 @@ impl LicenseIssuer {
         request: &Request,
         ssk_lp: &SecretSpendKey,
     ) -> Result<(BlsScalar, Vec<u8>), Error> {
-        let attr = JubJubScalar::from(USER_ATTRIBUTES);
+        let attr = JubJubScalar::from(ATTRIBUTE_DATA);
         let license = License::new(&attr, ssk_lp, request, rng);
         let license_blob = rkyv::to_bytes::<_, MAX_LICENSE_SIZE>(&license)
             .expect("License should serialize correctly")
