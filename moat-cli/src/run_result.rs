@@ -27,11 +27,19 @@ pub struct RequestsLPSummary {
     pub found_owned: usize,
 }
 
+pub struct IssueLicenseSummary {
+    pub request: Request,
+    pub tx_id: String,
+    pub license_blob: Vec<u8>,
+}
+
+#[allow(clippy::large_enum_variant)]
 /// Possible results of running a command in interactive mode
 pub enum RunResult {
     SubmitRequest(SubmitRequestSummary),
     Requests(RequestsSummary, Vec<Request>),
     RequestsLP(RequestsLPSummary, Vec<Request>),
+    IssueLicense(Option<IssueLicenseSummary>),
     Empty,
 }
 
@@ -79,6 +87,32 @@ impl fmt::Display for RunResult {
                 }
                 Ok(())
             }
+            IssueLicense(summary) => match summary {
+                Some(summary) => {
+                    writeln!(
+                        f,
+                        "issuing license for request: {}",
+                        RunResult::to_hash_hex(&summary.request)
+                    )?;
+                    writeln!(
+                        f,
+                        "license issuing transaction {} confirmed",
+                        summary.tx_id
+                    )?;
+                    writeln!(
+                        f,
+                        "issued license: {}",
+                        RunResult::blob_to_hash_hex(
+                            summary.license_blob.as_slice()
+                        )
+                    )?;
+                    Ok(())
+                }
+                _ => {
+                    writeln!(f, "Request not found")?;
+                    Ok(())
+                }
+            },
             Empty => Ok(()),
         }
     }

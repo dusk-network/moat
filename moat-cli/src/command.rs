@@ -6,7 +6,8 @@
 
 use crate::interactor::SetupHolder;
 use crate::run_result::{
-    RequestsLPSummary, RequestsSummary, RunResult, SubmitRequestSummary,
+    IssueLicenseSummary, RequestsLPSummary, RequestsSummary, RunResult,
+    SubmitRequestSummary,
 };
 use crate::SeedableRng;
 use bytes::Bytes;
@@ -351,7 +352,7 @@ impl Command {
             reference_lp.scan(blockchain_access_config).await?;
 
         let request = reference_lp.get_request(&request_hash);
-        match request {
+        Ok(match request {
             Some(request) => {
                 let license_issuer = LicenseIssuer::new(
                     blockchain_access_config.clone(),
@@ -360,28 +361,18 @@ impl Command {
                     gas_limit,
                     gas_price,
                 );
-
-                println!(
-                    "issuing license for request: {}",
-                    RunResult::to_hash_hex(&request)
-                );
                 let (tx_id, license_blob) = license_issuer
                     .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
                     .await?;
-                println!(
-                    "license issuing transaction {} confirmed",
-                    hex::encode(tx_id.to_bytes())
-                );
-                println!(
-                    "issued license: {}",
-                    RunResult::blob_to_hash_hex(license_blob.as_slice())
-                );
+                let summary = IssueLicenseSummary {
+                    request,
+                    tx_id: hex::encode(tx_id.to_bytes()),
+                    license_blob,
+                };
+                RunResult::IssueLicense(Some(summary))
             }
-            _ => {
-                println!("Request not found");
-            }
-        }
-        Ok(RunResult::Empty)
+            _ => RunResult::IssueLicense(None),
+        })
     }
 
     /// Command: List Licenses
