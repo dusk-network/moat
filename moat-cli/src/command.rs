@@ -190,16 +190,12 @@ impl Command {
                 .await?
             }
             Command::ListLicenses { request_path } => {
-                let request_json = match request_path {
-                    Some(request_path) => RequestJson::from_file(request_path)?,
-                    _ => request_json.expect("request should be provided"),
-                };
                 Self::list_licenses(
                     blockchain_access_config,
-                    Some(&request_json),
+                    request_json,
+                    request_path,
                 )
-                .await?;
-                println!();
+                .await?
             }
             Command::UseLicense {
                 request_path,
@@ -474,10 +470,17 @@ impl Command {
         Ok(())
     }
 
+    /// Command: List Licenses
     async fn list_licenses(
         blockchain_access_config: &BlockchainAccessConfig,
-        request_json: Option<&RequestJson>,
+        request_json: Option<RequestJson>,
+        request_path: Option<PathBuf>,
     ) -> Result<(), Error> {
+        let request_json = match request_path {
+            Some(request_path) => RequestJson::from_file(request_path)?,
+            _ => request_json.expect("request should be provided"),
+        };
+
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         let end_height = BcInquirer::block_height(&client).await?;
@@ -491,23 +494,9 @@ impl Command {
             CitadelInquirer::get_licenses(&client, block_heights).await?;
 
         let ssk_user = SecretSpendKey::from_slice(
-            hex::decode(
-                request_json
-                    .expect("request should be provided")
-                    .user_ssk
-                    .clone(),
-            )?
-            .as_slice(),
+            hex::decode(request_json.user_ssk.clone())?.as_slice(),
         )?;
 
-        // let owned_pairs = find_owned_licenses(ssk_user, &mut
-        // licenses_stream)?; if owned_pairs.is_empty() {
-        //     println!("licenses not found");
-        // } else {
-        //     for (_pos, license) in owned_pairs.iter() {
-        //         println!("license: {}", Self::to_hash_hex(license))
-        //     }
-        // };
         let pairs = find_all_licenses(&mut licenses_stream)?;
         if pairs.is_empty() {
             println!("licenses not found");
@@ -522,6 +511,7 @@ impl Command {
                 )
             }
         };
+        println!();
         Ok(())
     }
 
