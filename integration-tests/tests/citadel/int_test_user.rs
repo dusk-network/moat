@@ -19,33 +19,28 @@
 //!     nullifier (or session id) in a collection which stops us from double
 //!     usage of the license)
 
-use bytecheck::CheckBytes;
 use bytes::Bytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
-use dusk_pki::{PublicSpendKey, SecretSpendKey};
+use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::Error::InvalidQueryResponse;
 use moat_core::{
     BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
-    LicenseSessionId, PayloadRetriever, PayloadSender, RequestCreator,
-    RequestJson, RequestSender, StreamAux, TxAwaiter, ARITY, DEPTH,
-    LICENSE_CONTRACT_ID, USE_LICENSE_METHOD_NAME,
+    LicenseSessionId, LicenseUser, PayloadRetriever, RequestCreator,
+    RequestJson, RequestSender, StreamAux, TxAwaiter,
 };
-use poseidon_merkle::Opening;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
+use rkyv::{check_archived_root, Deserialize, Infallible};
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use tracing::{info, Level};
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::PwdHash;
-use zk_citadel::license::{
-    CitadelProverParameters, License, Request, SessionCookie,
-};
+use zk_citadel::license::{License, Request};
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -55,34 +50,6 @@ const GAS_PRICE: u64 = 1;
 
 static LABEL: &[u8] = b"dusk-network";
 const CAPACITY: usize = 17; // capacity required for the setup
-
-/// Use License Argument.
-#[derive(Debug, Clone, PartialEq, Archive, Serialize, Deserialize)]
-#[archive_attr(derive(CheckBytes))]
-pub struct UseLicenseArg {
-    pub proof: Proof,
-    pub public_inputs: Vec<BlsScalar>,
-}
-
-fn compute_citadel_parameters(
-    rng: &mut StdRng,
-    ssk: SecretSpendKey,
-    psk_lp: PublicSpendKey,
-    lic: &License,
-    merkle_proof: Opening<(), DEPTH, ARITY>,
-    challenge: &JubJubScalar,
-) -> (CitadelProverParameters<DEPTH, ARITY>, SessionCookie) {
-    let (cpp, sc) = CitadelProverParameters::compute_parameters(
-        &ssk,
-        &lic,
-        &psk_lp,
-        &psk_lp,
-        challenge,
-        rng,
-        merkle_proof,
-    );
-    (cpp, sc)
-}
 
 /// Calls license contract's issue license method.
 /// Awaits for confirmation of the contract-calling transaction.
@@ -105,65 +72,6 @@ async fn issue_license(
         .issue_license(rng, &request, &reference_lp.ssk_lp)
         .await?;
     Ok(tx_id)
-}
-
-/// Calculates and verified proof, sends proof along with public parameters
-/// as arguments to the license contract's use_license method.
-/// Awaits for confirmation of the contract-calling transaction.
-async fn prove_and_send_use_license(
-    client: &RuskHttpClient,
-    blockchain_config: &BlockchainAccessConfig,
-    wallet_path: &WalletPath,
-    reference_lp: &ReferenceLP,
-    ssk_user: SecretSpendKey,
-    prover: &Prover,
-    verifier: &Verifier,
-    license: &License,
-    opening: Opening<(), DEPTH, ARITY>,
-    rng: &mut StdRng,
-    challenge: &JubJubScalar,
-) -> Result<BlsScalar, Error> {
-    let (cpp, sc) = compute_citadel_parameters(
-        rng,
-        ssk_user,
-        reference_lp.psk_lp,
-        license,
-        opening,
-        &challenge,
-    );
-    let circuit = LicenseCircuit::new(&cpp, &sc);
-
-    info!("calculating proof");
-    let (proof, public_inputs) =
-        prover.prove(rng, &circuit).expect("Proving should succeed");
-
-    assert!(!public_inputs.is_empty());
-    let session_id = public_inputs[0];
-
-    verifier
-        .verify(&proof, &public_inputs)
-        .expect("Verifying the circuit should succeed");
-    info!("proof validated locally");
-
-    let use_license_arg = UseLicenseArg {
-        proof,
-        public_inputs,
-    };
-
-    info!("calling license contract's use_license");
-    let tx_id = PayloadSender::execute_contract_method(
-        use_license_arg,
-        &blockchain_config,
-        &wallet_path,
-        &PwdHash(PWD_HASH.to_string()),
-        GAS_LIMIT,
-        GAS_PRICE,
-        LICENSE_CONTRACT_ID,
-        USE_LICENSE_METHOD_NAME,
-    )
-    .await?;
-    TxAwaiter::wait_for(&client, tx_id).await?;
-    Ok(session_id)
 }
 
 /// Deserializes license, panics if deserialization fails.
@@ -351,21 +259,25 @@ async fn user_round_trip() -> Result<(), Error> {
     // so that it is different every time we run the test
     let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
     let challenge = JubJubScalar::from(num_sessions as u64 + 1);
-    info!("calling use_license (as a user)");
-    let session_id = prove_and_send_use_license(
-        &client,
+    info!("proving license and calling use_license (as a user)");
+    let (session_id, tx_id) = LicenseUser::prove_and_use_license(
         &blockchain_config,
         &wallet_path,
-        &reference_lp,
-        ssk_user,
+        &PwdHash(PWD_HASH.to_string()),
+        &ssk_user,
+        &reference_lp.psk_lp,
         &prover,
         &verifier,
         &license,
         opening.unwrap(),
         &mut rng,
         &challenge,
+        GAS_LIMIT,
+        GAS_PRICE,
     )
     .await?;
+    TxAwaiter::wait_for(&client, tx_id).await?;
+
     show_state(&client, "after use_license").await?;
     let session_id = LicenseSessionId { id: session_id };
 

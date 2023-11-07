@@ -548,7 +548,8 @@ impl Command {
         assert!(!public_inputs.is_empty());
         let session_id = public_inputs[0];
 
-        setup_holder.verifier
+        setup_holder
+            .verifier
             .verify(&proof, &public_inputs)
             .expect("Verifying the circuit should succeed");
         println!("proof validated locally");
