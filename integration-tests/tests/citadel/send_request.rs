@@ -6,8 +6,8 @@
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{
-    Error, PayloadRetriever, RequestCreator, RequestJson, RequestSender,
-    MAX_REQUEST_SIZE,
+    Error, PayloadExtractor, PayloadRetriever, RequestCreator, RequestJson,
+    RequestSender, TxInquirer, MAX_REQUEST_SIZE,
 };
 use moat_core::{JsonLoader, TxAwaiter};
 use rand::rngs::StdRng;
@@ -73,7 +73,17 @@ async fn send_request() -> Result<(), Error> {
     let tx_id_hex = hex::encode(tx_id.to_bytes());
 
     let retrieved_request =
-        get_request_from_blockchain(tx_id_hex, &client).await?;
+        get_request_from_blockchain(&tx_id_hex, &client).await?;
+    assert_eq!(
+        request_vec,
+        rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&retrieved_request)
+            .unwrap()
+            .to_vec(),
+        "requests not equal"
+    );
+
+    let retrieved_request =
+        get_request_from_blockchain_bulk(&tx_id_hex, &client).await?;
     assert_eq!(
         request_vec,
         rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&retrieved_request)
@@ -99,6 +109,21 @@ async fn get_request_from_blockchain<S: AsRef<str>>(
             continue;
         }
         return result;
+    }
+    unreachable!()
+}
+
+async fn get_request_from_blockchain_bulk<S: AsRef<str>>(
+    tx_id: S,
+    client: &RuskHttpClient,
+) -> Result<Request, Error> {
+    const LAST_N_BLOCKS: usize = 1000;
+    let txs =
+        TxInquirer::txs_from_last_n_blocks(&client, LAST_N_BLOCKS).await?;
+    for tx in txs.transactions.iter() {
+        if tx.id == tx_id.as_ref() {
+            return PayloadExtractor::payload_from_tx(&tx);
+        }
     }
     unreachable!()
 }

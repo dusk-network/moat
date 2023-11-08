@@ -15,6 +15,7 @@ mod bc_types;
 mod blockchain_payloads;
 mod blockchain_queries;
 mod circuit;
+mod citadel_licenses;
 mod citadel_queries;
 mod citadel_requests;
 mod citadel_types;
@@ -28,6 +29,7 @@ pub use blockchain_payloads::{
 };
 pub use blockchain_queries::{BcInquirer, TxAwaiter, TxInquirer};
 pub use circuit::*;
+pub use citadel_licenses::LicenseUser;
 pub use citadel_queries::{
     CitadelInquirer, CitadelInquirerWs, LicenseSession, LicenseSessionId,
 };

@@ -19,13 +19,9 @@ pub struct Args {
     #[clap(short, long)]
     pub wallet_path: PathBuf,
 
-    /// Blockchain access config directory
+    /// Config directory
     #[clap(short, long)]
     pub config_path: PathBuf,
-
-    /// LP Config directory
-    #[clap(short, long)]
-    pub lp_config_path: PathBuf,
 
     /// Password for the wallet
     #[clap(long, default_value_t = String::from(""), env = "RUSK_WALLET_PWD")]
@@ -36,10 +32,10 @@ pub struct Args {
     pub pwd_hash: String,
 
     /// Gas limit [default: `500000000`]
-    #[clap(long, default_value_t = 500000000)]
+    #[clap(short, long, default_value_t = 500000000)]
     pub gas_limit: u64,
 
     /// Gas price [default: `1`]
-    #[clap(long, default_value_t = 1)]
+    #[clap(short, long, default_value_t = 1)]
     pub gas_price: u64,
 }
