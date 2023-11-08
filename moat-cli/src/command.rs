@@ -388,7 +388,7 @@ impl Command {
                 let summary = UseLicenseSummary {
                     license_blob: RunResult::to_blob(&license),
                     tx_id: hex::encode(tx_id.to_bytes()),
-                    user_attr: hex::encode(session_cookie.attr.to_bytes()),
+                    user_attr: hex::encode(session_cookie.attr_data.to_bytes()),
                     session_id: hex::encode(
                         session_cookie.session_id.to_bytes(),
                     ),
