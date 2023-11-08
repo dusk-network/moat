@@ -7,8 +7,9 @@
 use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use crate::BlockchainAccessConfig;
 use dusk_bls12_381::BlsScalar;
+use dusk_wallet::dat::{read_file_version, DatFileVersion};
 use dusk_wallet::gas::Gas;
-use dusk_wallet::{DecodedNote, SecureWalletFile, Wallet, WalletPath};
+use dusk_wallet::{DecodedNote, Error, SecureWalletFile, Wallet, WalletPath};
 use dusk_wallet_core::MAX_CALL_SIZE;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
@@ -39,23 +40,34 @@ impl SecureWalletFile for WalletAccessor {
 }
 
 impl WalletAccessor {
-    pub fn new(path: WalletPath, pwd: Password) -> Self {
-        Self {
-            path,
+    pub fn create(
+        wallet_path: WalletPath,
+        pwd: Password,
+    ) -> Result<Self, Error> {
+        let dat_file_version = read_file_version(&wallet_path)?;
+        let is_sha256 =
+            matches!(dat_file_version, DatFileVersion::RuskBinaryFileFormat(_));
+        Ok(Self {
+            path: wallet_path,
             pwd: pwd.clone(),
             pwd_bytes: {
                 match &pwd {
                     Pwd(s) => {
-                        let mut hasher = Sha256::new();
-                        hasher.update(s.as_bytes());
-                        hasher.finalize().to_vec()
+                        if is_sha256 {
+                            let mut hasher = Sha256::new();
+                            hasher.update(s.as_bytes());
+                            hasher.finalize().to_vec()
+                        } else {
+                            let hash = blake3::hash(s.as_bytes());
+                            hash.as_bytes().to_vec()
+                        }
                     }
                     PwdHash(h) => hex::decode(h.as_str())
                         .expect("Password hash should be valid hex string")
                         .to_vec(),
                 }
             },
-        }
+        })
     }
 
     async fn get_wallet(
@@ -63,7 +75,7 @@ impl WalletAccessor {
         cfg: &BlockchainAccessConfig,
     ) -> Result<Wallet<WalletAccessor>, dusk_wallet::Error> {
         let wallet_accessor =
-            WalletAccessor::new(self.path.clone(), self.pwd.clone());
+            WalletAccessor::create(self.path.clone(), self.pwd.clone())?;
         let mut wallet = Wallet::from_file(wallet_accessor)?;
         wallet
             .connect_with_status(

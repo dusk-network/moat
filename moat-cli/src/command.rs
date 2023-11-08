@@ -200,7 +200,7 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
     ) -> Result<RunResult, Error> {
         let wallet_accessor =
-            WalletAccessor::new(wallet_path.clone(), psw.clone());
+            WalletAccessor::create(wallet_path.clone(), psw.clone())?;
         let note_hashes: Vec<BlsScalar> = wallet_accessor
             .get_notes(blockchain_access_config)
             .await?
