@@ -32,7 +32,7 @@ impl PayloadSender {
         M: AsRef<str>,
     {
         let wallet_accessor =
-            WalletAccessor::new(wallet_path.clone(), password.clone());
+            WalletAccessor::create(wallet_path.clone(), password.clone())?;
         let tx_id = wallet_accessor
             .execute_contract_method(
                 payload,
