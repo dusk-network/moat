@@ -22,7 +22,7 @@ use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
-    "7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787";
+    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
