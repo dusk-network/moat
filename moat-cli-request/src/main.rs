@@ -6,19 +6,19 @@
 
 //! Command line utility for submitting requests to the Dusk blockchain.
 //!
-//! In order to use the moat-request-cli utility you need to install Dusk wallet
+//! In order to use the moat-cli-request utility you need to install Dusk wallet
 //! first. Typically, your Dusk wallet is installed in ~/.dusk/rusk-wallet.
 //! Path to your wallet's directory needs to be provided as `wallet-path`
-//! argument when using moat-request-cli.
+//! argument when using moat-cli-request.
 //! Before usage you need to make sure that the default address of your wallet
 //! holds some Dusk funds, otherwise the utility won't be able to submit your
 //! request, as it needs funds for gas in order to do so.
 //! The CLI will also need password to your wallet, as well as a path to
 //! a configuration file containing blockchain urls. Example configuration file
-//! is provided in the moat-request-cli project main directory, under the name
+//! is provided in the moat-cli-request project main directory, under the name
 //! `config.toml`. The last thing you will need is an actual request. You will
 //! be able to provide it in a form of a json file. An example request file is
-//! provided in the moat-request-cli project's main directory as `request.json`.
+//! provided in the moat-cli-request project's main directory as `request.json`.
 //!
 //! Note that your wallet cannot be active when running this utility.
 //!
@@ -34,22 +34,22 @@
 //! - `wallet_path` - a path to wallet's location, e.g.: `--wallet_path
 //!   ~/.dusk/rusk-wallet`
 //! - `config_path` - a path to configuratin file, e.g.: `--config_path
-//!   ./moat-request-cli/config.toml`
+//!   ./moat-cli-request/config.toml`
 //! - `password` - wallet's password in the clear, e.g: `--password mypass2!`
 //! - `psw_hash` - wallet's password's blake3 hash, e.g: `--psw_hash
 //!   7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb`
 //! - `gas_limit` - gas limit, e.g.: `--gas_limit 500000000`
 //! - `gas_price` - gas price, e.g.: `--gas_price 1`
 //! - a full path (with a name) of the request file, e.g.:
-//!   `./moat-request-cli/request.json`
+//!   `./moat-cli-request/request.json`
 //!
-//! Example full command line invocation of `moat-request-cli` may look as
+//! Example full command line invocation of `moat-cli-request` may look as
 //! follows:
 //!
-//! `cargo r --release --bin moat-request-cli -- --wallet-path
-//! ~/.dusk/rusk-wallet --config-path ./moat-request-cli/config.toml
+//! `cargo r --release --bin moat-cli-request -- --wallet-path
+//! ~/.dusk/rusk-wallet --config-path ./moat-cli-request/config.toml
 //! --psw_hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d5aabb
-//! ./moat-request-cli/request.json`
+//! ./moat-cli-request/request.json`
 //!
 //! Note that when psw_hash argument is provided, the password argument will be
 //! ignored.
@@ -60,8 +60,10 @@ mod args;
 use crate::args::Args;
 
 use clap::Parser;
-use dusk_wallet::WalletPath;
-use moat_core::{JsonLoader, RequestCreator, RequestJson, RequestSender};
+use dusk_wallet::{RuskHttpClient, WalletPath};
+use moat_core::{
+    JsonLoader, RequestCreator, RequestJson, RequestSender, TxAwaiter,
+};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::error::Error;
@@ -105,7 +107,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         PwdHash(pwd_hash)
     };
 
-    RequestSender::send_request(
+    let tx_id = RequestSender::send_request(
         request,
         &blockchain_access_config,
         &wallet_path,
@@ -114,10 +116,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         gas_price,
     )
     .await?;
+    let tx_id_str = hex::encode(tx_id.to_bytes());
+    println!("transaction sent: {}", tx_id_str);
+    let client = RuskHttpClient::new(blockchain_access_config.rusk_address);
+    TxAwaiter::wait_for(&client, tx_id).await?;
+    println!("transaction confirmed: {}", tx_id_str);
 
     #[rustfmt::skip]
-    // cargo r --release --bin moat-request-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-request-cli/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-request-cli/request.json // blake3 encoding of "password"
-    // cargo r --release --bin moat-request-cli -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-request-cli/config.toml --pwd-hash 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8 ./moat-request-cli/request.json // sha256 encoding of "password"
+    // old wallet.dat file format:
+    // cargo r --release --bin moat-cli-request -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli-request/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-cli-request/request.json
+    // new wallet.dat file format:
+    // cargo r --release --bin moat-cli-request -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli-request/config.toml --pwd-hash 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8 ./moat-cli-request/request.json
 
     Ok(())
 }
