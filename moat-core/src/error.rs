@@ -39,6 +39,12 @@ pub enum Error {
     Transaction(Box<str>),
     #[error("Stream item not present or stream error: {0:?}")]
     Stream(Box<str>),
+    #[error("A PLONK error occurred: {0:?}")]
+    Plonk(Arc<dusk_plonk::error::Error>),
+    #[error("A CRS error occurred: {0:?}")]
+    CRS(Box<str>),
+    #[error(transparent)]
+    HttpClient(Arc<reqwest::Error>),
 }
 
 impl From<serde_json::Error> for Error {
@@ -80,5 +86,17 @@ impl From<base64::DecodeError> for Error {
 impl From<tokio_tungstenite::tungstenite::Error> for Error {
     fn from(e: tokio_tungstenite::tungstenite::Error) -> Self {
         Error::WebSocket(Arc::from(e))
+    }
+}
+
+impl From<dusk_plonk::error::Error> for Error {
+    fn from(e: dusk_plonk::error::Error) -> Self {
+        Error::Plonk(Arc::from(e))
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(e: reqwest::Error) -> Self {
+        Error::HttpClient(Arc::from(e))
     }
 }
