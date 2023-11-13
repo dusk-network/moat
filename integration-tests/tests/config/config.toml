@@ -1,4 +1,0 @@
-rusk_address = "http://127.0.0.1:8080"
-prover_address = "http://127.0.0.1:8080"
-#rusk_address = "http://nodes.dusk.network:8585"
-#prover_address = "http://provers.dusk.network:8686"

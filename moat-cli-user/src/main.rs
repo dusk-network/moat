@@ -23,25 +23,35 @@ use clap::Parser;
 use crate::error::CliError;
 use crate::interactor::Interactor;
 use dusk_wallet::WalletPath;
-use moat_core::{JsonLoader, RequestJson};
 use rand::SeedableRng;
+use dusk_pki::SecretSpendKey;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};
+use dusk_plonk::prelude::JubJubScalar;
+use dusk_bytes::DeserializableSlice;
+use std::fs;
 
 #[tokio::main]
+#[allow(non_snake_case)]
 async fn main() -> Result<(), CliError> {
     let cli = Args::parse();
 
-    let json_path = cli.json_path.as_path();
     let config_path = cli.config_path.as_path();
     let wallet_path = cli.wallet_path.as_path();
-    let password = cli.password;
+    let password = cli.wallet_pass;
     let pwd_hash = cli.pwd_hash;
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
 
-    let request_json: RequestJson = RequestJson::from_file(json_path)?;
+    let mut ssk_bytes = fs::read("data/secret_key_user").expect("Unable to read file");
+    ssk_bytes = hex::decode(ssk_bytes).expect("Decoded properly.");
+
+    let a = JubJubScalar::from_slice(&ssk_bytes[..32]).unwrap();
+    let b = JubJubScalar::from_slice(&ssk_bytes[32..]).unwrap();
+
+    let ssk = SecretSpendKey::new(a, b);
+
     let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
@@ -57,7 +67,7 @@ async fn main() -> Result<(), CliError> {
         blockchain_access_config,
         gas_limit,
         gas_price,
-        request_json,
+        ssk,
         setup_holder: None,
     };
 

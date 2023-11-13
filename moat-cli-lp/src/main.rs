@@ -28,6 +28,7 @@ use dusk_wallet::WalletPath;
 use rand::SeedableRng;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
+use std::fs;
 use wallet_accessor::Password::{Pwd, PwdHash};
 
 #[tokio::main]
@@ -36,7 +37,7 @@ async fn main() -> Result<(), CliError> {
 
     let config_path = cli.config_path.as_path();
     let wallet_path = cli.wallet_path.as_path();
-    let password = cli.password;
+    let password = cli.wallet_pass;
     let pwd_hash = cli.pwd_hash;
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
@@ -54,11 +55,13 @@ async fn main() -> Result<(), CliError> {
         PwdHash(pwd_hash)
     };
 
+    let ssk_bytes = fs::read("data/secret_key_lp").expect("Unable to read file");
+
     let mut interactor = Interactor {
         wallet_path,
         psw,
         blockchain_access_config,
-        config,
+        ssk_bytes,
         gas_limit,
         gas_price,
     };

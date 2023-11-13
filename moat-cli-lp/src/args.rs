@@ -17,12 +17,12 @@ pub struct Args {
     pub wallet_path: PathBuf,
 
     /// Blockchain access config directory
-    #[clap(short, long)]
+    #[clap(short, long, default_value = "./config.toml")]
     pub config_path: PathBuf,
 
     /// Password for the wallet
     #[clap(long, default_value_t = String::from(""), env = "RUSK_WALLET_PWD")]
-    pub password: String,
+    pub wallet_pass: String,
 
     /// Hash of the password for the wallet [default: ``]
     #[clap(short, long, default_value_t = String::from(""))]

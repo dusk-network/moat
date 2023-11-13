@@ -22,7 +22,7 @@ use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
-    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+    "9afbce9f2416520733bacb370315d32b6b2c43d6097576df1c1222859d91eecc";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
@@ -38,7 +38,7 @@ async fn send_request() -> Result<(), Error> {
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
     let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
 
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
 

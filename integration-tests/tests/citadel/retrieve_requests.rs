@@ -18,7 +18,7 @@ async fn retrieve_payload() -> Result<(), Error> {
         "8d45a9fb7196f322282d522ff4bb2d2e926ddd96b858b91d59f228b27250ef03";
 
     let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
 
     let config = BlockchainAccessConfig::load_path(config_path)?;
     let client = RuskHttpClient::new(config.rusk_address);
@@ -33,7 +33,7 @@ async fn retrieve_payload() -> Result<(), Error> {
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn scan_all_requests() -> Result<(), Error> {
     let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
     let mut height = 0;
     loop {
@@ -59,7 +59,7 @@ async fn scan_all_requests() -> Result<(), Error> {
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn scan_requests_in_last_blocks() -> Result<(), Error> {
     let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -78,7 +78,7 @@ async fn scan_requests_in_last_blocks() -> Result<(), Error> {
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn scan_requests_in_block_range() -> Result<(), Error> {
     let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 

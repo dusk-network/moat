@@ -1,12 +1,12 @@
 [package]
-name = "moat-cli-request"
+name = "test-moat-request"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 dusk-wallet = "0.20.0-rc.0"
-wallet-accessor = { path = "../wallet-accessor" }
-moat-core = { path = "../moat-core" }
+wallet-accessor = { path = "../../wallet-accessor" }
+moat-core = { path = "../../moat-core" }
 toml-base-config = "0.1"
 clap = { version = "4.0", features = ["derive", "env"] }
 tokio = { version = "1.21", features = ["full"] }

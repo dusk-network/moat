@@ -7,7 +7,7 @@
 use crate::run_result::{
     IssueLicenseSummary, LicenseContractSummary, RequestsLPSummary, RunResult,
 };
-use crate::{LPCliConfig, SeedableRng};
+use crate::SeedableRng;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{BcInquirer, CitadelInquirer, Error};
@@ -34,20 +34,20 @@ impl Command {
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
-        config: &LPCliConfig,
+        ssk: &Vec<u8>,
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
             Command::ListRequestsLP => {
-                Self::list_requests_lp(blockchain_access_config, config).await?
+                Self::list_requests_lp(blockchain_access_config, ssk).await?
             }
             Command::IssueLicenseLP { request_hash } => {
                 Self::issue_license_lp(
                     wallet_path,
                     psw,
                     blockchain_access_config,
-                    config,
+                    ssk,
                     gas_limit,
                     gas_price,
                     request_hash,
@@ -67,12 +67,9 @@ impl Command {
     /// Command: List Requests LP
     async fn list_requests_lp(
         blockchain_access_config: &BlockchainAccessConfig,
-        config: &LPCliConfig,
+        ssk: &Vec<u8>,
     ) -> Result<RunResult, Error> {
-        let mut reference_lp = ReferenceLP::create_with_ssk_psk::<&str>(
-            config.ssk_lp.as_ref(),
-            config.psk_lp.as_ref(),
-        )?;
+        let mut reference_lp = ReferenceLP::create_with_ssk(ssk)?;
         let (found_total, found_owned) =
             reference_lp.scan(blockchain_access_config).await?;
         let summary = RequestsLPSummary {
@@ -91,16 +88,13 @@ impl Command {
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
-        config: &LPCliConfig,
+        ssk: &Vec<u8>,
         gas_limit: u64,
         gas_price: u64,
         request_hash: String,
     ) -> Result<RunResult, Error> {
         let mut rng = StdRng::from_entropy();
-        let mut reference_lp = ReferenceLP::create_with_ssk_psk::<&str>(
-            config.ssk_lp.as_ref(),
-            config.psk_lp.as_ref(),
-        )?;
+        let mut reference_lp = ReferenceLP::create_with_ssk(ssk)?;
         let (_total_count, _this_lp_count) =
             reference_lp.scan(blockchain_access_config).await?;
 

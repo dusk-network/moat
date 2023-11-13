@@ -14,6 +14,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
+use std::fs;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct LPConfig {
@@ -47,19 +48,16 @@ impl ReferenceLP {
         }
     }
 
-    pub fn create<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
-        let lp_config: LPConfig = LPConfig::from_file(lp_config_path)?;
-        Self::create_with_ssk_psk(lp_config.ssk_lp, lp_config.psk_lp)
+    pub fn create<P: AsRef<Path>>(ssk_path: P) -> Result<Self, Error> {
+        let ssk_bytes = fs::read(ssk_path).expect("Unable to read file");
+        Self::create_with_ssk(&ssk_bytes)
     }
 
-    pub fn create_with_ssk_psk<S>(ssk_lp: S, psk_lp: S) -> Result<Self, Error>
-    where
-        S: AsRef<str>,
+    pub fn create_with_ssk(ssk_lp: &Vec<u8>) -> Result<Self, Error>
     {
-        let psk_bytes = hex::decode(psk_lp.as_ref())?;
-        let ssk_bytes = hex::decode(ssk_lp.as_ref())?;
-        let psk_lp = PublicSpendKey::from_slice(psk_bytes.as_slice())?;
+        let ssk_bytes = hex::decode(ssk_lp)?;
         let ssk_lp = SecretSpendKey::from_slice(ssk_bytes.as_slice())?;
+        let psk_lp = ssk_lp.public_spend_key();
         let vk_lp = ssk_lp.view_key();
         Ok(Self::new(psk_lp, ssk_lp, vk_lp))
     }

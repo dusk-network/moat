@@ -16,7 +16,7 @@ use wallet_accessor::Password::PwdHash;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
-    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+    "9afbce9f2416520733bacb370315d32b6b2c43d6097576df1c1222859d91eecc";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
@@ -26,10 +26,10 @@ async fn issue_license() -> Result<(), Error> {
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
     let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
 
     let lp_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp_2");
 
     let reference_lp = ReferenceLP::create(&lp_config_path)?;
 
