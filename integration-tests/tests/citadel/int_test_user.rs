@@ -26,7 +26,7 @@ use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{
-    BcInquirer, CitadelInquirer, Error, JsonLoader, LicenseCircuit,
+    BcInquirer, CitadelInquirer, CrsGetter, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, LicenseUser, PayloadRetriever, RequestCreator,
     RequestJson, RequestSender, TxAwaiter,
 };
@@ -46,7 +46,6 @@ const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
 static LABEL: &[u8] = b"dusk-network";
-const CAPACITY: usize = 17; // capacity required for the setup
 
 /// Calls license contract's issue license method.
 /// Awaits for confirmation of the contract-calling transaction.
@@ -122,9 +121,19 @@ async fn user_round_trip() -> Result<(), Error> {
     // PUB_PARAMS initialization code
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
-    info!("performing setup");
-    let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
-        .expect("Initializing public parameters should succeed");
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
+
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
+
+    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
+
+    info!("obtaining CRS");
+    let pp_vec = CrsGetter::get_crs(&client).await?;
+    let pp =
+        // SAFETY: CRS vector is checked by the hash check when it is received from the node
+        unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
 
     info!("compiling circuit");
     let (prover, verifier) = Compiler::compile::<LicenseCircuit>(&pp, LABEL)
@@ -132,22 +141,15 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
-    let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
 
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp_2");
 
     let reference_lp = ReferenceLP::create(&lp_config_path)?;
 
-    let blockchain_config =
-        BlockchainAccessConfig::load_path(blockchain_config_path)?;
-
     let wallet_path = WalletPath::from(
         PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
     );
-
-    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
 
     // create request
     let request_json: RequestJson = RequestJson::from_file(request_path)?;

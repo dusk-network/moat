@@ -5,9 +5,11 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 mod bc_inquirer;
+mod crs_getter;
 mod tx_awaiter;
 mod tx_inquirer;
 
 pub use bc_inquirer::BcInquirer;
+pub use crs_getter::CrsGetter;
 pub use tx_awaiter::TxAwaiter;
 pub use tx_inquirer::TxInquirer;

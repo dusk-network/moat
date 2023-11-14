@@ -16,7 +16,7 @@ use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{
-    BcInquirer, CitadelInquirer, Error, LicenseCircuit, LicenseUser,
+    BcInquirer, CitadelInquirer, CrsGetter, Error, LicenseCircuit, LicenseUser,
     RequestCreator, RequestSender, TxAwaiter,
 };
 use rand::rngs::StdRng;
@@ -39,7 +39,6 @@ pub(crate) enum Command {
 }
 
 static LABEL: &[u8] = b"dusk-network";
-const CAPACITY: usize = 17; // capacity required for the setup
 
 impl Command {
     #[allow(clippy::too_many_arguments)]
@@ -289,9 +288,11 @@ impl Command {
         let setup_holder = match sh_opt {
             Some(sh) => sh,
             _ => {
-                println!("performing setup");
-                let pp = PublicParameters::setup(1 << CAPACITY, &mut rng)
-                    .expect("Initializing public parameters should succeed");
+                println!("obtaining setup");
+                let pp_vec = CrsGetter::get_crs(&client).await?;
+                let pp =
+                    // SAFETY: CRS vector is checked by the hash check when it is received from the node
+                    unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
                 println!("compiling circuit");
                 let (prover, verifier) =
                     Compiler::compile::<LicenseCircuit>(&pp, LABEL)
