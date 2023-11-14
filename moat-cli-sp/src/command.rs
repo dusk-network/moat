@@ -9,6 +9,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
 use dusk_wallet::RuskHttpClient;
 use moat_core::{CitadelInquirer, Error, LicenseSessionId};
+use zk_citadel::license::SessionCookie;
 use wallet_accessor::BlockchainAccessConfig;
 
 /// Commands that can be run against the Moat
@@ -29,9 +30,8 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
-            Command::RequestService { session_cookie: _ } => {
-                println!("Off-chain request service to be placed here");
-                RunResult::Empty
+            Command::RequestService { session_cookie } => {
+                Self::request_service(&session_cookie).await?
             }
             Command::GetSession { session_id } => {
                 Self::get_session(blockchain_access_config, session_id).await?
@@ -41,6 +41,14 @@ impl Command {
             }
         };
         Ok(run_result)
+    }
+
+    /// Command: Request Service
+    async fn request_service(session_cookie: &str) -> Result<RunResult, Error> {
+        let bytes = hex::decode(session_cookie)?;
+        let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice()).map_err(|_|Error::Rkyv)?;//todo: error processing
+        println!("sc={:?}", sc);
+        Ok(RunResult::RequestService)
     }
 
     /// Command: Get Session

@@ -19,9 +19,9 @@ pub struct LicenseContractSummary {
 #[allow(clippy::large_enum_variant)]
 /// Possible results of running a command in interactive mode
 pub enum RunResult {
+    RequestService,
     GetSession(Option<SessionSummary>),
     ShowState(LicenseContractSummary),
-    Empty,
 }
 
 impl fmt::Display for RunResult {
@@ -54,7 +54,7 @@ impl fmt::Display for RunResult {
                 )?;
                 Ok(())
             }
-            Empty => Ok(()),
+            RequestService => Ok(()),
         }
     }
 }

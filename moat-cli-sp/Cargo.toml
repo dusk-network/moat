@@ -7,6 +7,7 @@ edition = "2021"
 dusk-wallet = "0.20.0-rc.0"
 wallet-accessor = { path = "../wallet-accessor" }
 moat-core = { path = "../moat-core" }
+zk-citadel = "0.5"
 rkyv = { version = "=0.7.39" }
 dusk-bls12_381 = "0.12"
 toml-base-config = "0.1"
