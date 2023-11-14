@@ -27,7 +27,7 @@ pub use bc_types::*;
 pub use blockchain_payloads::{
     PayloadExtractor, PayloadRetriever, PayloadSender,
 };
-pub use blockchain_queries::{BcInquirer, TxAwaiter, TxInquirer};
+pub use blockchain_queries::{BcInquirer, CrsGetter, TxAwaiter, TxInquirer};
 pub use circuit::*;
 pub use citadel_licenses::LicenseUser;
 pub use citadel_queries::{
