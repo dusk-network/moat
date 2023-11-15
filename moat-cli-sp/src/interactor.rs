@@ -9,7 +9,6 @@ use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
 use dusk_wallet::WalletPath;
-use moat_core::Error;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 
@@ -86,20 +85,9 @@ impl Interactor {
                         Ok(run_result) => {
                             println!("{}", run_result);
                         }
-                        Err(error) => match error {
-                            Error::IO(arc) => {
-                                println!("{}", arc.as_ref().to_string());
-                            }
-                            Error::Transaction(bx) => {
-                                println!("{}", bx.as_ref().to_string());
-                            }
-                            Error::DeserRkyv => {
-                                println!("deserialization error")
-                            }
-                            _ => {
-                                println!("{:?}", error);
-                            }
-                        },
+                        Err(error) => {
+                            println!("{}", error.to_string());
+                        }
                     }
                     continue;
                 }
