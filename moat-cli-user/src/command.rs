@@ -11,7 +11,6 @@ use crate::run_result::{
 };
 use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
@@ -31,7 +30,7 @@ pub(crate) enum Command {
     /// List licenses (User)
     ListLicenses,
     /// Use license (User)
-    UseLicense { license_hash: String },
+    UseLicense { license_hash: String, psk_lp_bytes: String },
     /// Request Service (User)
     RequestService { session_cookie: String },
     /// Show state
@@ -69,13 +68,14 @@ impl Command {
                 Self::list_licenses(blockchain_access_config, ssk)
                     .await?
             }
-            Command::UseLicense { license_hash } => {
+            Command::UseLicense { license_hash, psk_lp_bytes } => {
                 Self::use_license(
                     wallet_path,
                     psw,
                     blockchain_access_config,
                     gas_limit,
                     gas_price,
+                    psk_lp_bytes,
                     ssk,
                     setup_holder,
                     license_hash,
@@ -169,6 +169,7 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         gas_limit: u64,
         gas_price: u64,
+        psk_lp_bytes: String,
         ssk: SecretSpendKey,
         setup_holder: &mut Option<SetupHolder>,
         license_hash: String,
@@ -184,7 +185,7 @@ impl Command {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
                 let ssk_user = ssk;
 
-                let psk_lp_bytes: [u8; 64] = hex::decode("136d747ff489bd06077f937508b9237ac093ff868dc2e232ab3af0ecd038873288560dbd8aa851e055bc408ebeb89509b26eb6e34b4b43214de467e3ef09594e").expect("Decoded.").try_into().unwrap();
+                let psk_lp_bytes: [u8; 64] = hex::decode(&psk_lp_bytes.clone()).expect("Decoded.").try_into().unwrap();
                 let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes).unwrap();
 
                 let (tx_id, session_cookie) = Self::prove_and_send_use_license(
