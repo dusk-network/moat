@@ -11,6 +11,7 @@ zk-citadel = "0.5"
 rkyv = { version = "=0.7.39" }
 dusk-bls12_381 = "0.12"
 dusk-jubjub = { version = "0.13", default-features = false, features = ["rkyv-impl", "alloc"] }
+dusk-poseidon = { version = "0.31", default-features = false, features = ["rkyv-impl", "alloc", "size_32", "merkle"] }
 dusk-pki = "0.13"
 toml-base-config = "0.1"
 clap = { version = "4.0", features = ["derive", "env"] }
