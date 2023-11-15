@@ -68,7 +68,7 @@ impl ContractInquirer {
         >,
     {
         let contract_id = hex::encode(contract_id.as_slice());
-        let req = rkyv::to_bytes(&args).map_err(|_| Error::Rkyv)?.to_vec();
+        let req = rkyv::to_bytes(&args).map_err(|_| Error::SerRkyv)?.to_vec();
         let stream = client
             .call_raw(
                 1,

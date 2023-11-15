@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::config::SPCliConfig;
 use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
@@ -66,6 +67,7 @@ pub struct Interactor {
     pub wallet_path: WalletPath,
     pub psw: Password,
     pub blockchain_access_config: BlockchainAccessConfig,
+    pub config: SPCliConfig,
     pub gas_limit: u64,
     pub gas_price: u64,
 }
@@ -77,8 +79,9 @@ impl Interactor {
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    let result =
-                        command.run(&self.blockchain_access_config).await;
+                    let result = command
+                        .run(&self.blockchain_access_config, &self.config)
+                        .await;
                     match result {
                         Ok(run_result) => {
                             println!("{}", run_result);
@@ -89,6 +92,9 @@ impl Interactor {
                             }
                             Error::Transaction(bx) => {
                                 println!("{}", bx.as_ref().to_string());
+                            }
+                            Error::DeserRkyv => {
+                                println!("deserialization error")
                             }
                             _ => {
                                 println!("{:?}", error);

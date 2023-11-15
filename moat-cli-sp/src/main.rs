@@ -8,6 +8,7 @@
 
 mod args;
 mod command;
+mod config;
 mod error;
 mod interactor;
 mod menu;
@@ -20,6 +21,7 @@ use crate::menu::Menu;
 
 use clap::Parser;
 
+use crate::config::SPCliConfig;
 use crate::error::CliError;
 use crate::interactor::Interactor;
 use dusk_wallet::WalletPath;
@@ -38,9 +40,11 @@ async fn main() -> Result<(), CliError> {
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
 
-    let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
+    let config = SPCliConfig::load_path(config_path)?;
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
+
+    let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let psw = if pwd_hash.is_empty() {
         Pwd(password)
     } else {
@@ -51,6 +55,7 @@ async fn main() -> Result<(), CliError> {
         wallet_path,
         psw,
         blockchain_access_config,
+        config,
         gas_limit,
         gas_price,
     };

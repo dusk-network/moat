@@ -19,8 +19,10 @@ pub enum Error {
     DuskWallet(Arc<dusk_wallet::Error>),
     #[error("A serialization error occurred: {0:?}")]
     Bytes(Arc<dusk_bytes::Error>),
-    #[error("A serialization error occurred.")]
-    Rkyv,
+    #[error("A deserialization error occurred")]
+    DeserRkyv,
+    #[error("A serialization error occurred")]
+    SerRkyv,
     #[error(transparent)]
     Hex(Arc<hex::FromHexError>),
     #[error("A GraphQL error occurred: {0:?}")]

@@ -4,13 +4,14 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::config::SPCliConfig;
 use crate::run_result::{LicenseContractSummary, RunResult, SessionSummary};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
 use dusk_wallet::RuskHttpClient;
 use moat_core::{CitadelInquirer, Error, LicenseSessionId};
-use zk_citadel::license::SessionCookie;
 use wallet_accessor::BlockchainAccessConfig;
+use zk_citadel::license::SessionCookie;
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -28,10 +29,11 @@ impl Command {
     pub async fn run(
         self,
         blockchain_access_config: &BlockchainAccessConfig,
+        config: &SPCliConfig,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
             Command::RequestService { session_cookie } => {
-                Self::request_service(&session_cookie).await?
+                Self::request_service(&session_cookie, config).await?
             }
             Command::GetSession { session_id } => {
                 Self::get_session(blockchain_access_config, session_id).await?
@@ -44,10 +46,16 @@ impl Command {
     }
 
     /// Command: Request Service
-    async fn request_service(session_cookie: &str) -> Result<RunResult, Error> {
+    async fn request_service(
+        session_cookie: &str,
+        config: &SPCliConfig,
+    ) -> Result<RunResult, Error> {
         let bytes = hex::decode(session_cookie)?;
-        let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice()).map_err(|_|Error::Rkyv)?;//todo: error processing
+        let sc: SessionCookie =
+            rkyv::from_bytes(bytes.as_slice()).map_err(|_| Error::DeserRkyv)?;
         println!("sc={:?}", sc);
+        let psk_lp: &str = &config.psk_lp;
+        println!("psk_lp={:?}", psk_lp);
         Ok(RunResult::RequestService)
     }
 
