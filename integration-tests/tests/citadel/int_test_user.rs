@@ -41,7 +41,7 @@ use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
-    "9afbce9f2416520733bacb370315d32b6b2c43d6097576df1c1222859d91eecc";
+    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
@@ -121,7 +121,8 @@ async fn user_round_trip() -> Result<(), Error> {
     // PUB_PARAMS initialization code
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
-    let blockchain_config_path = "../config.toml";
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;

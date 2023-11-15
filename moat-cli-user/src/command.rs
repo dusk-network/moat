@@ -22,7 +22,7 @@ use moat_core::{
 use rand::rngs::StdRng;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, SessionCookie};
-
+use dusk_bytes::Serializable;
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
@@ -104,9 +104,8 @@ impl Command {
         ssk: SecretSpendKey,
         psk_lp_bytes: String,
     ) -> Result<RunResult, Error> {
-        let A = JubJubExtended::from(JubJubAffine::from_slice(&psk_lp_bytes.clone().into_bytes()[..32]).unwrap());
-        let B = JubJubExtended::from(JubJubAffine::from_slice(&psk_lp_bytes.clone().into_bytes()[32..]).unwrap());
-        let psk_lp = PublicSpendKey::new(A, B);
+        let psk_lp_bytes_formatted: [u8; 64] = hex::decode(psk_lp_bytes.clone()).expect("Decoded.").try_into().unwrap();
+        let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
         
         let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
         let request = RequestCreator::create(
@@ -185,11 +184,8 @@ impl Command {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
                 let ssk_user = ssk;
 
-                let psk_lp_bytes = "136d747ff489bd06077f937508b9237ac093ff868dc2e232ab3af0ecd038873288560dbd8aa851e055bc408ebeb89509b26eb6e34b4b43214de467e3ef09594e".to_string();
-
-                let A = JubJubExtended::from(JubJubAffine::from_slice(&psk_lp_bytes.clone().into_bytes()[..32]).unwrap());
-                let B = JubJubExtended::from(JubJubAffine::from_slice(&psk_lp_bytes.clone().into_bytes()[32..]).unwrap());
-                let psk_lp = PublicSpendKey::new(A, B);
+                let psk_lp_bytes: [u8; 64] = hex::decode("136d747ff489bd06077f937508b9237ac093ff868dc2e232ab3af0ecd038873288560dbd8aa851e055bc408ebeb89509b26eb6e34b4b43214de467e3ef09594e").expect("Decoded.").try_into().unwrap();
+                let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes).unwrap();
 
                 let (tx_id, session_cookie) = Self::prove_and_send_use_license(
                     blockchain_access_config,

@@ -12,7 +12,8 @@ use wallet_accessor::BlockchainAccessConfig;
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn lp_scan() -> Result<(), Error> {
-    let blockchain_config_path = "../config.toml";
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp");
 
@@ -28,7 +29,8 @@ async fn lp_scan() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn lp_scan_last_blocks() -> Result<(), Error> {
-    let blockchain_config_path = "../config.toml";
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp_2");
 
@@ -46,7 +48,8 @@ async fn lp_scan_last_blocks() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn lp_scan_2_lps() -> Result<(), Error> {
-    let blockchain_config_path = "../config.toml";
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
     let lp1_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp");
     let lp2_config_path =

@@ -15,7 +15,8 @@ const MIN_CRS_SIZE: usize = 10 * 1024 * 1024;
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn get_crs() -> Result<(), Error> {
-    let config_path = "../config.toml";
+    let config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
