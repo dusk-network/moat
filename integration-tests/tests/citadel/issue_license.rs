@@ -25,8 +25,7 @@ const GAS_PRICE: u64 = 1;
 async fn issue_license() -> Result<(), Error> {
     let request_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
-    let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
+    let blockchain_config_path = "../config.toml";
 
     let lp_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp_2");

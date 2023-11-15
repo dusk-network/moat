@@ -13,8 +13,7 @@ use wallet_accessor::BlockchainAccessConfig;
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn retrieve_txs_from_block() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
+    let config_path = "../config.toml";
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -32,8 +31,7 @@ async fn retrieve_txs_from_block() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn retrieve_txs_from_block_range() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
+    let config_path = "../config.toml";
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -58,8 +56,7 @@ async fn retrieve_txs_from_block_range() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn retrieve_txs_from_last_n_blocks() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
+    let config_path = "../config.toml";
 
     let cfg = BlockchainAccessConfig::load_path(config_path)?;
 
@@ -79,8 +76,7 @@ async fn retrieve_tx_by_id() -> Result<(), Error> {
     const TXID: &str =
         "44fe2c6407fc400a2dee6e30c62a02b82f3980da18d3b6306e80f9f83730520d";
 
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
+    let config_path = "../config.toml";
 
     let config = BlockchainAccessConfig::load_path(config_path)?;
 

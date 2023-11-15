@@ -13,7 +13,6 @@
 You can test if the environment you set up and the library are working properly by executing the following:
 
 ```
-cd integration-tests
 cargo t --release --features="exp_tests" -- --test-threads=1
 cargo t --release --features="int_tests" -- --test-threads=1
 ```

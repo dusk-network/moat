@@ -121,8 +121,7 @@ async fn user_round_trip() -> Result<(), Error> {
     // PUB_PARAMS initialization code
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
-    let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "../../config.toml");
+    let blockchain_config_path = "../config.toml";
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
