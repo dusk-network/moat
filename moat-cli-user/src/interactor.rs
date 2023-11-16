@@ -63,6 +63,8 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             OpSelection::Run(Box::from(Command::UseLicense {
                 license_hash: prompt::request_license_hash()?,
                 psk_lp_bytes: prompt::request_psk_lp_bytes()?,
+                psk_sp_bytes: prompt::request_psk_sp_bytes()?,
+                challenge_bytes: prompt::request_challenge_bytes()?,
             }))
         }
         CommandMenuItem::RequestService => {

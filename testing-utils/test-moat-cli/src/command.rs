@@ -293,7 +293,7 @@ impl Command {
                     gas_price,
                 );
                 let (tx_id, license_blob) = license_issuer
-                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
+                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp, &JubJubScalar::from(1234u64))
                     .await?;
                 let summary = IssueLicenseSummary {
                     request,
@@ -534,6 +534,7 @@ impl Command {
             wallet_path,
             psw,
             &ssk_user,
+            &psk_lp,
             &psk_lp,
             &setup_holder.prover,
             &setup_holder.verifier,

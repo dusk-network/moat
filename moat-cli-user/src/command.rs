@@ -32,6 +32,8 @@ pub(crate) enum Command {
     UseLicense {
         license_hash: String,
         psk_lp_bytes: String,
+        psk_sp_bytes: String,
+        challenge_bytes: String,
     },
     /// Request Service (User)
     RequestService { session_cookie: String },
@@ -72,6 +74,8 @@ impl Command {
             Command::UseLicense {
                 license_hash,
                 psk_lp_bytes,
+                psk_sp_bytes,
+                challenge_bytes,
             } => {
                 Self::use_license(
                     wallet_path,
@@ -80,7 +84,9 @@ impl Command {
                     gas_limit,
                     gas_price,
                     psk_lp_bytes,
+                    psk_sp_bytes,
                     ssk,
+                    challenge_bytes,
                     setup_holder,
                     license_hash,
                 )
@@ -175,7 +181,9 @@ impl Command {
         gas_limit: u64,
         gas_price: u64,
         psk_lp_bytes: String,
+        psk_sp_bytes: String,
         ssk: SecretSpendKey,
+        challenge_bytes: String,
         setup_holder: &mut Option<SetupHolder>,
         license_hash: String,
     ) -> Result<RunResult, Error> {
@@ -190,18 +198,28 @@ impl Command {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
                 let ssk_user = ssk;
 
+                let challenge = JubJubScalar::from(challenge_bytes.parse::<u64>().unwrap());
+
                 let psk_lp_bytes: [u8; 64] = hex::decode(&psk_lp_bytes.clone())
                     .expect("Decoded.")
                     .try_into()
                     .unwrap();
                 let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes).unwrap();
 
+                let psk_sp_bytes: [u8; 64] = hex::decode(&psk_sp_bytes.clone())
+                    .expect("Decoded.")
+                    .try_into()
+                    .unwrap();
+                let psk_sp = PublicSpendKey::from_bytes(&psk_sp_bytes).unwrap();
+
                 let (tx_id, session_cookie) = Self::prove_and_send_use_license(
                     blockchain_access_config,
                     wallet_path,
                     psw,
                     psk_lp,
+                    psk_sp,
                     ssk_user,
+                    challenge,
                     &license,
                     pos,
                     gas_limit,
@@ -276,7 +294,9 @@ impl Command {
         wallet_path: &WalletPath,
         psw: &Password,
         psk_lp: PublicSpendKey,
+        psk_sp: PublicSpendKey,
         ssk_user: SecretSpendKey,
+        challenge: JubJubScalar,
         license: &License,
         pos: u64,
         gas_limit: u64,
@@ -287,7 +307,6 @@ impl Command {
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         // let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
         // let challenge = JubJubScalar::from(num_sessions as u64 + 1);
-        let challenge = JubJubScalar::from(0xcafebabeu64);
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         let setup_holder = match sh_opt {
@@ -325,6 +344,7 @@ impl Command {
             psw,
             &ssk_user,
             &psk_lp,
+            &psk_sp,
             &setup_holder.prover,
             &setup_holder.verifier,
             license,

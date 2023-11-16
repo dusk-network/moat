@@ -65,7 +65,7 @@ async fn issue_license(
     );
 
     let (tx_id, _) = license_issuer
-        .issue_license(rng, &request, &reference_lp.ssk_lp)
+        .issue_license(rng, &request, &reference_lp.ssk_lp, &JubJubScalar::from(1234u64))
         .await?;
     Ok(tx_id)
 }
@@ -238,6 +238,7 @@ async fn user_round_trip() -> Result<(), Error> {
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
         &ssk_user,
+        &reference_lp.psk_lp,
         &reference_lp.psk_lp,
         &prover,
         &verifier,
