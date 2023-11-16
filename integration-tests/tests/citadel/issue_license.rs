@@ -62,12 +62,14 @@ async fn issue_license() -> Result<(), Error> {
         GAS_PRICE,
     );
 
+    const ATTRIBUTE_DATA_EXAMPLE: u64 = 1234;
+
     license_issuer
         .issue_license(
             rng,
             &request,
             &reference_lp.ssk_lp,
-            &JubJubScalar::from(1234u64),
+            &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
         )
         .await?;
 

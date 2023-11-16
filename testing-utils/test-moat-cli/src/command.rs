@@ -292,12 +292,15 @@ impl Command {
                     gas_limit,
                     gas_price,
                 );
+
+                const ATTRIBUTE_DATA_EXAMPLE: u64 = 1234;
+
                 let (tx_id, license_blob) = license_issuer
                     .issue_license(
                         &mut rng,
                         &request,
                         &reference_lp.ssk_lp,
-                        &JubJubScalar::from(1234u64),
+                        &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
                     )
                     .await?;
                 let summary = IssueLicenseSummary {
