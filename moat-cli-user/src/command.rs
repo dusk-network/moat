@@ -196,20 +196,23 @@ impl Command {
         Ok(match pos_license {
             Some((pos, license)) => {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
-                let ssk_user = ssk;
+                let challenge =
+                    JubJubScalar::from(challenge_bytes.parse::<u64>().unwrap());
 
-                let challenge = JubJubScalar::from(challenge_bytes.parse::<u64>().unwrap());
-
-                let psk_lp_bytes: [u8; 64] = hex::decode(&psk_lp_bytes.clone())
-                    .expect("Decoded.")
-                    .try_into()
-                    .unwrap();
+                let psk_lp_bytes: [u8; 64] =
+                    bs58::decode(&psk_lp_bytes.clone())
+                        .into_vec()
+                        .unwrap()
+                        .try_into()
+                        .unwrap();
                 let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes).unwrap();
 
-                let psk_sp_bytes: [u8; 64] = hex::decode(&psk_sp_bytes.clone())
-                    .expect("Decoded.")
-                    .try_into()
-                    .unwrap();
+                let psk_sp_bytes: [u8; 64] =
+                    bs58::decode(&psk_sp_bytes.clone())
+                        .into_vec()
+                        .unwrap()
+                        .try_into()
+                        .unwrap();
                 let psk_sp = PublicSpendKey::from_bytes(&psk_sp_bytes).unwrap();
 
                 let (tx_id, session_cookie) = Self::prove_and_send_use_license(
@@ -218,7 +221,7 @@ impl Command {
                     psw,
                     psk_lp,
                     psk_sp,
-                    ssk_user,
+                    ssk,
                     challenge,
                     &license,
                     pos,
@@ -270,12 +273,8 @@ impl Command {
         let mut licenses_stream =
             CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-        let ssk_user = ssk;
-
-        let pairs = CitadelInquirer::find_owned_licenses(
-            ssk_user,
-            &mut licenses_stream,
-        )?;
+        let pairs =
+            CitadelInquirer::find_owned_licenses(ssk, &mut licenses_stream)?;
         Ok(if pairs.is_empty() {
             None
         } else {

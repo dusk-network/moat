@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::WalletPath;
 use dusk_jubjub::JubJubScalar;
+use dusk_wallet::WalletPath;
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{Error, JsonLoader, RequestCreator, RequestJson};
 use rand::rngs::StdRng;
@@ -63,7 +63,12 @@ async fn issue_license() -> Result<(), Error> {
     );
 
     license_issuer
-        .issue_license(rng, &request, &reference_lp.ssk_lp, &JubJubScalar::from(1234u64))
+        .issue_license(
+            rng,
+            &request,
+            &reference_lp.ssk_lp,
+            &JubJubScalar::from(1234u64),
+        )
         .await?;
 
     Ok(())

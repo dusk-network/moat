@@ -8,13 +8,13 @@ use crate::run_result::{
     IssueLicenseSummary, LicenseContractSummary, RequestsLPSummary, RunResult,
 };
 use crate::SeedableRng;
+use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{BcInquirer, CitadelInquirer, Error};
 use rand::rngs::StdRng;
 use wallet_accessor::{BlockchainAccessConfig, Password};
-use dusk_jubjub::JubJubScalar;
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -22,7 +22,10 @@ pub(crate) enum Command {
     /// List requests
     ListRequestsLP,
     /// Issue license
-    IssueLicenseLP { request_hash: String, attr_data_bytes: String },
+    IssueLicenseLP {
+        request_hash: String,
+        attr_data_bytes: String,
+    },
     /// List licenses (User)
     ListLicenses,
     /// Show state
@@ -44,7 +47,10 @@ impl Command {
             Command::ListRequestsLP => {
                 Self::list_requests_lp(blockchain_access_config, ssk).await?
             }
-            Command::IssueLicenseLP { request_hash, attr_data_bytes } => {
+            Command::IssueLicenseLP {
+                request_hash,
+                attr_data_bytes,
+            } => {
                 Self::issue_license_lp(
                     wallet_path,
                     psw,
@@ -97,7 +103,8 @@ impl Command {
         request_hash: String,
         attr_data_bytes: String,
     ) -> Result<RunResult, Error> {
-        let attr_data = JubJubScalar::from(attr_data_bytes.parse::<u64>().unwrap());
+        let attr_data =
+            JubJubScalar::from(attr_data_bytes.parse::<u64>().unwrap());
 
         let mut rng = StdRng::from_entropy();
         let mut reference_lp = ReferenceLP::create_with_ssk(ssk)?;
@@ -115,7 +122,12 @@ impl Command {
                     gas_price,
                 );
                 let (tx_id, license_blob) = license_issuer
-                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp, &attr_data)
+                    .issue_license(
+                        &mut rng,
+                        &request,
+                        &reference_lp.ssk_lp,
+                        &attr_data,
+                    )
                     .await?;
                 let summary = IssueLicenseSummary {
                     request,

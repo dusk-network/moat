@@ -45,4 +45,3 @@ pub(crate) fn request_attr_data() -> Result<String, ErrorKind> {
     let a_str = a.as_string().expect("answer to be a string").to_string();
     Ok(a_str)
 }
-

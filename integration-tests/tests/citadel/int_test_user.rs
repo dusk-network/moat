@@ -65,7 +65,12 @@ async fn issue_license(
     );
 
     let (tx_id, _) = license_issuer
-        .issue_license(rng, &request, &reference_lp.ssk_lp, &JubJubScalar::from(1234u64))
+        .issue_license(
+            rng,
+            &request,
+            &reference_lp.ssk_lp,
+            &JubJubScalar::from(1234u64),
+        )
         .await?;
     Ok(tx_id)
 }

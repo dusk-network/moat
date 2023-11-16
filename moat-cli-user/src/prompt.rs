@@ -48,13 +48,13 @@ pub(crate) fn request_license_hash() -> Result<String, ErrorKind> {
 
 pub(crate) fn request_psk_lp_bytes() -> Result<String, ErrorKind> {
     let q = Question::input("psk_lp_bytes")
-        .message("Please enter the LP public key:".to_string())
+        .message("Please enter the address of the LP:".to_string())
         .validate_on_key(|_, _| {
             true // todo: add some validation of the psk
         })
         .validate(|psk_lp_bytes, _| {
             if psk_lp_bytes.is_empty() {
-                Err("Please enter a valid LP public key".to_string())
+                Err("Please enter a valid LP address".to_string())
             } else {
                 Ok(())
             }
@@ -68,13 +68,13 @@ pub(crate) fn request_psk_lp_bytes() -> Result<String, ErrorKind> {
 
 pub(crate) fn request_psk_sp_bytes() -> Result<String, ErrorKind> {
     let q = Question::input("psk_sp_bytes")
-        .message("Please enter the SP public key:".to_string())
+        .message("Please enter the address of the SP:".to_string())
         .validate_on_key(|_, _| {
             true // todo: add some validation of the SP public key
         })
         .validate(|psk_sp_bytes, _| {
             if psk_sp_bytes.is_empty() {
-                Err("Please enter a valid SP public key".to_string())
+                Err("Please enter a valid SP address".to_string())
             } else {
                 Ok(())
             }
