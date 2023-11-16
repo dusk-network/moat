@@ -7,9 +7,10 @@
 use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
+use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::{Prover, PublicParameters, Verifier};
 use dusk_wallet::WalletPath;
-use moat_core::{Error, RequestJson};
+use moat_core::Error;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 
@@ -22,7 +23,6 @@ enum OpSelection {
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 enum CommandMenuItem {
     SubmitRequest,
-    ListRequestsUser,
     ListLicenses,
     UseLicense,
     RequestService,
@@ -33,7 +33,6 @@ enum CommandMenuItem {
 fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd_menu = Menu::new()
         .add(CommandMenuItem::SubmitRequest, "Submit Request")
-        .add(CommandMenuItem::ListRequestsUser, "List Requests")
         .add(CommandMenuItem::ListLicenses, "List Licenses")
         .add(CommandMenuItem::UseLicense, "Use License")
         .add(
@@ -53,10 +52,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd = cmd_menu.answer(&answer).to_owned();
     Ok(match cmd {
         CommandMenuItem::SubmitRequest => {
-            OpSelection::Run(Box::from(Command::SubmitRequest))
-        }
-        CommandMenuItem::ListRequestsUser => {
-            OpSelection::Run(Box::from(Command::ListRequestsUser))
+            OpSelection::Run(Box::from(Command::SubmitRequest {
+                psk_lp_bytes: prompt::request_psk_lp_bytes()?,
+            }))
         }
         CommandMenuItem::ListLicenses => {
             OpSelection::Run(Box::from(Command::ListLicenses))
@@ -64,6 +62,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
         CommandMenuItem::UseLicense => {
             OpSelection::Run(Box::from(Command::UseLicense {
                 license_hash: prompt::request_license_hash()?,
+                psk_lp_bytes: prompt::request_psk_lp_bytes()?,
             }))
         }
         CommandMenuItem::RequestService => {
@@ -90,7 +89,7 @@ pub struct Interactor {
     pub blockchain_access_config: BlockchainAccessConfig,
     pub gas_limit: u64,
     pub gas_price: u64,
-    pub request_json: RequestJson,
+    pub ssk: SecretSpendKey,
     pub setup_holder: Option<SetupHolder>,
 }
 
@@ -108,7 +107,7 @@ impl Interactor {
                             &self.blockchain_access_config,
                             self.gas_limit,
                             self.gas_price,
-                            self.request_json.clone(),
+                            self.ssk,
                             &mut self.setup_holder,
                         )
                         .await;

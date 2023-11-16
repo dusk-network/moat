@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = "0.20.0-rc.0"
+dusk-wallet = "0.20.1-rc.0"
 dusk-wallet-core = "0.22.0-plonk.0.16"
 phoenix-core = { version = "0.21", features = ["alloc"] }
 dusk-bls12_381 = "0.12"

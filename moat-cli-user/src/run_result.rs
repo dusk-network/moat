@@ -7,7 +7,7 @@
 use rkyv::ser::serializers::AllocSerializer;
 use std::fmt;
 use std::ops::Range;
-use zk_citadel::license::{License, Request};
+use zk_citadel::license::License;
 // use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
 use sha3::{Digest, Sha3_256};
 
@@ -15,12 +15,6 @@ pub struct SubmitRequestSummary {
     pub psk_lp: String,
     pub tx_id: String,
     pub request_hash: String,
-}
-
-pub struct RequestsSummary {
-    pub height: u64,
-    pub found_total: usize,
-    pub found_owned: usize,
 }
 
 pub struct UseLicenseSummary {
@@ -40,7 +34,6 @@ pub struct LicenseContractSummary {
 /// Possible results of running a command in interactive mode
 pub enum RunResult {
     SubmitRequest(SubmitRequestSummary),
-    Requests(RequestsSummary, Vec<Request>),
     ListLicenses(Range<u64>, Vec<(License, bool)>),
     UseLicense(Option<UseLicenseSummary>),
     ShowState(LicenseContractSummary),
@@ -63,17 +56,6 @@ impl fmt::Display for RunResult {
                     summary.tx_id
                 )?;
                 writeln!(f, "request submitted: {}", summary.request_hash)?;
-                Ok(())
-            }
-            Requests(summary, requests) => {
-                writeln!(
-                    f,
-                    "scanned {} blocks, found {} requests, {} owned requests:",
-                    summary.height, summary.found_total, summary.found_owned,
-                )?;
-                for request in requests.iter() {
-                    writeln!(f, "request: {}", Self::to_hash_hex(request))?;
-                }
                 Ok(())
             }
             ListLicenses(block_range, licenses) => {

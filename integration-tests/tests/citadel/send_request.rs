@@ -35,8 +35,10 @@ async fn send_request() -> Result<(), Error> {
     tracing::subscriber::set_global_default(subscriber.finish())
         .expect("Setting tracing default should work");
 
-    let request_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
+    let request_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/request/test_request.json"
+    );
     let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 

@@ -22,26 +22,24 @@ use clap::Parser;
 
 use crate::error::CliError;
 use crate::interactor::Interactor;
-use dusk_wallet::WalletPath;
-use moat_core::{JsonLoader, RequestJson};
+use dusk_wallet::{Wallet, WalletPath};
 use rand::SeedableRng;
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};
+use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 #[tokio::main]
+#[allow(non_snake_case)]
 async fn main() -> Result<(), CliError> {
     let cli = Args::parse();
 
-    let json_path = cli.json_path.as_path();
     let config_path = cli.config_path.as_path();
     let wallet_path = cli.wallet_path.as_path();
-    let password = cli.password;
+    let password = cli.wallet_pass;
     let pwd_hash = cli.pwd_hash;
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
 
-    let request_json: RequestJson = RequestJson::from_file(json_path)?;
     let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let blockchain_access_config =
         BlockchainAccessConfig::load_path(config_path)?;
@@ -51,13 +49,19 @@ async fn main() -> Result<(), CliError> {
         PwdHash(pwd_hash)
     };
 
+    let wallet_accessor =
+        WalletAccessor::create(wallet_path.clone(), psw.clone()).unwrap();
+    let wallet = Wallet::from_file(wallet_accessor).unwrap();
+
+    let (_psk, ssk) = wallet.spending_keys(&wallet.default_address()).unwrap();
+
     let mut interactor = Interactor {
         wallet_path,
         psw,
         blockchain_access_config,
         gas_limit,
         gas_price,
-        request_json,
+        ssk,
         setup_holder: None,
     };
 

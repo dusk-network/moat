@@ -6,34 +6,33 @@
 
 use crate::interactor::SetupHolder;
 use crate::run_result::{
-    LicenseContractSummary, RequestsSummary, RunResult, SubmitRequestSummary,
-    UseLicenseSummary,
+    LicenseContractSummary, RunResult, SubmitRequestSummary, UseLicenseSummary,
 };
 use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::DeserializableSlice;
+use dusk_bytes::Serializable;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use moat_core::{
     BcInquirer, CitadelInquirer, CrsGetter, Error, LicenseCircuit, LicenseUser,
-    RequestCreator, RequestJson, RequestScanner, RequestSender, TxAwaiter,
+    RequestCreator, RequestSender, TxAwaiter,
 };
 use rand::rngs::StdRng;
-use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
+use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, SessionCookie};
-
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
     /// Submit request (User)
-    SubmitRequest,
-    /// List requests (User)
-    ListRequestsUser,
+    SubmitRequest { psk_lp_bytes: String },
     /// List licenses (User)
     ListLicenses,
     /// Use license (User)
-    UseLicense { license_hash: String },
+    UseLicense {
+        license_hash: String,
+        psk_lp_bytes: String,
+    },
     /// Request Service (User)
     RequestService { session_cookie: String },
     /// Show state
@@ -51,37 +50,37 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         gas_limit: u64,
         gas_price: u64,
-        request_json: RequestJson,
+        ssk: SecretSpendKey,
         setup_holder: &mut Option<SetupHolder>,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
-            Command::SubmitRequest => {
+            Command::SubmitRequest { psk_lp_bytes } => {
                 Self::submit_request(
                     wallet_path,
                     psw,
                     blockchain_access_config,
                     gas_limit,
                     gas_price,
-                    request_json,
+                    ssk,
+                    psk_lp_bytes,
                 )
                 .await?
             }
-            Command::ListRequestsUser => {
-                Self::list_requests(wallet_path, psw, blockchain_access_config)
-                    .await?
-            }
             Command::ListLicenses => {
-                Self::list_licenses(blockchain_access_config, request_json)
-                    .await?
+                Self::list_licenses(blockchain_access_config, ssk).await?
             }
-            Command::UseLicense { license_hash } => {
+            Command::UseLicense {
+                license_hash,
+                psk_lp_bytes,
+            } => {
                 Self::use_license(
                     wallet_path,
                     psw,
                     blockchain_access_config,
                     gas_limit,
                     gas_price,
-                    request_json,
+                    psk_lp_bytes,
+                    ssk,
                     setup_holder,
                     license_hash,
                 )
@@ -99,20 +98,26 @@ impl Command {
     }
 
     /// Command: Submit Request
+    #[allow(non_snake_case)]
     async fn submit_request(
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
         gas_limit: u64,
         gas_price: u64,
-        request_json: RequestJson,
+        ssk: SecretSpendKey,
+        psk_lp_bytes: String,
     ) -> Result<RunResult, Error> {
+        let psk_lp_bytes_formatted: [u8; 64] =
+            hex::decode(psk_lp_bytes.clone())
+                .expect("Decoded.")
+                .try_into()
+                .unwrap();
+        let psk_lp =
+            PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
+
         let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
-        let request = RequestCreator::create_from_hex_args(
-            request_json.user_ssk,
-            request_json.provider_psk.clone(),
-            rng,
-        )?;
+        let request = RequestCreator::create(&ssk, &psk_lp, rng)?;
         let request_hash = RunResult::to_hash_hex(&request);
         let tx_id = RequestSender::send_request(
             request,
@@ -126,64 +131,19 @@ impl Command {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         TxAwaiter::wait_for(&client, tx_id).await?;
+
         let summary = SubmitRequestSummary {
-            psk_lp: request_json.provider_psk,
+            psk_lp: psk_lp_bytes,
             tx_id: hex::encode(tx_id.to_bytes()),
             request_hash,
         };
         Ok(RunResult::SubmitRequest(summary))
     }
 
-    /// Command: List Requests
-    async fn list_requests(
-        wallet_path: &WalletPath,
-        psw: &Password,
-        blockchain_access_config: &BlockchainAccessConfig,
-    ) -> Result<RunResult, Error> {
-        let wallet_accessor =
-            WalletAccessor::create(wallet_path.clone(), psw.clone())?;
-        let note_hashes: Vec<BlsScalar> = wallet_accessor
-            .get_notes(blockchain_access_config)
-            .await?
-            .iter()
-            .flat_map(|n| n.nullified_by)
-            .collect();
-
-        let mut found_requests = vec![];
-        let mut height = 0;
-        let mut found_total = 0usize;
-        loop {
-            let height_end = height + 10000;
-            let (requests, top, total) =
-                RequestScanner::scan_related_to_notes_in_block_range(
-                    height,
-                    height_end,
-                    blockchain_access_config,
-                    &note_hashes,
-                )
-                .await?;
-            found_requests.extend(requests);
-            found_total += total;
-            if top <= height_end {
-                height = top;
-                break;
-            }
-            height = height_end;
-        }
-        let found_owned = found_requests.len();
-        let summary = RequestsSummary {
-            height,
-            found_total,
-            found_owned,
-        };
-        let run_result = RunResult::Requests(summary, found_requests);
-        Ok(run_result)
-    }
-
     /// Command: List Licenses
     async fn list_licenses(
         blockchain_access_config: &BlockchainAccessConfig,
-        request_json: RequestJson,
+        ssk: SecretSpendKey,
     ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
@@ -193,9 +153,7 @@ impl Command {
         let mut licenses_stream =
             CitadelInquirer::get_licenses(&client, block_range.clone()).await?;
 
-        let ssk_user = SecretSpendKey::from_slice(
-            hex::decode(request_json.user_ssk.clone())?.as_slice(),
-        )?;
+        let ssk_user = ssk;
 
         let pairs = CitadelInquirer::find_all_licenses(&mut licenses_stream)?;
         let vk = ssk_user.view_key();
@@ -208,6 +166,7 @@ impl Command {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[allow(non_snake_case)]
     /// Command: Use License
     async fn use_license(
         wallet_path: &WalletPath,
@@ -215,25 +174,28 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         gas_limit: u64,
         gas_price: u64,
-        request_json: RequestJson,
+        psk_lp_bytes: String,
+        ssk: SecretSpendKey,
         setup_holder: &mut Option<SetupHolder>,
         license_hash: String,
     ) -> Result<RunResult, Error> {
         let pos_license = Self::get_license_to_use(
             blockchain_access_config,
-            Some(&request_json),
+            ssk,
             license_hash.clone(),
         )
         .await?;
         Ok(match pos_license {
             Some((pos, license)) => {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
-                let ssk_user = SecretSpendKey::from_slice(
-                    hex::decode(request_json.user_ssk)?.as_slice(),
-                )?;
-                let psk_lp = PublicSpendKey::from_slice(
-                    hex::decode(request_json.provider_psk)?.as_slice(),
-                )?;
+                let ssk_user = ssk;
+
+                let psk_lp_bytes: [u8; 64] = hex::decode(&psk_lp_bytes.clone())
+                    .expect("Decoded.")
+                    .try_into()
+                    .unwrap();
+                let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes).unwrap();
+
                 let (tx_id, session_cookie) = Self::prove_and_send_use_license(
                     blockchain_access_config,
                     wallet_path,
@@ -279,7 +241,7 @@ impl Command {
 
     async fn get_license_to_use(
         blockchain_access_config: &BlockchainAccessConfig,
-        request_json: Option<&RequestJson>,
+        ssk: SecretSpendKey,
         license_hash: String,
     ) -> Result<Option<(u64, License)>, Error> {
         let client =
@@ -290,15 +252,7 @@ impl Command {
         let mut licenses_stream =
             CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-        let ssk_user = SecretSpendKey::from_slice(
-            hex::decode(
-                request_json
-                    .expect("request should be provided")
-                    .user_ssk
-                    .clone(),
-            )?
-            .as_slice(),
-        )?;
+        let ssk_user = ssk;
 
         let pairs = CitadelInquirer::find_owned_licenses(
             ssk_user,

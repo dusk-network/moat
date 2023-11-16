@@ -23,13 +23,17 @@ const GAS_PRICE: u64 = 1;
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn issue_license() -> Result<(), Error> {
-    let request_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
+    let request_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/request/test_request.json"
+    );
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
-    let lp_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/lp2.json");
+    let lp_config_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/config/test_keys_lp_2.json"
+    );
 
     let reference_lp = ReferenceLP::create(&lp_config_path)?;
 

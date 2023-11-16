@@ -34,8 +34,10 @@ async fn stake_add_owner() -> Result<(), Error> {
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
 
-    let request_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
+    let request_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/request/test_request.json"
+    );
 
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
 

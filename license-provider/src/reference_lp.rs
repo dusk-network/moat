@@ -49,19 +49,17 @@ impl ReferenceLP {
 
     pub fn create<P: AsRef<Path>>(lp_config_path: P) -> Result<Self, Error> {
         let lp_config: LPConfig = LPConfig::from_file(lp_config_path)?;
-        Self::create_with_ssk_psk(lp_config.ssk_lp, lp_config.psk_lp)
+
+        let ssk_bytes = hex::decode(lp_config.ssk_lp)?;
+        let ssk_lp = SecretSpendKey::from_slice(ssk_bytes.as_slice())?;
+
+        Self::create_with_ssk(&ssk_lp)
     }
 
-    pub fn create_with_ssk_psk<S>(ssk_lp: S, psk_lp: S) -> Result<Self, Error>
-    where
-        S: AsRef<str>,
-    {
-        let psk_bytes = hex::decode(psk_lp.as_ref())?;
-        let ssk_bytes = hex::decode(ssk_lp.as_ref())?;
-        let psk_lp = PublicSpendKey::from_slice(psk_bytes.as_slice())?;
-        let ssk_lp = SecretSpendKey::from_slice(ssk_bytes.as_slice())?;
+    pub fn create_with_ssk(ssk_lp: &SecretSpendKey) -> Result<Self, Error> {
+        let psk_lp = ssk_lp.public_spend_key();
         let vk_lp = ssk_lp.view_key();
-        Ok(Self::new(psk_lp, ssk_lp, vk_lp))
+        Ok(Self::new(psk_lp, *ssk_lp, vk_lp))
     }
 
     /// scans the entire blockchain for the requests to process

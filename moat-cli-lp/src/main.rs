@@ -24,11 +24,11 @@ use clap::Parser;
 use crate::config::LPCliConfig;
 use crate::error::CliError;
 use crate::interactor::Interactor;
-use dusk_wallet::WalletPath;
+use dusk_wallet::{Wallet, WalletPath};
 use rand::SeedableRng;
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};
+use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 #[tokio::main]
 async fn main() -> Result<(), CliError> {
@@ -36,7 +36,7 @@ async fn main() -> Result<(), CliError> {
 
     let config_path = cli.config_path.as_path();
     let wallet_path = cli.wallet_path.as_path();
-    let password = cli.password;
+    let password = cli.wallet_pass;
     let pwd_hash = cli.pwd_hash;
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
@@ -54,11 +54,17 @@ async fn main() -> Result<(), CliError> {
         PwdHash(pwd_hash)
     };
 
+    let wallet_accessor =
+        WalletAccessor::create(wallet_path.clone(), psw.clone()).unwrap();
+    let wallet = Wallet::from_file(wallet_accessor).unwrap();
+
+    let (_psk, ssk) = wallet.spending_keys(&wallet.default_address()).unwrap();
+
     let mut interactor = Interactor {
         wallet_path,
         psw,
         blockchain_access_config,
-        config,
+        ssk,
         gas_limit,
         gas_price,
     };
