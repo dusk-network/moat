@@ -73,9 +73,7 @@ impl TxAwaiter {
 
             match status {
                 TxStatus::Ok => break,
-                TxStatus::Error(err) => {
-                    return Err(Transaction(Box::from(err)))?
-                }
+                TxStatus::Error(err) => return Err(Transaction(err.into()))?,
                 TxStatus::NotFound => {
                     trace!("Awaiting ({}) for {}", i, tx_id.as_ref());
                     sleep(Duration::from_millis(1000)).await;
@@ -84,7 +82,7 @@ impl TxAwaiter {
             }
         }
         if i > TIMEOUT_SECS {
-            Err(Transaction(Box::from("Confirmation timed out")))
+            Err(Transaction("Confirmation timed out".into()))
         } else {
             Ok(())
         }

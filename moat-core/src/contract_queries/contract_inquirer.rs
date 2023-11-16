@@ -44,7 +44,7 @@ impl ContractInquirer {
 
         let response_data = check_archived_root::<R>(response.as_slice())
             .map_err(|_| {
-                InvalidQueryResponse(Box::from("rkyv deserialization error"))
+                InvalidQueryResponse("rkyv deserialization error".into())
             })?;
         let r = response_data
             .deserialize(&mut Infallible)

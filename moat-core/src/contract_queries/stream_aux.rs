@@ -34,12 +34,12 @@ impl StreamAux {
         while let Some(http_chunk) = stream.next().wait() {
             buffer.extend_from_slice(
                 &http_chunk
-                    .map_err(|_| Error::Stream(Box::from("chunking error")))?,
+                    .map_err(|_| Error::Stream("chunking error".into()))?,
             );
             let mut chunk = buffer.chunks_exact(L);
             for bytes in chunk.by_ref() {
                 let item: R = rkyv::from_bytes(bytes).map_err(|_| {
-                    Error::Stream(Box::from("deserialization error"))
+                    Error::Stream("deserialization error".into())
                 })?;
                 if filter(&item)? {
                     return Ok(item);
@@ -47,7 +47,7 @@ impl StreamAux {
             }
             buffer = chunk.remainder().to_vec();
         }
-        Err(Error::Stream(Box::from("item not found")))
+        Err(Error::Stream("item not found".into()))
     }
 
     /// Collects all items and returns them in a vector,
@@ -67,12 +67,12 @@ impl StreamAux {
         while let Some(http_chunk) = stream.next().wait() {
             buffer.extend_from_slice(
                 &http_chunk
-                    .map_err(|_| Error::Stream(Box::from("chunking error")))?,
+                    .map_err(|_| Error::Stream("chunking error".into()))?,
             );
             let mut chunk = buffer.chunks_exact(L);
             for bytes in chunk.by_ref() {
                 let item: R = rkyv::from_bytes(bytes).map_err(|_| {
-                    Error::Stream(Box::from("deserialization error"))
+                    Error::Stream("deserialization error".into())
                 })?;
                 vec.push(item);
             }

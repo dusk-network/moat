@@ -65,7 +65,7 @@ impl Command {
 
         let bytes = hex::decode(session_cookie)?;
         let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice())
-            .map_err(|_| Error::InvalidData(Box::from("session cookie")))?;
+            .map_err(|_| Error::InvalidData("session cookie".into()))?;
         println!("sc={:?}", sc);
         let psk_lp: &str = &config.psk_lp;
         println!("psk_lp={:?}", psk_lp);
@@ -76,7 +76,7 @@ impl Command {
         let session_id = LicenseSessionId { id: sc.session_id };
         let session = CitadelInquirer::get_session(&client, session_id)
             .await?
-            .ok_or(CliError::NotFound(Box::from("Session not found")))?;
+            .ok_or(CliError::NotFound("Session not found".into()))?;
 
         println!("session found");
         let b: bool = Self::verify_session_cookie(&sc, pk_lp, &session);

@@ -24,15 +24,15 @@ impl PayloadExtractor {
     {
         if let Some(call_info) = tx.call_data.as_ref() {
             if call_info.fn_name != NOOP_METHOD_NAME {
-                return Err(Error::PayloadNotPresent(Box::from(
-                    "fn name not noop",
-                )));
+                return Err(Error::PayloadNotPresent(
+                    "fn name not noop".into(),
+                ));
             }
         }
         let r = tx
             .call_data
             .as_ref()
-            .ok_or(PayloadNotPresent(Box::from("missing call data")))?
+            .ok_or(PayloadNotPresent("missing call data".into()))?
             .data
             .as_str();
         Self::payload_from_call_data::<P, _>(r)
@@ -47,9 +47,8 @@ impl PayloadExtractor {
     {
         let payload_ser = hex::decode(payload_ser.as_ref())?;
 
-        let payload = check_archived_root::<P>(&payload_ser).map_err(|_| {
-            PayloadNotPresent(Box::from("deserialization error"))
-        })?;
+        let payload = check_archived_root::<P>(&payload_ser)
+            .map_err(|_| PayloadNotPresent("deserialization error".into()))?;
         let p: P = payload.deserialize(&mut Infallible).expect("Infallible");
         Ok(p)
     }

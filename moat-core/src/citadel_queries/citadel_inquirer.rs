@@ -88,7 +88,7 @@ impl CitadelInquirer {
     fn deserialise_license(v: &Vec<u8>) -> License {
         let response_data = check_archived_root::<License>(v.as_slice())
             .map_err(|_| {
-                InvalidQueryResponse(Box::from("rkyv deserialization error"))
+                InvalidQueryResponse("rkyv deserialization error".into())
             })
             .expect("License should deserialize correctly");
         let license: License = response_data

@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use std::borrow::Cow;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -26,10 +27,10 @@ pub enum CliError {
     IO(Arc<std::io::Error>),
     /// Not found error
     #[error("Not found: {0:?}")]
-    NotFound(Box<str>),
+    NotFound(Cow<'static, str>),
     /// Hex string error
     #[error("Incorrect hexadecimal string: {0:?}")]
-    HexString(Box<str>),
+    HexString(Cow<'static, str>),
 }
 
 impl From<moat_core::Error> for CliError {
@@ -58,7 +59,7 @@ impl From<std::io::Error> for CliError {
 
 impl From<hex::FromHexError> for CliError {
     fn from(e: hex::FromHexError) -> Self {
-        CliError::HexString(Box::from(e.to_string()))
+        CliError::HexString(e.to_string().into())
     }
 }
 

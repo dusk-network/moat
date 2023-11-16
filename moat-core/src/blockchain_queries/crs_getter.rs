@@ -24,7 +24,7 @@ impl CrsGetter {
                 let crs = response.bytes().await?;
                 let this_hash = Self::hash_of_bytes(crs.as_ref());
                 if received_hash != this_hash {
-                    return Err(Error::CRS(Box::from("corrupted CRS")));
+                    return Err(Error::CRS("corrupted CRS".into()));
                 }
                 Ok(crs.to_vec())
             }
@@ -36,9 +36,9 @@ impl CrsGetter {
         let crs_hash = response
             .headers()
             .get(CRS_HASH_HEADER)
-            .ok_or(Error::CRS(Box::from("missing CRS hash header")))?;
+            .ok_or(Error::CRS("missing CRS hash header".into()))?;
         let crs_hash = crs_hash.to_str().map_err(|_| {
-            Error::CRS(Box::from("failed CRS hash header string conversion"))
+            Error::CRS("failed CRS hash header string conversion".into())
         })?;
         let mut h = CRSHash::default();
         hex::decode_to_slice(crs_hash, h.as_mut_slice())?;
