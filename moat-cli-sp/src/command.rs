@@ -9,11 +9,10 @@ use crate::run_result::{LicenseContractSummary, RunResult, SessionSummary};
 use crate::Error;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
-use dusk_jubjub::{JubJubAffine, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
+use dusk_jubjub::JubJubAffine;
 use dusk_pki::PublicSpendKey;
-use dusk_poseidon::sponge;
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CitadelInquirer, LicenseSession, LicenseSessionId};
+use moat_core::{CitadelInquirer, LicenseSessionId};
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::{Session, SessionCookie};
 
@@ -85,55 +84,11 @@ impl Command {
             .ok_or(Error::NotFound("Session not found".into()))?;
 
         println!("session found");
-        let b: bool = Self::verify_session_cookie(&sc, pk_lp, &session);
-        println!("session verified: {}", b);
-        Ok(RunResult::RequestService)
-    }
-
-    // todo: move this function somewhere else
-    // todo: because of asserts we cannot use Session::verify from zk_citadel
-    // here
-    // todo: need to provide a non-panicking version of Session:verify
-    // in zk_citadel
-    fn verify_session_cookie(
-        sc: &SessionCookie,
-        pk_lp: JubJubAffine,
-        session: &LicenseSession,
-    ) -> bool {
         let session = Session::from(&session.public_inputs);
-
-        // assert_eq!(pk_lp, sc.pk_lp);
-        if pk_lp != sc.pk_lp {
-            return false;
-        }
-
-        let session_hash =
-            sponge::hash(&[sc.pk_sp.get_u(), sc.pk_sp.get_v(), sc.r]);
-        // assert_eq!(session_hash, self.session_hash);
-        if session_hash != session.session_hash {
-            return false;
-        }
-
-        let com_0 = sponge::hash(&[pk_lp.get_u(), pk_lp.get_v(), sc.s_0]);
-        // assert_eq!(com_0, self.com_0);
-        if com_0 != session.com_0 {
-            return false;
-        }
-
-        let com_1 = (GENERATOR_EXTENDED * sc.attr_data)
-            + (GENERATOR_NUMS_EXTENDED * sc.s_1);
-        // assert_eq!(com_1, self.com_1);
-        if com_1 != session.com_1 {
-            return false;
-        }
-
-        let com_2 =
-            (GENERATOR_EXTENDED * sc.c) + (GENERATOR_NUMS_EXTENDED * sc.s_2);
-        // assert_eq!(com_2, self.com_2);
-        if com_2 != session.com_2 {
-            return false;
-        }
-        true
+        let b: bool = session.verifies_ok(sc, pk_lp);
+        println!("session verified: {}", b);
+        println!("session id= {}", hex::encode(session_id.id.to_bytes()));
+        Ok(RunResult::RequestService)
     }
 
     /// Command: Get Session
