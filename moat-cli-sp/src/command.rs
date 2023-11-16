@@ -5,7 +5,9 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::config::SPCliConfig;
-use crate::run_result::{LicenseContractSummary, RunResult, SessionSummary};
+use crate::run_result::{
+    LicenseContractSummary, RunResult, ServiceRequestSummery, SessionSummary,
+};
 use crate::Error;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
@@ -66,9 +68,7 @@ impl Command {
             .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
         let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice())
             .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
-        println!("sc={:?}", sc);
         let psk_lp: &str = &config.psk_lp;
-        println!("psk_lp={:?}", psk_lp);
         let psk_lp_bytes = hex::decode(psk_lp.as_bytes()).map_err(|_| {
             Error::InvalidConfigValue("license provider psk".into())
         })?;
@@ -83,12 +83,13 @@ impl Command {
             .await?
             .ok_or(Error::NotFound("Session not found".into()))?;
 
-        println!("session found");
         let session = Session::from(&session.public_inputs);
-        let b: bool = session.verifies_ok(sc, pk_lp);
-        println!("session verified: {}", b);
-        println!("session id= {}", hex::encode(session_id.id.to_bytes()));
-        Ok(RunResult::RequestService)
+        let granted = session.verifies_ok(sc, pk_lp);
+        println!("session id={}", hex::encode(session_id.id.to_bytes()));
+        let service_request_summary = ServiceRequestSummery {
+            service_granted: granted,
+        };
+        Ok(RunResult::RequestService(service_request_summary))
     }
 
     /// Command: Get Session
