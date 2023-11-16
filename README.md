@@ -10,7 +10,7 @@
 
 ## Testing the environment
 
-You can test if the environment you set up and the library are working properly by executing the following:
+You can test if the environment you set up and the library are working properly by specifying the testing Rusk node address in `integration-tests/tests/config/config.toml`, and executing the following (note that the wallet needs to use `password` as password for the tests to succeed):
 
 ```
 cargo t --release --features="exp_tests" -- --test-threads=1
@@ -21,7 +21,7 @@ cargo t --release --features="int_tests" -- --test-threads=1
 
 The moat-cli utility can be used from the POV of any of the parties involved in the Citadel protocol, let them be:
 - **License Provider (LP):** A party receiving onchain requests from users to issue licenses onchain addressed to them.
-- **User:** A party requesting licenses to LPs.
+- **User:** A party requesting licenses onchain to LPs, and being able to use the licenses onchain as well.
 
 ### License Provider
 

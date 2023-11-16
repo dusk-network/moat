@@ -79,7 +79,7 @@ async fn retrieve_tx_by_id() -> Result<(), Error> {
     const TXID: &str =
         "44fe2c6407fc400a2dee6e30c62a02b82f3980da18d3b6306e80f9f83730520d";
 
-        let config_path =
+    let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let config = BlockchainAccessConfig::load_path(config_path)?;

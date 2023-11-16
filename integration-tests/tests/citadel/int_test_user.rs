@@ -139,11 +139,15 @@ async fn user_round_trip() -> Result<(), Error> {
     let (prover, verifier) = Compiler::compile::<LicenseCircuit>(&pp, LABEL)
         .expect("Compiling circuit should succeed");
 
-    let request_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/request/request.json");
+    let request_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/request/test_request.json"
+    );
 
-    let lp_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp_2");
+    let lp_config_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/config/test_keys_lp_2.json"
+    );
 
     let reference_lp = ReferenceLP::create(&lp_config_path)?;
 

@@ -6,11 +6,11 @@
 
 use crate::interactor::SetupHolder;
 use crate::run_result::{
-    LicenseContractSummary, RunResult, SubmitRequestSummary,
-    UseLicenseSummary,
+    LicenseContractSummary, RunResult, SubmitRequestSummary, UseLicenseSummary,
 };
 use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
+use dusk_bytes::Serializable;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
@@ -21,7 +21,6 @@ use moat_core::{
 use rand::rngs::StdRng;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, SessionCookie};
-use dusk_bytes::Serializable;
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
@@ -30,7 +29,10 @@ pub(crate) enum Command {
     /// List licenses (User)
     ListLicenses,
     /// Use license (User)
-    UseLicense { license_hash: String, psk_lp_bytes: String },
+    UseLicense {
+        license_hash: String,
+        psk_lp_bytes: String,
+    },
     /// Request Service (User)
     RequestService { session_cookie: String },
     /// Show state
@@ -52,7 +54,7 @@ impl Command {
         setup_holder: &mut Option<SetupHolder>,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
-            Command::SubmitRequest { psk_lp_bytes }=> {
+            Command::SubmitRequest { psk_lp_bytes } => {
                 Self::submit_request(
                     wallet_path,
                     psw,
@@ -65,10 +67,12 @@ impl Command {
                 .await?
             }
             Command::ListLicenses => {
-                Self::list_licenses(blockchain_access_config, ssk)
-                    .await?
+                Self::list_licenses(blockchain_access_config, ssk).await?
             }
-            Command::UseLicense { license_hash, psk_lp_bytes } => {
+            Command::UseLicense {
+                license_hash,
+                psk_lp_bytes,
+            } => {
                 Self::use_license(
                     wallet_path,
                     psw,
@@ -104,15 +108,16 @@ impl Command {
         ssk: SecretSpendKey,
         psk_lp_bytes: String,
     ) -> Result<RunResult, Error> {
-        let psk_lp_bytes_formatted: [u8; 64] = hex::decode(psk_lp_bytes.clone()).expect("Decoded.").try_into().unwrap();
-        let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
-        
+        let psk_lp_bytes_formatted: [u8; 64] =
+            hex::decode(psk_lp_bytes.clone())
+                .expect("Decoded.")
+                .try_into()
+                .unwrap();
+        let psk_lp =
+            PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
+
         let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
-        let request = RequestCreator::create(
-            &ssk,
-            &psk_lp,
-            rng,
-        )?;
+        let request = RequestCreator::create(&ssk, &psk_lp, rng)?;
         let request_hash = RunResult::to_hash_hex(&request);
         let tx_id = RequestSender::send_request(
             request,
@@ -185,7 +190,10 @@ impl Command {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
                 let ssk_user = ssk;
 
-                let psk_lp_bytes: [u8; 64] = hex::decode(&psk_lp_bytes.clone()).expect("Decoded.").try_into().unwrap();
+                let psk_lp_bytes: [u8; 64] = hex::decode(&psk_lp_bytes.clone())
+                    .expect("Decoded.")
+                    .try_into()
+                    .unwrap();
                 let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes).unwrap();
 
                 let (tx_id, session_cookie) = Self::prove_and_send_use_license(

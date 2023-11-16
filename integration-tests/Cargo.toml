@@ -8,7 +8,7 @@ moat-core={ path = "../moat-core" }
 license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
-dusk-wallet = "0.20.0-rc.0"
+dusk-wallet = {git = "https://github.com/dusk-network/wallet-cli", branch = "get_ssk"}
 zk-citadel = "0.5"
 phoenix-core = { version = "0.21", features = ["alloc"] }
 poseidon-merkle = { version = "0.3", features = ["rkyv-impl"] }

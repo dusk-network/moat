@@ -9,7 +9,7 @@ tokio-tungstenite = { version = "0.19", default-features = false, features = ["c
 futures = "0.3"
 futures-core = "0.3"
 futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
-dusk-wallet = "0.20.0-rc.0"
+dusk-wallet = {git = "https://github.com/dusk-network/wallet-cli", branch = "get_ssk"}
 wallet-accessor = { path = "../wallet-accessor" }
 zk-citadel = "0.5"
 dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }

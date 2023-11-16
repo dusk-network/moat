@@ -7,11 +7,11 @@
 use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
+use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::{Prover, PublicParameters, Verifier};
 use dusk_wallet::WalletPath;
-use requestty::{ErrorKind, Question};
-use dusk_pki::SecretSpendKey;
 use moat_core::Error;
+use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]

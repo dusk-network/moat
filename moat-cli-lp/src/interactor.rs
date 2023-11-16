@@ -7,6 +7,7 @@
 use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
+use dusk_pki::SecretSpendKey;
 use dusk_wallet::WalletPath;
 use moat_core::Error;
 use requestty::{ErrorKind, Question};
@@ -66,7 +67,7 @@ pub struct Interactor {
     pub wallet_path: WalletPath,
     pub psw: Password,
     pub blockchain_access_config: BlockchainAccessConfig,
-    pub ssk_bytes: Vec<u8>,
+    pub ssk: SecretSpendKey,
     pub gas_limit: u64,
     pub gas_price: u64,
 }
@@ -83,7 +84,7 @@ impl Interactor {
                             &self.wallet_path,
                             &self.psw,
                             &self.blockchain_access_config,
-                            &self.ssk_bytes,
+                            &self.ssk,
                             self.gas_limit,
                             self.gas_price,
                         )

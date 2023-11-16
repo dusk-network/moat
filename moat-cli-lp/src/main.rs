@@ -24,12 +24,11 @@ use clap::Parser;
 use crate::config::LPCliConfig;
 use crate::error::CliError;
 use crate::interactor::Interactor;
-use dusk_wallet::WalletPath;
+use dusk_wallet::{Wallet, WalletPath};
 use rand::SeedableRng;
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
-use std::fs;
 use wallet_accessor::Password::{Pwd, PwdHash};
+use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 #[tokio::main]
 async fn main() -> Result<(), CliError> {
@@ -55,13 +54,17 @@ async fn main() -> Result<(), CliError> {
         PwdHash(pwd_hash)
     };
 
-    let ssk_bytes = fs::read("data/secret_key_lp").expect("Unable to read file");
+    let wallet_accessor =
+        WalletAccessor::create(wallet_path.clone(), psw.clone()).unwrap();
+    let wallet = Wallet::from_file(wallet_accessor).unwrap();
+
+    let (_psk, ssk) = wallet.spending_keys(&wallet.default_address()).unwrap();
 
     let mut interactor = Interactor {
         wallet_path,
         psw,
         blockchain_access_config,
-        ssk_bytes,
+        ssk,
         gas_limit,
         gas_price,
     };

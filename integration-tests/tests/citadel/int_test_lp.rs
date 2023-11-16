@@ -14,8 +14,10 @@ use wallet_accessor::BlockchainAccessConfig;
 async fn lp_scan() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-    let lp_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp");
+    let lp_config_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/config/test_keys_lp.json"
+    );
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
@@ -31,8 +33,10 @@ async fn lp_scan() -> Result<(), Error> {
 async fn lp_scan_last_blocks() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-    let lp_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp_2");
+    let lp_config_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/config/test_keys_lp_2.json"
+    );
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
@@ -50,10 +54,14 @@ async fn lp_scan_last_blocks() -> Result<(), Error> {
 async fn lp_scan_2_lps() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
-    let lp1_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp");
-    let lp2_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/test_secret_key_lp_2");
+    let lp1_config_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/config/test_keys_lp.json"
+    );
+    let lp2_config_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/config/test_keys_lp_2.json"
+    );
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;

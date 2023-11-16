@@ -19,7 +19,7 @@ pub struct Args {
     /// Blockchain access config directory
     #[clap(short, long, default_value = "./config.toml")]
     pub config_path: PathBuf,
-    
+
     /// Password for the wallet
     #[clap(long, default_value_t = String::from(""), env = "RUSK_WALLET_PWD")]
     pub wallet_pass: String,

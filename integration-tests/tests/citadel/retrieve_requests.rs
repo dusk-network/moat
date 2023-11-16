@@ -17,7 +17,7 @@ async fn retrieve_payload() -> Result<(), Error> {
     const TXID: &str =
         "8d45a9fb7196f322282d522ff4bb2d2e926ddd96b858b91d59f228b27250ef03";
 
-        let config_path =
+    let config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
 
     let config = BlockchainAccessConfig::load_path(config_path)?;

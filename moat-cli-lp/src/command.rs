@@ -8,6 +8,7 @@ use crate::run_result::{
     IssueLicenseSummary, LicenseContractSummary, RequestsLPSummary, RunResult,
 };
 use crate::SeedableRng;
+use dusk_pki::SecretSpendKey;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{BcInquirer, CitadelInquirer, Error};
@@ -34,7 +35,7 @@ impl Command {
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
-        ssk: &Vec<u8>,
+        ssk: &SecretSpendKey,
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<RunResult, Error> {
@@ -67,7 +68,7 @@ impl Command {
     /// Command: List Requests LP
     async fn list_requests_lp(
         blockchain_access_config: &BlockchainAccessConfig,
-        ssk: &Vec<u8>,
+        ssk: &SecretSpendKey,
     ) -> Result<RunResult, Error> {
         let mut reference_lp = ReferenceLP::create_with_ssk(ssk)?;
         let (found_total, found_owned) =
@@ -88,7 +89,7 @@ impl Command {
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
-        ssk: &Vec<u8>,
+        ssk: &SecretSpendKey,
         gas_limit: u64,
         gas_price: u64,
         request_hash: String,
