@@ -22,7 +22,7 @@ use crate::menu::Menu;
 use clap::Parser;
 
 use crate::config::SPCliConfig;
-use crate::error::CliError;
+use crate::error::Error;
 use crate::interactor::Interactor;
 use dusk_wallet::WalletPath;
 use toml_base_config::BaseConfig;
@@ -30,7 +30,7 @@ use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};
 
 #[tokio::main]
-async fn main() -> Result<(), CliError> {
+async fn main() -> Result<(), Error> {
     let cli = Args::parse();
 
     let config_path = cli.config_path.as_path();

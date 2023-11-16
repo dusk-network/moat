@@ -12,7 +12,7 @@ use thiserror::Error;
 // todo: make sure it is used in other CLIs as well
 
 #[derive(Error, Debug, Clone)]
-pub enum CliError {
+pub enum Error {
     /// Moat core error
     #[error(transparent)]
     Moat(Arc<moat_core::Error>),
@@ -28,43 +28,34 @@ pub enum CliError {
     /// Not found error
     #[error("Not found: {0:?}")]
     NotFound(Cow<'static, str>),
-    /// Hex string error
-    #[error("Incorrect hexadecimal string: {0:?}")]
-    HexString(Cow<'static, str>),
+    /// Invalid entry
+    #[error("Invalid entry: {0:?}")]
+    InvalidEntry(Cow<'static, str>),
+    /// Invalid config value
+    #[error("Invalid config value: {0:?}")]
+    InvalidConfigValue(Cow<'static, str>),
 }
 
-impl From<moat_core::Error> for CliError {
+impl From<moat_core::Error> for Error {
     fn from(e: moat_core::Error) -> Self {
-        CliError::Moat(Arc::from(e))
+        Error::Moat(Arc::from(e))
     }
 }
 
-impl From<requestty::ErrorKind> for CliError {
+impl From<requestty::ErrorKind> for Error {
     fn from(e: requestty::ErrorKind) -> Self {
-        CliError::Interaction(Arc::from(e))
+        Error::Interaction(Arc::from(e))
     }
 }
 
-impl From<clap::error::ErrorKind> for CliError {
+impl From<clap::error::ErrorKind> for Error {
     fn from(e: clap::error::ErrorKind) -> Self {
-        CliError::Parsing(Arc::from(e))
+        Error::Parsing(Arc::from(e))
     }
 }
 
-impl From<std::io::Error> for CliError {
+impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
-        CliError::IO(Arc::from(e))
-    }
-}
-
-impl From<hex::FromHexError> for CliError {
-    fn from(e: hex::FromHexError) -> Self {
-        CliError::HexString(e.to_string().into())
-    }
-}
-
-impl From<dusk_bytes::Error> for CliError {
-    fn from(e: dusk_bytes::Error) -> Self {
-        CliError::Moat(Arc::from(moat_core::Error::Bytes(Arc::from(e))))
+        Error::IO(Arc::from(e))
     }
 }

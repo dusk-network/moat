@@ -6,14 +6,14 @@
 
 use crate::config::SPCliConfig;
 use crate::run_result::{LicenseContractSummary, RunResult, SessionSummary};
-use crate::CliError;
+use crate::Error;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
 use dusk_jubjub::{JubJubAffine, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::PublicSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CitadelInquirer, Error, LicenseSession, LicenseSessionId};
+use moat_core::{CitadelInquirer, LicenseSession, LicenseSessionId};
 use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::{Session, SessionCookie};
 
@@ -34,7 +34,7 @@ impl Command {
         self,
         blockchain_access_config: &BlockchainAccessConfig,
         config: &SPCliConfig,
-    ) -> Result<RunResult, CliError> {
+    ) -> Result<RunResult, Error> {
         let run_result = match self {
             Command::RequestService { session_cookie } => {
                 Self::request_service(
@@ -59,24 +59,30 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         session_cookie: &str,
         config: &SPCliConfig,
-    ) -> Result<RunResult, CliError> {
+    ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
 
-        let bytes = hex::decode(session_cookie)?;
+        let bytes = hex::decode(session_cookie)
+            .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
         let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice())
-            .map_err(|_| Error::InvalidData("session cookie".into()))?;
+            .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
         println!("sc={:?}", sc);
         let psk_lp: &str = &config.psk_lp;
         println!("psk_lp={:?}", psk_lp);
-        let psk_lp_bytes = hex::decode(psk_lp.as_bytes())?;
-        let psk_lp = PublicSpendKey::from_slice(psk_lp_bytes.as_slice())?;
+        let psk_lp_bytes = hex::decode(psk_lp.as_bytes()).map_err(|_| {
+            Error::InvalidConfigValue("license provider psk".into())
+        })?;
+        let psk_lp = PublicSpendKey::from_slice(psk_lp_bytes.as_slice())
+            .map_err(|_| {
+                Error::InvalidConfigValue("license provider psk".into())
+            })?;
         let pk_lp = JubJubAffine::from(*psk_lp.A());
 
         let session_id = LicenseSessionId { id: sc.session_id };
         let session = CitadelInquirer::get_session(&client, session_id)
             .await?
-            .ok_or(CliError::NotFound("Session not found".into()))?;
+            .ok_or(Error::NotFound("Session not found".into()))?;
 
         println!("session found");
         let b: bool = Self::verify_session_cookie(&sc, pk_lp, &session);
@@ -134,13 +140,14 @@ impl Command {
     async fn get_session(
         blockchain_access_config: &BlockchainAccessConfig,
         session_id: String,
-    ) -> Result<RunResult, CliError> {
+    ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let session_id_bytes = hex::decode(session_id.clone())
+            .map_err(|_| Error::InvalidEntry("session id".into()))?;
         let id = LicenseSessionId {
-            id: BlsScalar::from_slice(
-                hex::decode(session_id.clone())?.as_slice(),
-            )?,
+            id: BlsScalar::from_slice(session_id_bytes.as_slice())
+                .map_err(|_| Error::InvalidEntry("session id".into()))?,
         };
         Ok(match CitadelInquirer::get_session(&client, id).await? {
             Some(session) => {

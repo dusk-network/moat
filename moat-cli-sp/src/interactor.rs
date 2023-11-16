@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::config::SPCliConfig;
-use crate::error::CliError;
+use crate::error::Error;
 use crate::prompt;
 use crate::{Command, Menu};
 use dusk_wallet::WalletPath;
@@ -72,7 +72,7 @@ pub struct Interactor {
 }
 
 impl Interactor {
-    pub async fn run_loop(&mut self) -> Result<(), CliError> {
+    pub async fn run_loop(&mut self) -> Result<(), Error> {
         loop {
             let op = menu_operation()?;
             match op {
