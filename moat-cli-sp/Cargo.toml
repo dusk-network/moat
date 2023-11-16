@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = {git = "https://github.com/dusk-network/wallet-cli", branch = "get_ssk"}
+dusk-wallet = "0.20.1-rc.0"
 wallet-accessor = { path = "../wallet-accessor" }
 moat-core = { path = "../moat-core" }
 rkyv = { version = "=0.7.39" }
