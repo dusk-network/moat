@@ -64,8 +64,8 @@ impl Command {
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
 
         let bytes = hex::decode(session_cookie)?;
-        let sc: SessionCookie =
-            rkyv::from_bytes(bytes.as_slice()).map_err(|_| Error::DeserRkyv)?;
+        let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice())
+            .map_err(|_| Error::InvalidData(Box::from("session cookie")))?;
         println!("sc={:?}", sc);
         let psk_lp: &str = &config.psk_lp;
         println!("psk_lp={:?}", psk_lp);

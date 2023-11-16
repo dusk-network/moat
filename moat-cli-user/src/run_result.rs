@@ -154,7 +154,7 @@ impl RunResult {
         T: rkyv::Serialize<AllocSerializer<16386>>,
     {
         let blob = rkyv::to_bytes::<_, 16386>(object)
-            .expect("type should serialize correctly")
+            .expect("Serializing should be infallible")
             .to_vec();
         Self::blob_to_hash_hex(blob.as_slice())
     }
@@ -179,7 +179,7 @@ impl RunResult {
         T: rkyv::Serialize<AllocSerializer<16386>>,
     {
         rkyv::to_bytes::<_, 16386>(object)
-            .expect("type should serialize correctly")
+            .expect("Serializing should be infallible")
             .to_vec()
     }
 }
