@@ -6,6 +6,10 @@
 
 use std::fmt;
 
+pub struct ServiceRequestSummery {
+    pub service_granted: bool,
+}
+
 pub struct SessionSummary {
     pub session_id: String,
     pub session: Vec<String>,
@@ -19,15 +23,23 @@ pub struct LicenseContractSummary {
 #[allow(clippy::large_enum_variant)]
 /// Possible results of running a command in interactive mode
 pub enum RunResult {
+    RequestService(ServiceRequestSummery),
     GetSession(Option<SessionSummary>),
     ShowState(LicenseContractSummary),
-    Empty,
 }
 
 impl fmt::Display for RunResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use RunResult::*;
         match self {
+            RequestService(summary) => {
+                if summary.service_granted {
+                    writeln!(f, "Service granted")?;
+                } else {
+                    writeln!(f, "Service denied")?;
+                }
+                Ok(())
+            }
             GetSession(summary) => {
                 match summary {
                     Some(summary) => {
@@ -54,7 +66,6 @@ impl fmt::Display for RunResult {
                 )?;
                 Ok(())
             }
-            Empty => Ok(()),
         }
     }
 }
