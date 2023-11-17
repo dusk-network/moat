@@ -64,8 +64,15 @@ async fn issue_license(
         GAS_PRICE,
     );
 
+    const ATTRIBUTE_DATA_EXAMPLE: u64 = 1234;
+
     let (tx_id, _) = license_issuer
-        .issue_license(rng, &request, &reference_lp.ssk_lp)
+        .issue_license(
+            rng,
+            &request,
+            &reference_lp.ssk_lp,
+            &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
+        )
         .await?;
     Ok(tx_id)
 }
@@ -238,6 +245,7 @@ async fn user_round_trip() -> Result<(), Error> {
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
         &ssk_user,
+        &reference_lp.psk_lp,
         &reference_lp.psk_lp,
         &prover,
         &verifier,

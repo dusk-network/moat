@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_jubjub::JubJubScalar;
 use dusk_wallet::WalletPath;
 use license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{Error, JsonLoader, RequestCreator, RequestJson};
@@ -61,8 +62,15 @@ async fn issue_license() -> Result<(), Error> {
         GAS_PRICE,
     );
 
+    const ATTRIBUTE_DATA_EXAMPLE: u64 = 1234;
+
     license_issuer
-        .issue_license(rng, &request, &reference_lp.ssk_lp)
+        .issue_license(
+            rng,
+            &request,
+            &reference_lp.ssk_lp,
+            &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
+        )
         .await?;
 
     Ok(())

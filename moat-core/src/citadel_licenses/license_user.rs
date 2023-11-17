@@ -42,6 +42,7 @@ impl LicenseUser {
         password: &Password,
         ssk_user: &SecretSpendKey,
         psk_lp: &PublicSpendKey,
+        psk_sp: &PublicSpendKey,
         prover: &Prover,
         verifier: &Verifier,
         license: &License,
@@ -52,7 +53,7 @@ impl LicenseUser {
         gas_price: u64,
     ) -> Result<(BlsScalar, SessionCookie), Error> {
         let (cpp, sc) = CitadelProverParameters::compute_parameters(
-            ssk_user, license, psk_lp, psk_lp, challenge, rng, opening,
+            ssk_user, license, psk_lp, psk_sp, challenge, rng, opening,
         );
         let circuit = LicenseCircuit::new(&cpp, &sc);
 

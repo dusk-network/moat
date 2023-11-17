@@ -8,7 +8,7 @@ use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
 use dusk_pki::SecretSpendKey;
-use dusk_plonk::prelude::{Prover, PublicParameters, Verifier};
+use dusk_plonk::prelude::{Prover, Verifier};
 use dusk_wallet::WalletPath;
 use moat_core::Error;
 use requestty::{ErrorKind, Question};
@@ -63,6 +63,8 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
             OpSelection::Run(Box::from(Command::UseLicense {
                 license_hash: prompt::request_license_hash()?,
                 psk_lp_bytes: prompt::request_psk_lp_bytes()?,
+                psk_sp_bytes: prompt::request_psk_sp_bytes()?,
+                challenge_bytes: prompt::request_challenge_bytes()?,
             }))
         }
         CommandMenuItem::RequestService => {
@@ -78,7 +80,6 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
 }
 
 pub struct SetupHolder {
-    pub pp: PublicParameters,
     pub prover: Prover,
     pub verifier: Verifier,
 }

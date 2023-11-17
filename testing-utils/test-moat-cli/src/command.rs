@@ -292,8 +292,16 @@ impl Command {
                     gas_limit,
                     gas_price,
                 );
+
+                const ATTRIBUTE_DATA_EXAMPLE: u64 = 1234;
+
                 let (tx_id, license_blob) = license_issuer
-                    .issue_license(&mut rng, &request, &reference_lp.ssk_lp)
+                    .issue_license(
+                        &mut rng,
+                        &request,
+                        &reference_lp.ssk_lp,
+                        &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
+                    )
                     .await?;
                 let summary = IssueLicenseSummary {
                     request,
@@ -534,6 +542,7 @@ impl Command {
             wallet_path,
             psw,
             &ssk_user,
+            &psk_lp,
             &psk_lp,
             &setup_holder.prover,
             &setup_holder.verifier,
