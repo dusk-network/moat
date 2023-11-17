@@ -324,12 +324,12 @@ impl Command {
                 let verifier_path = &wallet_dir_path.join("moat_verifier.dat");
 
                 if prover_path.exists() && verifier_path.exists() {
-                    let mut file = File::open(&prover_path)?;
+                    let mut file = File::open(prover_path)?;
                     let mut prover_bytes = vec![];
                     file.read_to_end(&mut prover_bytes)?;
                     let prover = Prover::try_from_bytes(prover_bytes).unwrap();
 
-                    file = File::open(&verifier_path)?;
+                    file = File::open(verifier_path)?;
                     let mut verifier_bytes = vec![];
                     file.read_to_end(&mut verifier_bytes)?;
                     let verifier =
@@ -349,10 +349,10 @@ impl Command {
                         Compiler::compile::<LicenseCircuit>(&pp, LABEL)
                             .expect("Compiling circuit should succeed");
 
-                    let mut file = File::create(&prover_path)?;
+                    let mut file = File::create(prover_path)?;
                     file.write_all(prover.to_bytes().as_slice())?;
 
-                    file = File::create(&verifier_path)?;
+                    file = File::create(verifier_path)?;
                     file.write_all(verifier.to_bytes().as_slice())?;
 
                     let sh = SetupHolder { prover, verifier };

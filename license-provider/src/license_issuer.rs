@@ -50,7 +50,7 @@ impl LicenseIssuer {
         ssk_lp: &SecretSpendKey,
         attr_data: &JubJubScalar,
     ) -> Result<(BlsScalar, Vec<u8>), Error> {
-        let license = License::new(&attr_data, ssk_lp, request, rng);
+        let license = License::new(attr_data, ssk_lp, request, rng);
         let license_blob = rkyv::to_bytes::<_, MAX_LICENSE_SIZE>(&license)
             .expect("License should serialize correctly")
             .to_vec();
