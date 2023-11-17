@@ -8,7 +8,7 @@ use crate::error::CliError;
 use crate::prompt;
 use crate::{Command, Menu};
 use dusk_pki::SecretSpendKey;
-use dusk_plonk::prelude::{Prover, PublicParameters, Verifier};
+use dusk_plonk::prelude::{Prover, Verifier};
 use dusk_wallet::WalletPath;
 use moat_core::Error;
 use requestty::{ErrorKind, Question};
@@ -80,7 +80,6 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
 }
 
 pub struct SetupHolder {
-    pub pp: PublicParameters,
     pub prover: Prover,
     pub verifier: Verifier,
 }

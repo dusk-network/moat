@@ -21,6 +21,10 @@ use moat_core::{
 use rand::rngs::StdRng;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, SessionCookie};
+
+use std::fs::File;
+use std::io::prelude::*;
+
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
@@ -311,22 +315,50 @@ impl Command {
         let setup_holder = match sh_opt {
             Some(sh) => sh,
             _ => {
-                println!("obtaining setup");
-                let pp_vec = CrsGetter::get_crs(&client).await?;
-                let pp =
-                    // SAFETY: CRS vector is checked by the hash check when it is received from the node
-                    unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
-                println!("compiling circuit");
-                let (prover, verifier) =
-                    Compiler::compile::<LicenseCircuit>(&pp, LABEL)
-                        .expect("Compiling circuit should succeed");
-                let sh = SetupHolder {
-                    pp,
-                    prover,
-                    verifier,
+                let wallet_dir_path = match wallet_path.dir() {
+                    Some(path) => path,
+                    None => panic!(),
                 };
-                *sh_opt = Some(sh);
-                sh_opt.as_ref().unwrap()
+
+                let prover_path = &wallet_dir_path.join("moat_prover.dat");
+                let verifier_path = &wallet_dir_path.join("moat_verifier.dat");
+
+                if prover_path.exists() && verifier_path.exists() {
+                    let mut file = File::open(&prover_path)?;
+                    let mut prover_bytes = vec![];
+                    file.read_to_end(&mut prover_bytes)?;
+                    let prover = Prover::try_from_bytes(prover_bytes).unwrap();
+
+                    file = File::open(&verifier_path)?;
+                    let mut verifier_bytes = vec![];
+                    file.read_to_end(&mut verifier_bytes)?;
+                    let verifier =
+                        Verifier::try_from_bytes(verifier_bytes).unwrap();
+
+                    let sh = SetupHolder { prover, verifier };
+                    *sh_opt = Some(sh);
+                    sh_opt.as_ref().unwrap()
+                } else {
+                    println!("obtaining setup");
+                    let pp_vec = CrsGetter::get_crs(&client).await?;
+                    let pp =
+                        // SAFETY: CRS vector is checked by the hash check when it is received from the node
+                        unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
+                    println!("compiling circuit");
+                    let (prover, verifier) =
+                        Compiler::compile::<LicenseCircuit>(&pp, LABEL)
+                            .expect("Compiling circuit should succeed");
+
+                    let mut file = File::create(&prover_path)?;
+                    file.write_all(prover.to_bytes().as_slice())?;
+
+                    file = File::create(&verifier_path)?;
+                    file.write_all(verifier.to_bytes().as_slice())?;
+
+                    let sh = SetupHolder { prover, verifier };
+                    *sh_opt = Some(sh);
+                    sh_opt.as_ref().unwrap()
+                }
             }
         };
 
