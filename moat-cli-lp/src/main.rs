@@ -58,7 +58,7 @@ async fn main() -> Result<(), CliError> {
         WalletAccessor::create(wallet_path.clone(), psw.clone()).unwrap();
     let wallet = Wallet::from_file(wallet_accessor).unwrap();
 
-    let (_psk, ssk) = wallet.spending_keys(&wallet.default_address()).unwrap();
+    let (_psk, ssk) = wallet.spending_keys(wallet.default_address()).unwrap();
 
     let mut interactor = Interactor {
         wallet_path,

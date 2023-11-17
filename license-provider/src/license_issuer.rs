@@ -54,7 +54,7 @@ impl LicenseIssuer {
         let attr = JubJubScalar::from(ATTRIBUTE_DATA);
         let license = License::new(&attr, ssk_lp, request, rng);
         let license_blob = rkyv::to_bytes::<_, MAX_LICENSE_SIZE>(&license)
-            .expect("License should serialize correctly")
+            .expect("Serializing should be infallible")
             .to_vec();
         let lpk = JubJubAffine::from(license.lsa.pk_r().as_ref());
         let license_hash = sponge::hash(&[lpk.get_u(), lpk.get_v()]);

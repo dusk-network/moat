@@ -101,13 +101,13 @@ async fn accept_connection(stream: TcpStream) {
                 public_inputs: vec![BlsScalar::zero()],
             });
             rkyv::to_bytes::<_, MAX_RESPONSE_SIZE>(&response_data)
-                .expect("Data should serialize correctly")
+                .expect("Serializing should be infallible")
                 .to_vec()
         }
         "get_licenses" => {
             let response_data = vec![vec![1u8], vec![2u8]];
             rkyv::to_bytes::<_, MAX_RESPONSE_SIZE>(&response_data)
-                .expect("Data should serialize correctly")
+                .expect("Serializing should be infallible")
                 .to_vec()
         }
         _ => vec![],

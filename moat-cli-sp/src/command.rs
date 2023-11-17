@@ -4,12 +4,19 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::run_result::{LicenseContractSummary, RunResult, SessionSummary};
+use crate::config::SPCliConfig;
+use crate::run_result::{
+    LicenseContractSummary, RunResult, ServiceRequestSummery, SessionSummary,
+};
+use crate::Error;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
+use dusk_jubjub::JubJubAffine;
+use dusk_pki::PublicSpendKey;
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CitadelInquirer, Error, LicenseSessionId};
+use moat_core::{CitadelInquirer, LicenseSessionId};
 use wallet_accessor::BlockchainAccessConfig;
+use zk_citadel::license::{Session, SessionCookie};
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -27,11 +34,16 @@ impl Command {
     pub async fn run(
         self,
         blockchain_access_config: &BlockchainAccessConfig,
+        config: &SPCliConfig,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
-            Command::RequestService { session_cookie: _ } => {
-                println!("Off-chain request service to be placed here");
-                RunResult::Empty
+            Command::RequestService { session_cookie } => {
+                Self::request_service(
+                    blockchain_access_config,
+                    &session_cookie,
+                    config,
+                )
+                .await?
             }
             Command::GetSession { session_id } => {
                 Self::get_session(blockchain_access_config, session_id).await?
@@ -43,6 +55,43 @@ impl Command {
         Ok(run_result)
     }
 
+    /// Command: Request Service
+    async fn request_service(
+        blockchain_access_config: &BlockchainAccessConfig,
+        session_cookie: &str,
+        config: &SPCliConfig,
+    ) -> Result<RunResult, Error> {
+        let client =
+            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+
+        let bytes = hex::decode(session_cookie)
+            .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
+        let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice())
+            .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
+        let psk_lp: &str = &config.psk_lp;
+        let psk_lp_bytes = hex::decode(psk_lp.as_bytes()).map_err(|_| {
+            Error::InvalidConfigValue("license provider psk".into())
+        })?;
+        let psk_lp = PublicSpendKey::from_slice(psk_lp_bytes.as_slice())
+            .map_err(|_| {
+                Error::InvalidConfigValue("license provider psk".into())
+            })?;
+        let pk_lp = JubJubAffine::from(*psk_lp.A());
+
+        let session_id = LicenseSessionId { id: sc.session_id };
+        let session = CitadelInquirer::get_session(&client, session_id)
+            .await?
+            .ok_or(Error::NotFound("Session not found".into()))?;
+
+        let session = Session::from(&session.public_inputs);
+        let granted = session.verifies_ok(sc, pk_lp);
+        println!("session id={}", hex::encode(session_id.id.to_bytes()));
+        let service_request_summary = ServiceRequestSummery {
+            service_granted: granted,
+        };
+        Ok(RunResult::RequestService(service_request_summary))
+    }
+
     /// Command: Get Session
     async fn get_session(
         blockchain_access_config: &BlockchainAccessConfig,
@@ -50,10 +99,11 @@ impl Command {
     ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let session_id_bytes = hex::decode(session_id.clone())
+            .map_err(|_| Error::InvalidEntry("session id".into()))?;
         let id = LicenseSessionId {
-            id: BlsScalar::from_slice(
-                hex::decode(session_id.clone())?.as_slice(),
-            )?,
+            id: BlsScalar::from_slice(session_id_bytes.as_slice())
+                .map_err(|_| Error::InvalidEntry("session id".into()))?,
         };
         Ok(match CitadelInquirer::get_session(&client, id).await? {
             Some(session) => {

@@ -4,11 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::error::CliError;
+use crate::config::SPCliConfig;
+use crate::error::Error;
 use crate::prompt;
 use crate::{Command, Menu};
 use dusk_wallet::WalletPath;
-use moat_core::Error;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 
@@ -66,34 +66,28 @@ pub struct Interactor {
     pub wallet_path: WalletPath,
     pub psw: Password,
     pub blockchain_access_config: BlockchainAccessConfig,
+    pub config: SPCliConfig,
     pub gas_limit: u64,
     pub gas_price: u64,
 }
 
 impl Interactor {
-    pub async fn run_loop(&mut self) -> Result<(), CliError> {
+    pub async fn run_loop(&mut self) -> Result<(), Error> {
         loop {
             let op = menu_operation()?;
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    let result =
-                        command.run(&self.blockchain_access_config).await;
+                    let result = command
+                        .run(&self.blockchain_access_config, &self.config)
+                        .await;
                     match result {
                         Ok(run_result) => {
                             println!("{}", run_result);
                         }
-                        Err(error) => match error {
-                            Error::IO(arc) => {
-                                println!("{}", arc.as_ref().to_string());
+                        Err(error) => {
+                            println!("{}", error.to_string());
                             }
-                            Error::Transaction(bx) => {
-                                println!("{}", bx.as_ref().to_string());
-                            }
-                            _ => {
-                                println!("{:?}", error);
-                            }
-                        },
                     }
                     continue;
                 }

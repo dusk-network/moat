@@ -124,9 +124,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     #[rustfmt::skip]
     // old wallet.dat file format:
-    // cargo r --release --bin moat-cli-request -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli-request/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./moat-cli-request/request.json
+    // cargo r --release --bin test-moat-request -- --wallet-path ~/.dusk/rusk-wallet --config-path ./test-moat-request/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787 ./test-moat-request/request.json
     // new wallet.dat file format:
-    // cargo r --release --bin moat-cli-request -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli-request/config.toml --pwd-hash 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8 ./moat-cli-request/request.json
+    // cargo r --release --bin test-moat-request -- --wallet-path ~/.dusk/rusk-wallet --config-path ./test-moat-request/config.toml --pwd-hash 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8 ./test-moat-request/request.json
 
     Ok(())
 }

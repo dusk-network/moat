@@ -51,7 +51,7 @@ async fn send_request() -> Result<(), Error> {
         rng,
     )?;
     let request_vec = rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&request)
-        .unwrap()
+        .expect("Serializing should be infallible")
         .to_vec();
 
     let config = BlockchainAccessConfig::load_path(config_path)?;
@@ -79,7 +79,7 @@ async fn send_request() -> Result<(), Error> {
     assert_eq!(
         request_vec,
         rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&retrieved_request)
-            .unwrap()
+            .expect("Serializing should be infallible")
             .to_vec(),
         "requests not equal"
     );
@@ -89,7 +89,7 @@ async fn send_request() -> Result<(), Error> {
     assert_eq!(
         request_vec,
         rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&retrieved_request)
-            .unwrap()
+            .expect("Serializing should be infallible")
             .to_vec(),
         "requests not equal"
     );
