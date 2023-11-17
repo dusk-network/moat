@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 dusk-wallet = "0.20.1-rc.0"
-zk-citadel = "0.5"
+zk-citadel = "0.5.2-rc.0"
 moat-core={ path = "../moat-core" }
 wallet-accessor = { path = "../wallet-accessor" }
 dusk-poseidon = { version = "0.31", default-features = false, features = ["rkyv-impl", "alloc"] }

@@ -33,7 +33,7 @@ fn create_serialized_request() -> Result<(), Error> {
         rng,
     )?;
     let v = rkyv::to_bytes::<_, MAX_REQUEST_SIZE>(&request)
-        .expect("Infallible")
+        .expect("Serializing should be infallible")
         .to_vec();
     println!("request={}", hex::encode(v));
     Ok(())

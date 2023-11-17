@@ -190,7 +190,7 @@ impl Command {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
                 let ssk_user = ssk;
 
-                let psk_lp_bytes: [u8; 64] = hex::decode(&psk_lp_bytes.clone())
+                let psk_lp_bytes: [u8; 64] = hex::decode(psk_lp_bytes.clone())
                     .expect("Decoded.")
                     .try_into()
                     .unwrap();
