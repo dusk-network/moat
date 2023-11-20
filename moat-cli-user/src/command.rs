@@ -10,12 +10,13 @@ use crate::run_result::{
 };
 use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::Serializable;
+use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
+use moat_cli_common::Error;
 use moat_core::{
-    BcInquirer, CitadelInquirer, CrsGetter, Error, LicenseCircuit, LicenseUser,
+    BcInquirer, CitadelInquirer, CrsGetter, LicenseCircuit, LicenseUser,
     RequestCreator, RequestSender, TxAwaiter,
 };
 use rand::rngs::StdRng;
@@ -118,13 +119,10 @@ impl Command {
         ssk: SecretSpendKey,
         psk_lp_bytes: String,
     ) -> Result<RunResult, Error> {
-        let psk_lp_bytes_formatted: [u8; 64] =
-            hex::decode(psk_lp_bytes.clone())
-                .expect("Decoded.")
-                .try_into()
-                .unwrap();
+        let psk_lp_bytes_formatted = hex::decode(psk_lp_bytes.clone())?;
         let psk_lp =
-            PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
+            PublicSpendKey::from_slice(psk_lp_bytes_formatted.as_slice())
+                .unwrap();
 
         let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
         let request = RequestCreator::create(&ssk, &psk_lp, rng)?;

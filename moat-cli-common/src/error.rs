@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use hex::FromHexError;
 use std::borrow::Cow;
 use std::num::ParseIntError;
 use std::sync::Arc;
@@ -63,6 +64,12 @@ impl From<std::io::Error> for Error {
 
 impl From<ParseIntError> for Error {
     fn from(e: ParseIntError) -> Self {
+        Error::InvalidEntry(e.to_string().into())
+    }
+}
+
+impl From<FromHexError> for Error {
+    fn from(e: FromHexError) -> Self {
         Error::InvalidEntry(e.to_string().into())
     }
 }

@@ -8,3 +8,4 @@ moat-core = { path = "../moat-core" }
 clap = { version = "4.0", features = ["derive", "env"] }
 requestty = "0.4.1"
 thiserror = "1.0"
+hex = "0.4"
