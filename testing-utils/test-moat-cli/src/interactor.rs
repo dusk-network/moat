@@ -163,10 +163,10 @@ impl Interactor {
                         }
                         Err(error) => match error {
                             Error::IO(arc) => {
-                                println!("{}", arc.as_ref().to_string());
+                                println!("{}", arc.as_ref());
                             }
                             Error::Transaction(bx) => {
-                                println!("{}", bx.as_ref().to_string());
+                                println!("{}", bx.as_ref());
                             }
                             _ => {
                                 println!("{:?}", error);
