@@ -9,7 +9,6 @@
 mod args;
 mod command;
 mod config;
-mod error;
 mod interactor;
 mod menu;
 mod prompt;
@@ -22,8 +21,8 @@ use crate::menu::Menu;
 use clap::Parser;
 
 use crate::config::SPCliConfig;
-use crate::error::Error;
 use crate::interactor::Interactor;
+use moat_cli_common::Error;
 use dusk_wallet::WalletPath;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;

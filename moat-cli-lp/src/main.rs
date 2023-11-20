@@ -9,12 +9,15 @@
 mod args;
 mod command;
 mod config;
-mod error;
 mod interactor;
 mod menu;
 mod prompt;
 mod run_result;
 
+use std::borrow::Cow;
+use std::fs;
+use std::path::Path;
+use std::sync::Arc;
 use crate::args::Args;
 use crate::command::Command;
 use crate::menu::Menu;
@@ -22,8 +25,8 @@ use crate::menu::Menu;
 use clap::Parser;
 
 use crate::config::LPCliConfig;
-use crate::error::CliError;
 use crate::interactor::Interactor;
+use moat_cli_common::Error;
 use dusk_wallet::{Wallet, WalletPath};
 use rand::SeedableRng;
 use toml_base_config::BaseConfig;
@@ -31,7 +34,7 @@ use wallet_accessor::Password::{Pwd, PwdHash};
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 #[tokio::main]
-async fn main() -> Result<(), CliError> {
+async fn main() -> Result<(), Error> {
     let cli = Args::parse();
 
     let config_path = cli.config_path.as_path();
@@ -41,6 +44,7 @@ async fn main() -> Result<(), CliError> {
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
 
+    let _ = fs::metadata(config_path).map_err(|_| Error::NotFound(config_path.to_string_lossy().into_owned().into()))?;
     let config = LPCliConfig::load_path(config_path)?;
     let blockchain_access_config = BlockchainAccessConfig {
         rusk_address: config.rusk_address.clone(),

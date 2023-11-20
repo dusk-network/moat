@@ -5,9 +5,9 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::config::SPCliConfig;
-use crate::error::Error;
 use crate::prompt;
 use crate::{Command, Menu};
+use moat_cli_common::Error;
 use dusk_wallet::WalletPath;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
@@ -87,7 +87,7 @@ impl Interactor {
                         }
                         Err(error) => {
                             println!("{}", error.to_string());
-                            }
+                        }
                     }
                     continue;
                 }

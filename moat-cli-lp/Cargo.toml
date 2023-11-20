@@ -8,6 +8,7 @@ dusk-wallet = "0.20.1-rc.0"
 dusk-jubjub = { version = "0.13", default-features = false }
 wallet-accessor = { path = "../wallet-accessor" }
 moat-core = { path = "../moat-core" }
+moat-cli-common = { path = "../moat-cli-common" }
 dusk-pki = "0.13"
 license-provider = { path = "../license-provider" }
 zk-citadel = "0.5.2-rc.0"

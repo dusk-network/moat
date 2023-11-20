@@ -1,0 +1,10 @@
+[package]
+name = "moat-cli-common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+moat-core = { path = "../moat-core" }
+clap = { version = "4.0", features = ["derive", "env"] }
+requestty = "0.4.1"
+thiserror = "1.0"
