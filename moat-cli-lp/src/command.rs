@@ -11,7 +11,7 @@ use crate::SeedableRng;
 use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use license_provider::{LicenseIssuer, ReferenceLP};
+use moat_core::license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{BcInquirer, CitadelInquirer, Error};
 use rand::rngs::StdRng;
 use wallet_accessor::{BlockchainAccessConfig, Password};

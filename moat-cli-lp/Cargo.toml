@@ -9,7 +9,6 @@ dusk-jubjub = { version = "0.13", default-features = false }
 wallet-accessor = { path = "../wallet-accessor" }
 moat-core = { path = "../moat-core" }
 dusk-pki = "0.13"
-license-provider = { path = "../license-provider" }
 zk-citadel = "0.6.0-rc.0"
 rkyv = { version = "=0.7.39" }
 toml-base-config = "0.1"

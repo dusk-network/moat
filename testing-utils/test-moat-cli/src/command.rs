@@ -10,19 +10,18 @@ use crate::run_result::{
     RequestsSummary, RunResult, SessionSummary, SubmitRequestSummary,
     UseLicenseSummary,
 };
-use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use license_provider::{LicenseIssuer, ReferenceLP};
+use moat_core::license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{
     BcInquirer, CitadelInquirer, CrsGetter, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, LicenseUser, RequestCreator, RequestJson, RequestScanner,
     RequestSender, TxAwaiter,
 };
-use rand::rngs::StdRng;
+use rand::rngs::OsRng;
 use std::path::{Path, PathBuf};
 use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 use zk_citadel::license::{License, SessionCookie};
@@ -165,11 +164,10 @@ impl Command {
             Some(request_path) => RequestJson::from_file(request_path)?,
             _ => request_json.expect("request should be provided"),
         };
-        let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
         let request = RequestCreator::create_from_hex_args(
             request_json.user_ssk,
             request_json.provider_psk.clone(),
-            rng,
+            &mut OsRng,
         )?;
         let request_hash = RunResult::to_hash_hex(&request);
         let tx_id = RequestSender::send_request(
@@ -273,7 +271,6 @@ impl Command {
         lp_config_path: Option<PathBuf>,
         request_hash: String,
     ) -> Result<RunResult, Error> {
-        let mut rng = StdRng::from_entropy(); // seed_from_u64(0xbeef);
         let lp_config_path = match lp_config_path {
             Some(lp_config_path) => lp_config_path,
             _ => PathBuf::from(lp_config),
@@ -297,7 +294,7 @@ impl Command {
 
                 let (tx_id, license_blob) = license_issuer
                     .issue_license(
-                        &mut rng,
+                        &mut OsRng,
                         &request,
                         &reference_lp.ssk_lp,
                         &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
@@ -506,7 +503,6 @@ impl Command {
         // let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
         // let challenge = JubJubScalar::from(num_sessions as u64 + 1);
         let challenge = JubJubScalar::from(0xcafebabeu64);
-        let mut rng = StdRng::seed_from_u64(0xbeef);
 
         let setup_holder = match sh_opt {
             Some(sh) => sh,
@@ -548,7 +544,7 @@ impl Command {
             &setup_holder.verifier,
             license,
             opening,
-            &mut rng,
+            &mut OsRng,
             &challenge,
             gas_limit,
             gas_price,

@@ -4,10 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::{Error, JsonLoader, RequestScanner, MAX_REQUEST_SIZE};
 use blake3::OUT_LEN;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey, ViewKey};
-use moat_core::{Error, JsonLoader, RequestScanner, MAX_REQUEST_SIZE};
 use rkyv::ser::serializers::AllocSerializer;
 use sha3::{Digest, Sha3_256};
 use std::collections::BTreeSet;

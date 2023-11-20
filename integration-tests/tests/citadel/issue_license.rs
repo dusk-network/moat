@@ -6,7 +6,7 @@
 
 use dusk_jubjub::JubJubScalar;
 use dusk_wallet::WalletPath;
-use license_provider::{LicenseIssuer, ReferenceLP};
+use moat_core::license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{Error, JsonLoader, RequestCreator, RequestJson};
 use rand::rngs::StdRng;
 use rand::SeedableRng;

@@ -1,0 +1,10 @@
+[package]
+name = "moat-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dusk-jubjub = { version = "0.13", default-features = false }
+moat-core = { path = "../moat-core" }
+tokio = { version = "1.21", features = ["full"] }
+rand = "0.8"

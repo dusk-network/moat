@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use license_provider::ReferenceLP;
+use moat_core::license_provider::ReferenceLP;
 use moat_core::{Error, JsonLoader, RequestScanner, Transactions};
 
 #[test]

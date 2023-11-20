@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 moat-core={ path = "../moat-core" }
-license-provider = { path = "../license-provider" }
 
 [dev-dependencies]
 dusk-wallet = "0.20.1-rc.0"

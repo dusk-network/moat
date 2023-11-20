@@ -22,6 +22,10 @@ mod citadel_types;
 mod contract_queries;
 mod error;
 mod json_loader;
+mod utils;
+
+pub mod api;
+pub mod license_provider;
 
 pub use bc_types::*;
 pub use blockchain_payloads::{
