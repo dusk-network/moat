@@ -61,21 +61,21 @@ impl ContractInquirerWs {
 
         let response: ExecutionResponse = serde_json::from_str(&msg)?;
         if let Some(response_error) = response.error {
-            return Err(InvalidQueryResponse(Box::from(response_error)));
+            return Err(InvalidQueryResponse(response_error.into()));
         }
         if let Some(sent_id) = id {
             match response.request_id {
                 Some(received_id) if sent_id == received_id => (),
                 _ => {
-                    return Err(InvalidQueryResponse(Box::from(
-                        "received wrong request id",
-                    )))
+                    return Err(InvalidQueryResponse(
+                        "received wrong request id".into(),
+                    ))
                 }
             }
         }
         let response_data = check_archived_root::<R>(response.data.as_slice())
             .map_err(|_| {
-                InvalidQueryResponse(Box::from("rkyv deserialization error"))
+                InvalidQueryResponse("rkyv deserialization error".into())
             })?;
         let r: R = response_data
             .deserialize(&mut Infallible)

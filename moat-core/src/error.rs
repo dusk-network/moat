@@ -4,13 +4,14 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use std::borrow::Cow;
 use std::sync::Arc;
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
     #[error("Payload not present or incorrect: {0:?}")]
-    PayloadNotPresent(Box<str>),
+    PayloadNotPresent(Cow<'static, str>),
     #[error(transparent)]
     JsonParsing(Arc<serde_json::Error>),
     #[error(transparent)]
@@ -19,12 +20,10 @@ pub enum Error {
     DuskWallet(Arc<dusk_wallet::Error>),
     #[error("A serialization error occurred: {0:?}")]
     Bytes(Arc<dusk_bytes::Error>),
-    #[error("A serialization error occurred.")]
-    Rkyv,
     #[error(transparent)]
     Hex(Arc<hex::FromHexError>),
     #[error("A GraphQL error occurred: {0:?}")]
-    GQL(Box<str>),
+    GQL(Cow<'static, str>),
     #[error("TransactionNotFound")]
     TransactionNotFound,
     #[error("A base64 decode error occurred: {0:?}")]
@@ -34,15 +33,15 @@ pub enum Error {
     #[error("WebSocketStreamClosed")]
     WebSocketStreamClosed,
     #[error("Invalid query response: {0:?}")]
-    InvalidQueryResponse(Box<str>),
+    InvalidQueryResponse(Cow<'static, str>),
     #[error("Transaction error: {0:?}")]
-    Transaction(Box<str>),
+    Transaction(Cow<'static, str>),
     #[error("Stream item not present or stream error: {0:?}")]
-    Stream(Box<str>),
+    Stream(Cow<'static, str>),
     #[error("A PLONK error occurred: {0:?}")]
     Plonk(Arc<dusk_plonk::error::Error>),
     #[error("A CRS error occurred: {0:?}")]
-    CRS(Box<str>),
+    CRS(Cow<'static, str>),
     #[error(transparent)]
     HttpClient(Arc<reqwest::Error>),
 }
