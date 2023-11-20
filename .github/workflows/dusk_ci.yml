@@ -4,7 +4,7 @@ on:
     branches:
       - main
 
-name: CI
+name: build
 
 jobs:
   analyze:
