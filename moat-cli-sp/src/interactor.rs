@@ -8,6 +8,7 @@ use crate::config::SPCliConfig;
 use crate::error::Error;
 use crate::prompt;
 use crate::{Command, Menu};
+use dusk_pki::PublicSpendKey;
 use dusk_wallet::WalletPath;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
@@ -30,7 +31,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd_menu = Menu::new()
         .add(
             CommandMenuItem::RequestService,
-            "Request Service (Off-Chain)",
+            "Verify Requested Service (Off-Chain)",
         )
         .add(CommandMenuItem::GetSession, "Get Session (SP)")
         .add(CommandMenuItem::ShowState, "Show state")
@@ -46,8 +47,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd = cmd_menu.answer(&answer).to_owned();
     Ok(match cmd {
         CommandMenuItem::RequestService => {
-            OpSelection::Run(Box::from(Command::RequestService {
+            OpSelection::Run(Box::from(Command::VerifyRequestedService {
                 session_cookie: prompt::request_session_cookie()?,
+                psk_lp_bytes: prompt::request_psk_lp()?,
             }))
         }
         CommandMenuItem::GetSession => {
@@ -69,6 +71,7 @@ pub struct Interactor {
     pub config: SPCliConfig,
     pub gas_limit: u64,
     pub gas_price: u64,
+    pub psk_sp: PublicSpendKey,
 }
 
 impl Interactor {
@@ -79,7 +82,7 @@ impl Interactor {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
                     let result = command
-                        .run(&self.blockchain_access_config, &self.config)
+                        .run(&self.blockchain_access_config, self.psk_sp)
                         .await;
                     match result {
                         Ok(run_result) => {
@@ -87,7 +90,7 @@ impl Interactor {
                         }
                         Err(error) => {
                             println!("{}", error.to_string());
-                            }
+                        }
                     }
                     continue;
                 }

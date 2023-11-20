@@ -119,8 +119,9 @@ impl Command {
         psk_lp_bytes: String,
     ) -> Result<RunResult, Error> {
         let psk_lp_bytes_formatted: [u8; 64] =
-            hex::decode(psk_lp_bytes.clone())
-                .expect("Decoded.")
+            bs58::decode(&psk_lp_bytes.clone())
+                .into_vec()
+                .unwrap()
                 .try_into()
                 .unwrap();
         let psk_lp =

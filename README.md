@@ -20,16 +20,10 @@ cargo t --release --features="int_tests" -- --test-threads=1
 ## Usage
 
 The moat-cli utility can be used from the POV of any of the parties involved in the Citadel protocol, let them be:
-- **License Provider (LP):** A party receiving onchain requests from users to issue licenses onchain addressed to them.
 - **User:** A party requesting licenses onchain to LPs, and being able to use the licenses onchain as well.
+- **License Provider (LP):** A party receiving onchain requests from users to issue licenses onchain addressed to them.
+- **Service Provider (SP):** A party receiving offchain requests from users to grant services.
 
-### License Provider
-
-LPs can then scan the Blockchain for requests and issue licenses if the requests are valid. To run the LP CLI, simply run:
-
-```sh
-cargo r --release --bin moat-cli-lp -- --wallet-path ~/.dusk/rusk-wallet --wallet-pass <PASSWORD>
-```
 
 ### User
 
@@ -39,3 +33,18 @@ Users can request licenses and use them. To run the user CLI, simply run:
 cargo r --release --bin moat-cli-user -- --wallet-path ~/.dusk/rusk-wallet --wallet-pass <PASSWORD>
 ```
 
+### License Provider
+
+LPs can scan the Blockchain for requests and issue licenses if the requests are valid. To run the LP CLI, simply run:
+
+```sh
+cargo r --release --bin moat-cli-lp -- --wallet-path ~/.dusk/rusk-wallet --wallet-pass <PASSWORD>
+```
+
+### Service Provider
+
+SPs can get requests from users to grant their services, and accept or deny them by checking if the session cookies provided by the users are valid. To run the SP CLI, simply run:
+
+```sh
+cargo r --release --bin moat-cli-sp -- --wallet-path ~/.dusk/rusk-wallet --wallet-pass <PASSWORD>
+```
