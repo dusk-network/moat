@@ -78,7 +78,6 @@ impl RequestScanner {
         height_end: u64,
         cfg: &BlockchainAccessConfig,
     ) -> Result<(Vec<Request>, u64), Error> {
-        println!("got here 002: {} len={}", cfg.rusk_address.clone(), cfg.rusk_address.len());
         let client = RuskHttpClient::new(cfg.rusk_address.clone());
         let (txs, top) =
             TxInquirer::txs_from_block_range(&client, height_beg, height_end)

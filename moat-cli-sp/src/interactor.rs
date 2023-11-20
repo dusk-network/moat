@@ -7,8 +7,8 @@
 use crate::config::SPCliConfig;
 use crate::prompt;
 use crate::{Command, Menu};
-use moat_cli_common::Error;
 use dusk_wallet::WalletPath;
+use moat_cli_common::Error;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 

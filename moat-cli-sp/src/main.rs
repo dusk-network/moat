@@ -22,8 +22,8 @@ use clap::Parser;
 
 use crate::config::SPCliConfig;
 use crate::interactor::Interactor;
-use moat_cli_common::Error;
 use dusk_wallet::WalletPath;
+use moat_cli_common::Error;
 use toml_base_config::BaseConfig;
 use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};

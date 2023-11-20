@@ -5,11 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use rkyv::ser::serializers::AllocSerializer;
+use sha3::{Digest, Sha3_256};
 use std::fmt;
 use std::ops::Range;
 use zk_citadel::license::{License, Request};
-// use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
-use sha3::{Digest, Sha3_256};
 
 pub struct RequestsLPSummary {
     pub found_total: usize,

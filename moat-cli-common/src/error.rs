@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use std::borrow::Cow;
+use std::num::ParseIntError;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -57,5 +58,11 @@ impl From<clap::error::ErrorKind> for Error {
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Error::IO(Arc::from(e))
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(e: ParseIntError) -> Self {
+        Error::InvalidEntry(e.to_string().into())
     }
 }
