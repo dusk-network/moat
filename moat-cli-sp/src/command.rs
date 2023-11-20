@@ -4,7 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::config::SPCliConfig;
 use crate::run_result::{
     LicenseContractSummary, RunResult, ServiceRequestSummery, SessionSummary,
 };
@@ -13,6 +12,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
 use dusk_jubjub::JubJubAffine;
 use dusk_pki::PublicSpendKey;
+use dusk_bytes::Serializable;
 use dusk_wallet::RuskHttpClient;
 use moat_core::{CitadelInquirer, LicenseSessionId};
 use wallet_accessor::BlockchainAccessConfig;
@@ -22,7 +22,7 @@ use zk_citadel::license::{Session, SessionCookie};
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
     /// Request Service (User)
-    RequestService { session_cookie: String },
+    VerifyRequestedService { session_cookie: String, psk_lp_bytes: String },
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
@@ -34,14 +34,13 @@ impl Command {
     pub async fn run(
         self,
         blockchain_access_config: &BlockchainAccessConfig,
-        config: &SPCliConfig,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
-            Command::RequestService { session_cookie } => {
-                Self::request_service(
+            Command::VerifyRequestedService { session_cookie, psk_lp_bytes } => {
+                Self::verify_requested_service(
                     blockchain_access_config,
                     &session_cookie,
-                    config,
+                    &psk_lp_bytes,
                 )
                 .await?
             }
@@ -56,10 +55,10 @@ impl Command {
     }
 
     /// Command: Request Service
-    async fn request_service(
+    async fn verify_requested_service(
         blockchain_access_config: &BlockchainAccessConfig,
         session_cookie: &str,
-        config: &SPCliConfig,
+        psk_lp_bytes: &str,
     ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
@@ -68,15 +67,16 @@ impl Command {
             .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
         let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice())
             .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
-        let psk_lp: &str = &config.psk_lp;
-        let psk_lp_bytes = hex::decode(psk_lp.as_bytes()).map_err(|_| {
-            Error::InvalidConfigValue("license provider psk".into())
-        })?;
-        let psk_lp = PublicSpendKey::from_slice(psk_lp_bytes.as_slice())
-            .map_err(|_| {
-                Error::InvalidConfigValue("license provider psk".into())
-            })?;
-        let pk_lp = JubJubAffine::from(*psk_lp.A());
+
+        let psk_lp_bytes_formatted: [u8; 64] =
+            bs58::decode(&psk_lp_bytes.clone())
+                .into_vec()
+                .unwrap()
+                .try_into()
+                .unwrap();
+        let psk_lp =
+            PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
+        let psk_lp_a = JubJubAffine::from(*psk_lp.A());
 
         let session_id = LicenseSessionId { id: sc.session_id };
         let session = CitadelInquirer::get_session(&client, session_id)
@@ -84,7 +84,7 @@ impl Command {
             .ok_or(Error::NotFound("Session not found".into()))?;
 
         let session = Session::from(&session.public_inputs);
-        let granted = session.verifies_ok(sc, pk_lp);
+        let granted = session.verifies_ok(sc, psk_lp_a);
         println!("session id={}", hex::encode(session_id.id.to_bytes()));
         let service_request_summary = ServiceRequestSummery {
             service_granted: granted,

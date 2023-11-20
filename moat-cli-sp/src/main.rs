@@ -35,7 +35,7 @@ async fn main() -> Result<(), Error> {
 
     let config_path = cli.config_path.as_path();
     let wallet_path = cli.wallet_path.as_path();
-    let password = cli.password;
+    let password = cli.wallet_pass;
     let pwd_hash = cli.pwd_hash;
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;

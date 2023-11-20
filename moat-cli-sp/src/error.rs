@@ -31,9 +31,6 @@ pub enum Error {
     /// Invalid entry
     #[error("Invalid entry: {0:?}")]
     InvalidEntry(Cow<'static, str>),
-    /// Invalid config value
-    #[error("Invalid config value: {0:?}")]
-    InvalidConfigValue(Cow<'static, str>),
 }
 
 impl From<moat_core::Error> for Error {

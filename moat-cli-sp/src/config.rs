@@ -11,7 +11,6 @@ use toml_base_config::BaseConfig;
 pub struct SPCliConfig {
     pub rusk_address: String,
     pub prover_address: String,
-    pub psk_lp: String,
 }
 
 impl BaseConfig for SPCliConfig {

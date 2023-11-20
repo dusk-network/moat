@@ -30,7 +30,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd_menu = Menu::new()
         .add(
             CommandMenuItem::RequestService,
-            "Request Service (Off-Chain)",
+            "Verify Requested Service (Off-Chain)",
         )
         .add(CommandMenuItem::GetSession, "Get Session (SP)")
         .add(CommandMenuItem::ShowState, "Show state")
@@ -46,8 +46,9 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     let cmd = cmd_menu.answer(&answer).to_owned();
     Ok(match cmd {
         CommandMenuItem::RequestService => {
-            OpSelection::Run(Box::from(Command::RequestService {
+            OpSelection::Run(Box::from(Command::VerifyRequestedService {
                 session_cookie: prompt::request_session_cookie()?,
+                psk_lp_bytes: prompt::request_psk_lp()?,
             }))
         }
         CommandMenuItem::GetSession => {
@@ -79,7 +80,7 @@ impl Interactor {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
                     let result = command
-                        .run(&self.blockchain_access_config, &self.config)
+                        .run(&self.blockchain_access_config)
                         .await;
                     match result {
                         Ok(run_result) => {
