@@ -79,16 +79,15 @@ impl Interactor {
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    let result = command
-                        .run(&self.blockchain_access_config)
-                        .await;
+                    let result =
+                        command.run(&self.blockchain_access_config).await;
                     match result {
                         Ok(run_result) => {
                             println!("{}", run_result);
                         }
                         Err(error) => {
                             println!("{}", error.to_string());
-                            }
+                        }
                     }
                     continue;
                 }

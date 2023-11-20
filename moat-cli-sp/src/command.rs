@@ -10,9 +10,9 @@ use crate::run_result::{
 use crate::Error;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
+use dusk_bytes::Serializable;
 use dusk_jubjub::JubJubAffine;
 use dusk_pki::PublicSpendKey;
-use dusk_bytes::Serializable;
 use dusk_wallet::RuskHttpClient;
 use moat_core::{CitadelInquirer, LicenseSessionId};
 use wallet_accessor::BlockchainAccessConfig;
@@ -22,7 +22,10 @@ use zk_citadel::license::{Session, SessionCookie};
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum Command {
     /// Request Service (User)
-    VerifyRequestedService { session_cookie: String, psk_lp_bytes: String },
+    VerifyRequestedService {
+        session_cookie: String,
+        psk_lp_bytes: String,
+    },
     /// Get session (SP)
     GetSession { session_id: String },
     /// Show state
@@ -36,7 +39,10 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
-            Command::VerifyRequestedService { session_cookie, psk_lp_bytes } => {
+            Command::VerifyRequestedService {
+                session_cookie,
+                psk_lp_bytes,
+            } => {
                 Self::verify_requested_service(
                     blockchain_access_config,
                     &session_cookie,

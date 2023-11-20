@@ -34,9 +34,15 @@ impl fmt::Display for RunResult {
         match self {
             RequestService(summary) => {
                 if summary.service_granted {
-                    writeln!(f, "Session Cookie is correct, service can be granted")?;
+                    writeln!(
+                        f,
+                        "Session Cookie is correct, service can be granted"
+                    )?;
                 } else {
-                    writeln!(f, "Session Cookie is NOT correct, service must be denied")?;
+                    writeln!(
+                        f,
+                        "Session Cookie is NOT correct, service must be denied"
+                    )?;
                 }
                 Ok(())
             }
