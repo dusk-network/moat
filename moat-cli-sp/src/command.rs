@@ -37,6 +37,7 @@ impl Command {
     pub async fn run(
         self,
         blockchain_access_config: &BlockchainAccessConfig,
+        psk_sp: PublicSpendKey,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
             Command::VerifyRequestedService {
@@ -47,6 +48,7 @@ impl Command {
                     blockchain_access_config,
                     &session_cookie,
                     &psk_lp_bytes,
+                    &psk_sp,
                 )
                 .await?
             }
@@ -65,6 +67,7 @@ impl Command {
         blockchain_access_config: &BlockchainAccessConfig,
         session_cookie: &str,
         psk_lp_bytes: &str,
+        psk_sp: &PublicSpendKey,
     ) -> Result<RunResult, Error> {
         let client =
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
@@ -82,7 +85,8 @@ impl Command {
                 .unwrap();
         let psk_lp =
             PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
-        let psk_lp_a = JubJubAffine::from(*psk_lp.A());
+        let pk_lp = JubJubAffine::from(*psk_lp.A());
+        let pk_sp = JubJubAffine::from(*psk_sp.A());
 
         let session_id = LicenseSessionId { id: sc.session_id };
         let session = CitadelInquirer::get_session(&client, session_id)
@@ -90,7 +94,7 @@ impl Command {
             .ok_or(Error::NotFound("Session not found".into()))?;
 
         let session = Session::from(&session.public_inputs);
-        let granted = session.verifies_ok(sc, psk_lp_a);
+        let granted = session.verifies_ok(sc, pk_lp, pk_sp);
         println!("session id={}", hex::encode(session_id.id.to_bytes()));
         let service_request_summary = ServiceRequestSummery {
             service_granted: granted,

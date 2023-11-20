@@ -8,6 +8,7 @@ use crate::config::SPCliConfig;
 use crate::error::Error;
 use crate::prompt;
 use crate::{Command, Menu};
+use dusk_pki::PublicSpendKey;
 use dusk_wallet::WalletPath;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
@@ -70,6 +71,7 @@ pub struct Interactor {
     pub config: SPCliConfig,
     pub gas_limit: u64,
     pub gas_price: u64,
+    pub psk_sp: PublicSpendKey,
 }
 
 impl Interactor {
@@ -79,8 +81,9 @@ impl Interactor {
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    let result =
-                        command.run(&self.blockchain_access_config).await;
+                    let result = command
+                        .run(&self.blockchain_access_config, self.psk_sp)
+                        .await;
                     match result {
                         Ok(run_result) => {
                             println!("{}", run_result);

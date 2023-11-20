@@ -24,10 +24,10 @@ use clap::Parser;
 use crate::config::SPCliConfig;
 use crate::error::Error;
 use crate::interactor::Interactor;
-use dusk_wallet::WalletPath;
+use dusk_wallet::{Wallet, WalletPath};
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};
+use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -51,6 +51,13 @@ async fn main() -> Result<(), Error> {
         PwdHash(pwd_hash)
     };
 
+    let wallet_accessor =
+        WalletAccessor::create(wallet_path.clone(), psw.clone()).unwrap();
+    let wallet = Wallet::from_file(wallet_accessor).unwrap();
+
+    let (psk_sp, _ssk_sp) =
+        wallet.spending_keys(wallet.default_address()).unwrap();
+
     let mut interactor = Interactor {
         wallet_path,
         psw,
@@ -58,6 +65,7 @@ async fn main() -> Result<(), Error> {
         config,
         gas_limit,
         gas_price,
+        psk_sp,
     };
 
     interactor.run_loop().await?;
