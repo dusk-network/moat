@@ -24,13 +24,13 @@ use dusk_bytes::DeserializableSlice;
 use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use license_provider::{LicenseIssuer, ReferenceLP};
+use moat_core::license_provider::{LicenseIssuer, ReferenceLP};
 use moat_core::{
     BcInquirer, CitadelInquirer, CrsGetter, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, LicenseUser, PayloadRetriever, RequestCreator,
     RequestJson, RequestSender, TxAwaiter,
 };
-use rand::rngs::StdRng;
+use rand::rngs::{OsRng, StdRng};
 use rand::SeedableRng;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
@@ -251,7 +251,7 @@ async fn user_round_trip() -> Result<(), Error> {
         &verifier,
         &license,
         opening.unwrap(),
-        &mut rng,
+        &mut OsRng,
         &challenge,
         GAS_LIMIT,
         GAS_PRICE,

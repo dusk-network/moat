@@ -16,7 +16,7 @@ use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::{Proof, Prover, Verifier};
 use dusk_wallet::WalletPath;
 use poseidon_merkle::Opening;
-use rand::rngs::StdRng;
+use rand::rngs::OsRng;
 use rkyv::{Archive, Deserialize, Serialize};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{CitadelProverParameters, License, SessionCookie};
@@ -47,7 +47,7 @@ impl LicenseUser {
         verifier: &Verifier,
         license: &License,
         opening: Opening<(), DEPTH, ARITY>,
-        rng: &mut StdRng,
+        rng: &mut OsRng,
         challenge: &JubJubScalar,
         gas_limit: u64,
         gas_price: u64,

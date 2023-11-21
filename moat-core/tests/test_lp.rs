@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use license_provider::ReferenceLP;
+use moat_core::license_provider::ReferenceLP;
 use moat_core::{Error, JsonLoader, RequestScanner, Transactions};
 
 #[test]
@@ -16,7 +16,7 @@ fn lp_filter_requests() -> Result<(), Error> {
     let reference_lp = ReferenceLP::create(&lp_config_path)?;
 
     let txs_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/transactions.json");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/tx/transactions_lp.json");
 
     let txs = Transactions::from_file(txs_path)
         .expect("transactions file should load correctly");

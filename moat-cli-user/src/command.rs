@@ -18,7 +18,7 @@ use moat_core::{
     BcInquirer, CitadelInquirer, CrsGetter, Error, LicenseCircuit, LicenseUser,
     RequestCreator, RequestSender, TxAwaiter,
 };
-use rand::rngs::StdRng;
+use rand::rngs::{OsRng, StdRng};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, SessionCookie};
 
@@ -311,7 +311,6 @@ impl Command {
             RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
         // let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
         // let challenge = JubJubScalar::from(num_sessions as u64 + 1);
-        let mut rng = StdRng::seed_from_u64(0xbeef);
 
         let setup_holder = match sh_opt {
             Some(sh) => sh,
@@ -381,7 +380,7 @@ impl Command {
             &setup_holder.verifier,
             license,
             opening,
-            &mut rng,
+            &mut OsRng,
             &challenge,
             gas_limit,
             gas_price,

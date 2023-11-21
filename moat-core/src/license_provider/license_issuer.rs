@@ -4,15 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::{
+    Error, PayloadSender, TxAwaiter, ISSUE_LICENSE_METHOD_NAME,
+    LICENSE_CONTRACT_ID, MAX_LICENSE_SIZE,
+};
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{
-    Error, PayloadSender, TxAwaiter, ISSUE_LICENSE_METHOD_NAME,
-    LICENSE_CONTRACT_ID, MAX_LICENSE_SIZE,
-};
 use rand::{CryptoRng, RngCore};
 use tracing::trace;
 use wallet_accessor::{BlockchainAccessConfig, Password};

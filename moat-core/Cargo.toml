@@ -38,6 +38,8 @@ tracing = "0.1"
 bytes = "1.4"
 reqwest = "0.11"
 sha2 = "0.10"
+sha3 = "0.10"
+bs58 = "0.4"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
