@@ -78,7 +78,8 @@ async fn main() -> Result<(), Error> {
         &license_hash,
         rng,
     )
-    .await?;
+    .await?
+    .expect("session cookie has been obtained");
     println!("Session cookie for the used license: {:?}", session_cookie);
 
     // Verify a session cookie
@@ -86,7 +87,7 @@ async fn main() -> Result<(), Error> {
         &moat_context,
         &psk_lp,
         &psk_sp,
-        &session_cookie.expect("session cookie has been obtained"),
+        &session_cookie,
     )
     .await?
     {
