@@ -116,7 +116,7 @@ impl Interactor {
                             println!("{}", run_result);
                         }
                         Err(error) => {
-                            println!("{}", error.to_string());
+                            println!("{}", error);
                         }
                     }
                     continue;
