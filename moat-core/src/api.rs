@@ -198,18 +198,18 @@ pub struct MoatContext {
 
 impl MoatContext {
     /// Create a new Moat Context given the required configurations
-    pub fn create(
-        config_path: &String,
-        wallet_path: &String,
-        wallet_password: &String,
+    pub fn create<T: AsRef<str>>(
+        config_path: T,
+        wallet_path: T,
+        wallet_password: T,
         gas_limit: u64,
         gas_price: u64,
     ) -> Result<Self, Error> {
-        let wallet_path = WalletPath::from(Path::new(&wallet_path));
-        let wallet_password = Pwd(wallet_password.to_string());
+        let wallet_path = WalletPath::from(Path::new(wallet_path.as_ref()));
+        let wallet_password = Pwd(wallet_password.as_ref().to_string());
 
         let blockchain_access_config =
-            BlockchainAccessConfig::load_path(config_path)?;
+            BlockchainAccessConfig::load_path(config_path.as_ref())?;
 
         Ok(Self {
             blockchain_access_config,

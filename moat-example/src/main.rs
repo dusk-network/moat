@@ -14,12 +14,12 @@ use moat_core::Error;
 #[allow(non_snake_case)]
 async fn main() -> Result<(), Error> {
     // Specify a configuration file path to connect to the Blockchain
-    let config_path = "./config.toml".to_string();
+    let config_path = "./config.toml";
 
     // Specify a wallet file path and its encryption password
     // let wallet_path = "/path/to/rusk-wallet/wallet.dat".to_string();
-    let wallet_path = "/Users/miloszm/.dusk/rusk-wallet/wallet.dat".to_string();
-    let wallet_password = "password".to_string();
+    let wallet_path = concat!(env!("HOME"), "/.dusk/rusk-wallet/wallet.dat");
+    let wallet_password = "password";
 
     // Specify the gas configuration for the transactions
     let gas_limit = 500000000;
@@ -27,9 +27,9 @@ async fn main() -> Result<(), Error> {
 
     // Build a configuration object with the previously set information
     let moat_context = MoatContext::create(
-        &config_path,
-        &wallet_path,
-        &wallet_password,
+        config_path,
+        wallet_path,
+        wallet_password,
         gas_limit,
         gas_price,
     )?;
