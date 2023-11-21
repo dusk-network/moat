@@ -16,7 +16,7 @@ async fn main() {
     let config_path = "./config.toml".to_string();
 
     // Specify a wallet file path and its encryption password
-    let wallet_path = "/home/xevi/.dusk/rusk-wallet/wallet.dat".to_string();
+    let wallet_path = "/path/to/rusk-wallet/wallet.dat".to_string();
     let wallet_password = "password".to_string();
 
     // Specify the gas configuration for the transactions
