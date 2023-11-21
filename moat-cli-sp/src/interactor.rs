@@ -5,11 +5,11 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::config::SPCliConfig;
-use crate::error::Error;
 use crate::prompt;
 use crate::{Command, Menu};
 use dusk_pki::PublicSpendKey;
 use dusk_wallet::WalletPath;
+use moat_cli_common::Error;
 use requestty::{ErrorKind, Question};
 use wallet_accessor::{BlockchainAccessConfig, Password};
 

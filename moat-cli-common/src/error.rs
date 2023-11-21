@@ -4,7 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use hex::FromHexError;
 use std::borrow::Cow;
+use std::num::ParseIntError;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -31,6 +33,12 @@ pub enum Error {
     /// Invalid entry
     #[error("Invalid entry: {0:?}")]
     InvalidEntry(Cow<'static, str>),
+    /// Invalid config value
+    #[error("Invalid config value: {0:?}")]
+    InvalidConfigValue(Cow<'static, str>),
+    /// Wallet error
+    #[error(transparent)]
+    Wallet(Arc<dusk_wallet::Error>),
 }
 
 impl From<moat_core::Error> for Error {
@@ -54,5 +62,41 @@ impl From<clap::error::ErrorKind> for Error {
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Error::IO(Arc::from(e))
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(e: ParseIntError) -> Self {
+        Error::InvalidEntry(e.to_string().into())
+    }
+}
+
+impl From<FromHexError> for Error {
+    fn from(e: FromHexError) -> Self {
+        Error::InvalidEntry(e.to_string().into())
+    }
+}
+
+impl From<dusk_bytes::Error> for Error {
+    fn from(_: dusk_bytes::Error) -> Self {
+        Error::InvalidEntry("invalid bytes".into())
+    }
+}
+
+impl From<bs58::decode::Error> for Error {
+    fn from(e: bs58::decode::Error) -> Self {
+        Error::InvalidEntry(e.to_string().into())
+    }
+}
+
+impl From<dusk_plonk::error::Error> for Error {
+    fn from(e: dusk_plonk::error::Error) -> Self {
+        Error::Moat(Arc::from(moat_core::Error::Plonk(Arc::from(e))))
+    }
+}
+
+impl From<dusk_wallet::Error> for Error {
+    fn from(e: dusk_wallet::Error) -> Self {
+        Error::Wallet(Arc::from(e))
     }
 }

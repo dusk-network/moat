@@ -11,8 +11,9 @@ use crate::SeedableRng;
 use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
 use dusk_wallet::{RuskHttpClient, WalletPath};
+use moat_cli_common::Error;
 use moat_core::license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{BcInquirer, CitadelInquirer, Error};
+use moat_core::{BcInquirer, CitadelInquirer};
 use rand::rngs::StdRng;
 use wallet_accessor::{BlockchainAccessConfig, Password};
 
@@ -103,8 +104,7 @@ impl Command {
         request_hash: String,
         attr_data_bytes: String,
     ) -> Result<RunResult, Error> {
-        let attr_data =
-            JubJubScalar::from(attr_data_bytes.parse::<u64>().unwrap());
+        let attr_data = JubJubScalar::from(attr_data_bytes.parse::<u64>()?);
 
         let mut rng = StdRng::from_entropy();
         let mut reference_lp = ReferenceLP::create_with_ssk(ssk)?;

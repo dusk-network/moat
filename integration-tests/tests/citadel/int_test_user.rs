@@ -250,7 +250,7 @@ async fn user_round_trip() -> Result<(), Error> {
         &prover,
         &verifier,
         &license,
-        opening.unwrap(),
+        opening.expect("opening should be present"),
         &mut OsRng,
         &challenge,
         GAS_LIMIT,
@@ -268,7 +268,7 @@ async fn user_round_trip() -> Result<(), Error> {
     info!("calling get_session (as an SP)");
     let session = CitadelInquirer::get_session(&client, session_id).await?;
     assert!(session.is_some());
-    let session = session.unwrap();
+    let session = session.expect("session should be present");
     info!(
         "obtained session {}",
         hex::encode(session.public_inputs[0].to_bytes())

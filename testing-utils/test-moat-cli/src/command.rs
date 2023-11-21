@@ -522,7 +522,7 @@ impl Command {
                     verifier,
                 };
                 *sh_opt = Some(sh);
-                sh_opt.as_ref().unwrap()
+                sh_opt.as_ref().expect("setup holder is not empty")
             }
         };
 

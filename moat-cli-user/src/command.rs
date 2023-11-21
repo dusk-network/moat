@@ -10,12 +10,13 @@ use crate::run_result::{
 };
 use crate::SeedableRng;
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::Serializable;
+use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
+use moat_cli_common::Error;
 use moat_core::{
-    BcInquirer, CitadelInquirer, CrsGetter, Error, LicenseCircuit, LicenseUser,
+    BcInquirer, CitadelInquirer, CrsGetter, LicenseCircuit, LicenseUser,
     RequestCreator, RequestSender, TxAwaiter,
 };
 use rand::rngs::{OsRng, StdRng};
@@ -118,14 +119,9 @@ impl Command {
         ssk: SecretSpendKey,
         psk_lp_bytes: String,
     ) -> Result<RunResult, Error> {
-        let psk_lp_bytes_formatted: [u8; 64] =
-            bs58::decode(&psk_lp_bytes.clone())
-                .into_vec()
-                .unwrap()
-                .try_into()
-                .unwrap();
+        let psk_lp_bytes_formatted = hex::decode(psk_lp_bytes.clone())?;
         let psk_lp =
-            PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
+            PublicSpendKey::from_slice(psk_lp_bytes_formatted.as_slice())?;
 
         let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
         let request = RequestCreator::create(&ssk, &psk_lp, rng)?;
@@ -202,23 +198,15 @@ impl Command {
             Some((pos, license)) => {
                 println!("using license: {}", RunResult::to_hash_hex(&license));
                 let challenge =
-                    JubJubScalar::from(challenge_bytes.parse::<u64>().unwrap());
+                    JubJubScalar::from(challenge_bytes.parse::<u64>()?);
 
-                let psk_lp_bytes: [u8; 64] =
-                    bs58::decode(&psk_lp_bytes.clone())
-                        .into_vec()
-                        .unwrap()
-                        .try_into()
-                        .unwrap();
-                let psk_lp = PublicSpendKey::from_bytes(&psk_lp_bytes).unwrap();
+                let psk_lp_bytes = bs58::decode(&psk_lp_bytes).into_vec()?;
+                let psk_lp =
+                    PublicSpendKey::from_slice(psk_lp_bytes.as_slice())?;
 
-                let psk_sp_bytes: [u8; 64] =
-                    bs58::decode(&psk_sp_bytes.clone())
-                        .into_vec()
-                        .unwrap()
-                        .try_into()
-                        .unwrap();
-                let psk_sp = PublicSpendKey::from_bytes(&psk_sp_bytes).unwrap();
+                let psk_sp_bytes = bs58::decode(&psk_sp_bytes).into_vec()?;
+                let psk_sp =
+                    PublicSpendKey::from_slice(psk_sp_bytes.as_slice())?;
 
                 let (tx_id, session_cookie) = Self::prove_and_send_use_license(
                     blockchain_access_config,
@@ -327,17 +315,16 @@ impl Command {
                     let mut file = File::open(prover_path)?;
                     let mut prover_bytes = vec![];
                     file.read_to_end(&mut prover_bytes)?;
-                    let prover = Prover::try_from_bytes(prover_bytes).unwrap();
+                    let prover = Prover::try_from_bytes(prover_bytes)?;
 
                     file = File::open(verifier_path)?;
                     let mut verifier_bytes = vec![];
                     file.read_to_end(&mut verifier_bytes)?;
-                    let verifier =
-                        Verifier::try_from_bytes(verifier_bytes).unwrap();
+                    let verifier = Verifier::try_from_bytes(verifier_bytes)?;
 
                     let sh = SetupHolder { prover, verifier };
                     *sh_opt = Some(sh);
-                    sh_opt.as_ref().unwrap()
+                    sh_opt.as_ref().expect("setup holder is not empty")
                 } else {
                     println!("obtaining setup");
                     let pp_vec = CrsGetter::get_crs(&client).await?;
@@ -357,7 +344,7 @@ impl Command {
 
                     let sh = SetupHolder { prover, verifier };
                     *sh_opt = Some(sh);
-                    sh_opt.as_ref().unwrap()
+                    sh_opt.as_ref().expect("setup holder is not empty")
                 }
             }
         };

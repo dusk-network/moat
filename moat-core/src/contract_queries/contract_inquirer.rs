@@ -44,7 +44,7 @@ impl ContractInquirer {
 
         let response_data = check_archived_root::<R>(response.as_slice())
             .map_err(|_| {
-                InvalidQueryResponse(Box::from("rkyv deserialization error"))
+                InvalidQueryResponse("rkyv deserialization error".into())
             })?;
         let r = response_data
             .deserialize(&mut Infallible)
@@ -68,7 +68,9 @@ impl ContractInquirer {
         >,
     {
         let contract_id = hex::encode(contract_id.as_slice());
-        let req = rkyv::to_bytes(&args).map_err(|_| Error::Rkyv)?.to_vec();
+        let req = rkyv::to_bytes(&args)
+            .expect("Serializing should be infallible")
+            .to_vec();
         let stream = client
             .call_raw(
                 1,

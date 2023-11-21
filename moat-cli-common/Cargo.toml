@@ -1,0 +1,15 @@
+[package]
+name = "moat-cli-common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+moat-core = { path = "../moat-core" }
+dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
+dusk-wallet = "0.20.1-rc.0"
+clap = { version = "4.0", features = ["derive", "env"] }
+requestty = "0.4.1"
+thiserror = "1.0"
+hex = "0.4"
+dusk-bytes = "0.1"
+bs58 = "0.4"

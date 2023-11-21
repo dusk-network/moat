@@ -9,7 +9,6 @@
 mod args;
 mod command;
 mod config;
-mod error;
 mod interactor;
 mod menu;
 mod prompt;
@@ -22,9 +21,9 @@ use crate::menu::Menu;
 use clap::Parser;
 
 use crate::config::SPCliConfig;
-use crate::error::Error;
 use crate::interactor::Interactor;
 use dusk_wallet::{Wallet, WalletPath};
+use moat_cli_common::Error;
 use toml_base_config::BaseConfig;
 use wallet_accessor::Password::{Pwd, PwdHash};
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
@@ -52,11 +51,10 @@ async fn main() -> Result<(), Error> {
     };
 
     let wallet_accessor =
-        WalletAccessor::create(wallet_path.clone(), psw.clone()).unwrap();
-    let wallet = Wallet::from_file(wallet_accessor).unwrap();
+        WalletAccessor::create(wallet_path.clone(), psw.clone())?;
+    let wallet = Wallet::from_file(wallet_accessor)?;
 
-    let (psk_sp, _ssk_sp) =
-        wallet.spending_keys(wallet.default_address()).unwrap();
+    let (psk_sp, _ssk_sp) = wallet.spending_keys(wallet.default_address())?;
 
     let mut interactor = Interactor {
         wallet_path,

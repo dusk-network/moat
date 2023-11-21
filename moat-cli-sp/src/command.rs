@@ -10,7 +10,6 @@ use crate::run_result::{
 use crate::Error;
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::DeserializableSlice;
-use dusk_bytes::Serializable;
 use dusk_jubjub::JubJubAffine;
 use dusk_pki::PublicSpendKey;
 use dusk_wallet::RuskHttpClient;
@@ -77,14 +76,10 @@ impl Command {
         let sc: SessionCookie = rkyv::from_bytes(bytes.as_slice())
             .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
 
-        let psk_lp_bytes_formatted: [u8; 64] =
-            bs58::decode(&psk_lp_bytes.clone())
-                .into_vec()
-                .unwrap()
-                .try_into()
-                .unwrap();
+        let psk_lp_bytes_formatted =
+            bs58::decode(&psk_lp_bytes.clone()).into_vec()?;
         let psk_lp =
-            PublicSpendKey::from_bytes(&psk_lp_bytes_formatted).unwrap();
+            PublicSpendKey::from_slice(psk_lp_bytes_formatted.as_slice())?;
         let pk_lp = JubJubAffine::from(*psk_lp.A());
         let pk_sp = JubJubAffine::from(*psk_sp.A());
 

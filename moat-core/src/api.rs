@@ -13,13 +13,15 @@ use zk_citadel::license::{Session, SessionCookie};
 use crate::license_provider::{LicenseIssuer, ReferenceLP};
 use crate::utils::MoatCoreUtils;
 use crate::{
-    CitadelInquirer, LicenseSessionId, RequestCreator, RequestSender, TxAwaiter,
+    CitadelInquirer, Error, LicenseSessionId, RequestCreator, RequestSender,
+    TxAwaiter,
 };
 use wallet_accessor::Password::{self, Pwd};
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 use rand::rngs::OsRng;
 use std::path::Path;
+use std::sync::Arc;
 use toml_base_config::BaseConfig;
 
 pub struct MoatCore {}
@@ -29,16 +31,18 @@ impl MoatCore {
     /// Moat Context
     pub fn get_wallet_keypair(
         moat_context: &MoatContext,
-    ) -> (PublicSpendKey, SecretSpendKey) {
+    ) -> Result<(PublicSpendKey, SecretSpendKey), Error> {
         // We access the wallet to get the key pair
+        println!("wallet_path={}", &moat_context.wallet_path);
         let wallet_accessor = WalletAccessor::create(
             moat_context.wallet_path.clone(),
             moat_context.wallet_password.clone(),
-        )
-        .unwrap();
-        let wallet = Wallet::from_file(wallet_accessor).unwrap();
+        )?;
+        let wallet = Wallet::from_file(wallet_accessor)?;
 
-        wallet.spending_keys(wallet.default_address()).unwrap()
+        wallet
+            .spending_keys(wallet.default_address())
+            .map_err(|e| Error::DuskWallet(Arc::from(e)))
     }
 
     /// Create and send a transaction containing a license request
@@ -47,8 +51,8 @@ impl MoatCore {
         psk_lp: &PublicSpendKey,
         moat_context: &MoatContext,
         rng: &mut OsRng,
-    ) -> String {
-        let request = RequestCreator::create(ssk_user, psk_lp, rng).unwrap();
+    ) -> Result<String, Error> {
+        let request = RequestCreator::create(ssk_user, psk_lp, rng)?;
         let request_hash = MoatCoreUtils::to_hash_hex(&request);
 
         let tx_id = RequestSender::send_request(
@@ -59,15 +63,14 @@ impl MoatCore {
             moat_context.gas_limit,
             moat_context.gas_price,
         )
-        .await
-        .unwrap();
+        .await?;
 
         let client = RuskHttpClient::new(
             moat_context.blockchain_access_config.rusk_address.clone(),
         );
-        TxAwaiter::wait_for(&client, tx_id).await.unwrap();
+        TxAwaiter::wait_for(&client, tx_id).await?;
 
-        request_hash
+        Ok(request_hash)
     }
 
     /// Create and send a transaction containing a license for a given request
@@ -77,13 +80,12 @@ impl MoatCore {
         moat_context: &MoatContext,
         attr_data: &JubJubScalar,
         rng: &mut OsRng,
-    ) -> String {
-        let mut reference_lp = ReferenceLP::create_with_ssk(ssk_lp).unwrap();
+    ) -> Result<String, Error> {
+        let mut reference_lp = ReferenceLP::create_with_ssk(ssk_lp)?;
 
         let (_total_count, _this_lp_count) = reference_lp
             .scan(&moat_context.blockchain_access_config)
-            .await
-            .unwrap();
+            .await?;
 
         let request = reference_lp.get_request(request_hash);
 
@@ -103,11 +105,10 @@ impl MoatCore {
                         &reference_lp.ssk_lp,
                         attr_data,
                     )
-                    .await
-                    .unwrap();
-                MoatCoreUtils::blob_to_hash_hex(&license_blob)
+                    .await?;
+                Ok(MoatCoreUtils::blob_to_hash_hex(&license_blob))
             }
-            _ => "nothing to do".to_string(),
+            _ => Ok("nothing to do".to_string()),
         }
     }
 
@@ -121,14 +122,13 @@ impl MoatCore {
         challenge: &JubJubScalar,
         license_hash: &str,
         rng: &mut OsRng,
-    ) -> Option<SessionCookie> {
+    ) -> Result<Option<SessionCookie>, Error> {
         let pos_license = MoatCoreUtils::get_license_to_use(
             &moat_context.blockchain_access_config,
             ssk,
             license_hash.to_owned(),
         )
-        .await
-        .unwrap();
+        .await?;
 
         match pos_license {
             Some((pos, license)) => {
@@ -153,12 +153,11 @@ impl MoatCore {
                         &mut None,
                         rng,
                     )
-                    .await
-                    .unwrap();
+                    .await?;
 
-                Some(session_cookie)
+                Ok(Some(session_cookie))
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 
@@ -169,7 +168,7 @@ impl MoatCore {
         psk_lp: &PublicSpendKey,
         psk_sp: &PublicSpendKey,
         session_cookie: &SessionCookie,
-    ) -> bool {
+    ) -> Result<bool, Error> {
         let client = RuskHttpClient::new(
             moat_context.blockchain_access_config.rusk_address.clone(),
         );
@@ -181,12 +180,11 @@ impl MoatCore {
             id: session_cookie.session_id,
         };
         let session = CitadelInquirer::get_session(&client, session_id)
-            .await
-            .unwrap()
-            .unwrap();
+            .await?
+            .ok_or(Error::SessionNotFound)?;
 
         let session = Session::from(&session.public_inputs);
-        session.verifies_ok(*session_cookie, pk_lp, pk_sp)
+        Ok(session.verifies_ok(*session_cookie, pk_lp, pk_sp))
     }
 }
 
@@ -200,25 +198,25 @@ pub struct MoatContext {
 
 impl MoatContext {
     /// Create a new Moat Context given the required configurations
-    pub fn new(
+    pub fn create(
         config_path: &String,
         wallet_path: &String,
         wallet_password: &String,
         gas_limit: u64,
         gas_price: u64,
-    ) -> Self {
+    ) -> Result<Self, Error> {
         let wallet_path = WalletPath::from(Path::new(&wallet_path));
         let wallet_password = Pwd(wallet_password.to_string());
 
         let blockchain_access_config =
-            BlockchainAccessConfig::load_path(config_path).unwrap();
+            BlockchainAccessConfig::load_path(config_path)?;
 
-        Self {
+        Ok(Self {
             blockchain_access_config,
             wallet_path,
             wallet_password,
             gas_limit,
             gas_price,
-        }
+        })
     }
 }
