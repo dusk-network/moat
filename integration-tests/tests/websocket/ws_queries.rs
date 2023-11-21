@@ -44,7 +44,10 @@ async fn ws_query_session() -> Result<(), Error> {
     let session: Option<LicenseSession> =
         CitadelInquirerWs::get_session(url, id, session_id).await?;
     assert!(session.is_some());
-    let public_inputs = &session.as_ref().unwrap().public_inputs;
+    let public_inputs = &session
+        .as_ref()
+        .expect("session should be present")
+        .public_inputs;
     assert_eq!(public_inputs.len(), 1);
     assert_eq!(public_inputs[0], BlsScalar::zero());
     Ok(())

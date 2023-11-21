@@ -117,17 +117,16 @@ impl MoatCoreUtils {
                     let mut file = File::open(prover_path)?;
                     let mut prover_bytes = vec![];
                     file.read_to_end(&mut prover_bytes)?;
-                    let prover = Prover::try_from_bytes(prover_bytes).unwrap();
+                    let prover = Prover::try_from_bytes(prover_bytes)?;
 
                     file = File::open(verifier_path)?;
                     let mut verifier_bytes = vec![];
                     file.read_to_end(&mut verifier_bytes)?;
-                    let verifier =
-                        Verifier::try_from_bytes(verifier_bytes).unwrap();
+                    let verifier = Verifier::try_from_bytes(verifier_bytes)?;
 
                     let sh = SetupHolder { prover, verifier };
                     *sh_opt = Some(sh);
-                    sh_opt.as_ref().unwrap()
+                    sh_opt.as_ref().expect("setup holder is not empty")
                 } else {
                     println!("obtaining setup");
                     let pp_vec = CrsGetter::get_crs(&client).await?;
@@ -147,7 +146,7 @@ impl MoatCoreUtils {
 
                     let sh = SetupHolder { prover, verifier };
                     *sh_opt = Some(sh);
-                    sh_opt.as_ref().unwrap()
+                    sh_opt.as_ref().expect("setup holder is not empty")
                 }
             }
         };
