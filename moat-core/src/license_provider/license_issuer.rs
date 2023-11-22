@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::{BlockchainAccessConfig, Password};
 use crate::{
     Error, PayloadSender, TxAwaiter, ISSUE_LICENSE_METHOD_NAME,
     LICENSE_CONTRACT_ID, MAX_LICENSE_SIZE,
@@ -15,7 +16,6 @@ use dusk_poseidon::sponge;
 use dusk_wallet::{RuskHttpClient, WalletPath};
 use rand::{CryptoRng, RngCore};
 use tracing::trace;
-use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, Request};
 
 pub struct LicenseIssuer {

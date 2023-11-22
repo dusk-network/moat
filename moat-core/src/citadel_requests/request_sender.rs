@@ -4,10 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::{BlockchainAccessConfig, Password};
 use crate::{Error, PayloadSender, LICENSE_CONTRACT_ID, NOOP_METHOD_NAME};
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::WalletPath;
-use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::Request;
 
 pub struct RequestSender;

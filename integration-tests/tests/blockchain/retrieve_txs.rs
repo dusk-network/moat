@@ -5,10 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::RuskHttpClient;
-use moat_core::{Error, TxInquirer};
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::{Error, TxInquirer};
 use toml_base_config::BaseConfig;
 use tracing::trace;
-use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]

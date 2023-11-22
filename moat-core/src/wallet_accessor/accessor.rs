@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::BlockchainAccessConfig;
 use crate::wallet_accessor::Password::{Pwd, PwdHash};
-use crate::BlockchainAccessConfig;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::dat::{read_file_version, DatFileVersion};
 use dusk_wallet::gas::Gas;

@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::license_provider::ReferenceLP;
-use moat_core::{Error, JsonLoader, RequestScanner, Transactions};
+use moat::license_provider::ReferenceLP;
+use moat::{Error, JsonLoader, RequestScanner, Transactions};
 
 #[test]
 fn lp_filter_requests() -> Result<(), Error> {

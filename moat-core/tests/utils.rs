@@ -6,7 +6,7 @@
 
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_pki::SecretSpendKey;
-use moat_core::{Error, RequestCreator, MAX_REQUEST_SIZE};
+use moat::{Error, RequestCreator, MAX_REQUEST_SIZE};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use sha2::Digest;

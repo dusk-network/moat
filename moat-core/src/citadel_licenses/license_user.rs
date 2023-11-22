@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::{BlockchainAccessConfig, Password};
 use crate::{
     Error, LicenseCircuit, PayloadSender, LICENSE_CONTRACT_ID,
     USE_LICENSE_METHOD_NAME,
@@ -18,7 +19,6 @@ use dusk_wallet::WalletPath;
 use poseidon_merkle::Opening;
 use rand::rngs::OsRng;
 use rkyv::{Archive, Deserialize, Serialize};
-use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{CitadelProverParameters, License, SessionCookie};
 
 /// Use License Argument.

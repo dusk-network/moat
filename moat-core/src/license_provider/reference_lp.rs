@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::BlockchainAccessConfig;
 use crate::{Error, JsonLoader, RequestScanner, MAX_REQUEST_SIZE};
 use blake3::OUT_LEN;
 use dusk_bytes::DeserializableSlice;
@@ -12,7 +13,6 @@ use rkyv::ser::serializers::AllocSerializer;
 use sha3::{Digest, Sha3_256};
 use std::collections::BTreeSet;
 use std::path::Path;
-use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]

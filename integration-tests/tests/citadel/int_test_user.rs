@@ -24,8 +24,10 @@ use dusk_bytes::DeserializableSlice;
 use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{
+use moat::license_provider::{LicenseIssuer, ReferenceLP};
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::wallet_accessor::Password::PwdHash;
+use moat::{
     BcInquirer, CitadelInquirer, CrsGetter, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, LicenseUser, PayloadRetriever, RequestCreator,
     RequestJson, RequestSender, TxAwaiter,
@@ -35,8 +37,6 @@ use rand::SeedableRng;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use tracing::{info, Level};
-use wallet_accessor::BlockchainAccessConfig;
-use wallet_accessor::Password::PwdHash;
 use zk_citadel::license::Request;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");

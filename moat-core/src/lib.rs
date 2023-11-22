@@ -26,6 +26,7 @@ mod utils;
 
 pub mod api;
 pub mod license_provider;
+pub mod wallet_accessor;
 
 pub use bc_types::*;
 pub use blockchain_payloads::{

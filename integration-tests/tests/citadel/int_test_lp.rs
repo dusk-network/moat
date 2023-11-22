@@ -4,10 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat_core::license_provider::ReferenceLP;
-use moat_core::Error;
+use moat::license_provider::ReferenceLP;
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::Error;
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "exp_tests"), ignore)]

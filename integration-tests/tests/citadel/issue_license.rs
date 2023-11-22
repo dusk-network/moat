@@ -6,14 +6,14 @@
 
 use dusk_jubjub::JubJubScalar;
 use dusk_wallet::WalletPath;
-use moat_core::license_provider::{LicenseIssuer, ReferenceLP};
-use moat_core::{Error, JsonLoader, RequestCreator, RequestJson};
+use moat::license_provider::{LicenseIssuer, ReferenceLP};
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::wallet_accessor::Password::PwdHash;
+use moat::{Error, JsonLoader, RequestCreator, RequestJson};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
-use wallet_accessor::Password::PwdHash;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
