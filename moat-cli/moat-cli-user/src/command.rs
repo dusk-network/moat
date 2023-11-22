@@ -110,16 +110,17 @@ impl Command {
 
     /// Command: Submit Request
     #[allow(non_snake_case)]
-    async fn submit_request(
+    async fn submit_request<T: AsRef<str>>(
         wallet_path: &WalletPath,
         psw: &Password,
         blockchain_access_config: &BlockchainAccessConfig,
         gas_limit: u64,
         gas_price: u64,
         ssk: SecretSpendKey,
-        psk_lp_bytes: String,
+        psk_lp_bytes: T,
     ) -> Result<RunResult, Error> {
-        let psk_lp_bytes_formatted = hex::decode(psk_lp_bytes.clone())?;
+        let psk_lp_bytes_formatted =
+            bs58::decode(psk_lp_bytes.as_ref()).into_vec()?;
         let psk_lp =
             PublicSpendKey::from_slice(psk_lp_bytes_formatted.as_slice())?;
 
@@ -140,7 +141,7 @@ impl Command {
         TxAwaiter::wait_for(&client, tx_id).await?;
 
         let summary = SubmitRequestSummary {
-            psk_lp: psk_lp_bytes,
+            psk_lp: psk_lp_bytes.as_ref().to_string(),
             tx_id: hex::encode(tx_id.to_bytes()),
             request_hash,
         };
