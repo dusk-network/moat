@@ -68,11 +68,5 @@ async fn main() -> Result<(), Error> {
 
     interactor.run_loop().await?;
 
-    #[rustfmt::skip]
-    // old wallet.dat file format:
-    // cargo r --release --bin moat-cli-sp -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli-sp/config.toml --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787
-    // new wallet.dat file format:
-    // cargo r --release --bin moat-cli-sp -- --wallet-path ~/.dusk/rusk-wallet --config-path ./moat-cli-sp/config.toml --pwd-hash 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
-
     Ok(())
 }

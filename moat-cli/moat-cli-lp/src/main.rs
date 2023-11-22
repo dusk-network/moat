@@ -8,6 +8,7 @@
 
 mod args;
 mod command;
+mod config;
 mod interactor;
 mod menu;
 mod prompt;
@@ -20,6 +21,7 @@ use std::fs;
 
 use clap::Parser;
 
+use crate::config::LPCliConfig;
 use crate::interactor::Interactor;
 use dusk_wallet::{Wallet, WalletPath};
 use moat_cli_common::Error;
@@ -29,7 +31,6 @@ use wallet_accessor::Password::{Pwd, PwdHash};
 use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 #[tokio::main]
-#[allow(non_snake_case)]
 async fn main() -> Result<(), Error> {
     let cli = Args::parse();
 
@@ -40,12 +41,16 @@ async fn main() -> Result<(), Error> {
     let gas_limit = cli.gas_limit;
     let gas_price = cli.gas_price;
 
-    let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let _ = fs::metadata(config_path).map_err(|_| {
         Error::NotFound(config_path.to_string_lossy().into_owned().into())
     })?;
-    let blockchain_access_config =
-        BlockchainAccessConfig::load_path(config_path)?;
+    let config = LPCliConfig::load_path(config_path)?;
+    let blockchain_access_config = BlockchainAccessConfig {
+        rusk_address: config.rusk_address.clone(),
+        prover_address: config.prover_address.clone(),
+    };
+
+    let wallet_path = WalletPath::from(wallet_path.join("wallet.dat"));
     let psw = if pwd_hash.is_empty() {
         Pwd(password)
     } else {
@@ -62,19 +67,12 @@ async fn main() -> Result<(), Error> {
         wallet_path,
         psw,
         blockchain_access_config,
+        ssk,
         gas_limit,
         gas_price,
-        ssk,
-        setup_holder: None,
     };
 
     interactor.run_loop().await?;
-
-    #[rustfmt::skip]
-    // old wallet.dat file format:
-    // cargo r --release --bin moat-cli-user -- --wallet-path ~/.dusk/rusk-wallet --pwd-hash 7f2611ba158b6dcea4a69c229c303358c5e04493abeadee106a4bfa464d55787
-    // new wallet.dat file format:
-    // cargo r --release --bin moat-cli-user -- --wallet-path ~/.dusk/rusk-wallet --pwd-hash 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
 
     Ok(())
 }
