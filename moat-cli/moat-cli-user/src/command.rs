@@ -14,13 +14,13 @@ use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_cli_common::Error;
-use moat_core::{
+use moat::wallet_accessor::{BlockchainAccessConfig, Password};
+use moat::{
     BcInquirer, CitadelInquirer, CrsGetter, LicenseCircuit, LicenseUser,
     RequestCreator, RequestSender, TxAwaiter,
 };
+use moat_cli_common::Error;
 use rand::rngs::{OsRng, StdRng};
-use wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel::license::{License, SessionCookie};
 
 use std::fs::File;

@@ -4,11 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::wallet_accessor::BlockchainAccessConfig;
+use crate::wallet_accessor::Password;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_wallet::WalletPath;
 use rand::rngs::OsRng;
-use wallet_accessor::BlockchainAccessConfig;
-use wallet_accessor::Password;
 
 use zk_citadel::license::{License, SessionCookie};
 

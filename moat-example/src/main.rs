@@ -7,8 +7,7 @@
 use dusk_jubjub::JubJubScalar;
 use rand::rngs::OsRng;
 
-use moat_core::api::{MoatContext, MoatCore};
-use moat_core::Error;
+use moat::api::{Error, MoatContext, MoatCore};
 
 #[tokio::main]
 #[allow(non_snake_case)]
@@ -17,7 +16,6 @@ async fn main() -> Result<(), Error> {
     let config_path = "./config.toml";
 
     // Specify a wallet file path and its encryption password
-    // let wallet_path = "/path/to/rusk-wallet/wallet.dat".to_string();
     let wallet_path = concat!(env!("HOME"), "/.dusk/rusk-wallet/wallet.dat");
     let wallet_password = "password";
 

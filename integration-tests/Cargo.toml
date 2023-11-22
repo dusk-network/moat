@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-moat-core={ path = "../moat-core" }
+moat={ path = "../moat-core" }
 
 [dev-dependencies]
 dusk-wallet = "0.20.1-rc.0"
@@ -15,7 +15,6 @@ poseidon-merkle = { version = "0.3", features = ["rkyv-impl"] }
 dusk-pki = { version = "0.13", default-features = false, features = ["rkyv-impl"] }
 dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
 dusk-bls12_381 = "0.12"
-wallet-accessor = { path = "../wallet-accessor" }
 rkyv = { version = "=0.7.39" }
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
 tokio-tungstenite = { version = "0.19", default-features = false, features = ["connect"] }

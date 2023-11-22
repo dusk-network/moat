@@ -13,8 +13,8 @@ use dusk_bytes::DeserializableSlice;
 use dusk_jubjub::JubJubAffine;
 use dusk_pki::PublicSpendKey;
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CitadelInquirer, LicenseSessionId};
-use wallet_accessor::BlockchainAccessConfig;
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::{CitadelInquirer, LicenseSessionId};
 use zk_citadel::license::{Session, SessionCookie};
 
 /// Commands that can be run against the Moat

@@ -5,12 +5,14 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::error::Error;
+use crate::wallet_accessor::{
+    BlockchainAccessConfig, Password, WalletAccessor,
+};
 use crate::MAX_CALL_SIZE;
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::WalletPath;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
-use wallet_accessor::{BlockchainAccessConfig, Password, WalletAccessor};
 
 pub struct PayloadSender;
 

@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+pub mod accessor;
 mod config;
-mod wallet_accessor;
 
-pub use crate::config::BlockchainAccessConfig;
-pub use crate::wallet_accessor::{Password, WalletAccessor};
+pub use accessor::{Password, WalletAccessor};
+pub use config::BlockchainAccessConfig;

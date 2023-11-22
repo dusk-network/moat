@@ -6,10 +6,10 @@
 
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CitadelInquirer, Error, LicenseSessionId, StreamAux};
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::{CitadelInquirer, Error, LicenseSessionId, StreamAux};
 use toml_base_config::BaseConfig;
 use tracing::trace;
-use wallet_accessor::BlockchainAccessConfig;
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]

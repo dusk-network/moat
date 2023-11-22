@@ -12,17 +12,18 @@ use zk_citadel::license::{Session, SessionCookie};
 
 use crate::license_provider::{LicenseIssuer, ReferenceLP};
 use crate::utils::MoatCoreUtils;
+use crate::wallet_accessor::Password::{self, Pwd};
+use crate::wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 use crate::{
-    CitadelInquirer, Error, LicenseSessionId, RequestCreator, RequestSender,
-    TxAwaiter,
+    CitadelInquirer, LicenseSessionId, RequestCreator, RequestSender, TxAwaiter,
 };
-use wallet_accessor::Password::{self, Pwd};
-use wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 
 use rand::rngs::OsRng;
 use std::path::Path;
 use std::sync::Arc;
 use toml_base_config::BaseConfig;
+
+pub use crate::Error;
 
 pub struct MoatCore {}
 

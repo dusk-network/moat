@@ -5,12 +5,12 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat_core::{Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter};
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::wallet_accessor::Password::PwdHash;
+use moat::{Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter};
 use phoenix_core::transaction::ModuleId;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
-use wallet_accessor::BlockchainAccessConfig;
-use wallet_accessor::Password::PwdHash;
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =

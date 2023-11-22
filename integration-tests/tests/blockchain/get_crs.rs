@@ -5,10 +5,10 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::RuskHttpClient;
-use moat_core::{CrsGetter, Error};
+use moat::wallet_accessor::BlockchainAccessConfig;
+use moat::{CrsGetter, Error};
 use toml_base_config::BaseConfig;
 use tracing::trace;
-use wallet_accessor::BlockchainAccessConfig;
 
 const MIN_CRS_SIZE: usize = 10 * 1024 * 1024;
 

@@ -17,7 +17,7 @@ use thiserror::Error;
 pub enum Error {
     /// Moat core error
     #[error(transparent)]
-    Moat(Arc<moat_core::Error>),
+    Moat(Arc<moat::Error>),
     /// Interaction error
     #[error(transparent)]
     Interaction(Arc<requestty::ErrorKind>),
@@ -41,8 +41,8 @@ pub enum Error {
     Wallet(Arc<dusk_wallet::Error>),
 }
 
-impl From<moat_core::Error> for Error {
-    fn from(e: moat_core::Error) -> Self {
+impl From<moat::Error> for Error {
+    fn from(e: moat::Error) -> Self {
         Error::Moat(Arc::from(e))
     }
 }
@@ -91,7 +91,7 @@ impl From<bs58::decode::Error> for Error {
 
 impl From<dusk_plonk::error::Error> for Error {
     fn from(e: dusk_plonk::error::Error) -> Self {
-        Error::Moat(Arc::from(moat_core::Error::Plonk(Arc::from(e))))
+        Error::Moat(Arc::from(moat::Error::Plonk(Arc::from(e))))
     }
 }
 

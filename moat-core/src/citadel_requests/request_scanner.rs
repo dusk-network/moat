@@ -6,11 +6,11 @@
 
 use crate::blockchain_payloads::PayloadExtractor;
 use crate::error::Error;
+use crate::wallet_accessor::BlockchainAccessConfig;
 use crate::{Transactions, TxInquirer};
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::RuskHttpClient;
 use phoenix_core::Transaction;
-use wallet_accessor::BlockchainAccessConfig;
 use zk_citadel::license::Request;
 
 pub struct RequestScanner;
