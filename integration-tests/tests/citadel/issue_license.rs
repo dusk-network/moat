@@ -29,11 +29,11 @@ async fn issue_license() -> Result<(), Error> {
         "/tests/request/test_request.json"
     );
     let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
 
     let lp_config_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/config/test_keys_lp_2.json"
+        "/tests/test_keys/test_keys_lp_2.json"
     );
 
     let reference_lp = ReferenceLP::create(&lp_config_path)?;

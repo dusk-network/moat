@@ -39,8 +39,7 @@ async fn send_request() -> Result<(), Error> {
         env!("CARGO_MANIFEST_DIR"),
         "/tests/request/test_request.json"
     );
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
 
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
 

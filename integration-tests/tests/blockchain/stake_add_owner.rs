@@ -29,7 +29,7 @@ pub const ADD_OWNER_METHOD_NAME: &str = "add_owner";
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn stake_add_owner() -> Result<(), Error> {
     let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;

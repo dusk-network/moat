@@ -11,7 +11,7 @@
 
 ## Testing the environment
 
-You can test if the environment you set up and the library are working properly by specifying the testing Rusk node address in `integration-tests/tests/config/config.toml`, and executing the following (note that the wallet needs to use `password` as password for the tests to succeed):
+You can test if the environment you set up and the library are working properly by specifying the testing Rusk node address in `integration-tests/config.toml`, and executing the following (note that the wallet needs to use `password` as password for the tests to succeed):
 
 ```
 cargo t --release --features="exp_tests" -- --test-threads=1
@@ -25,7 +25,7 @@ The `moat-cli` utility can be used from the POV of any of the parties involved i
 - **License Provider (LP):** A party receiving onchain requests from users to issue licenses onchain addressed to them.
 - **Service Provider (SP):** A party receiving offchain requests from users to grant services.
 
-To use the CLI, you should specify the Rusk node address in `config.toml`. Then, you can execute the CLI for any of the involved parties as follows.
+To use the CLI, you should specify the Rusk node address in `moat-cli/config.toml`. Then, you can execute the CLI for any of the involved parties as follows.
 
 ### User
 

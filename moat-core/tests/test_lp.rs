@@ -11,7 +11,7 @@ use moat::{Error, JsonLoader, RequestScanner, Transactions};
 fn lp_filter_requests() -> Result<(), Error> {
     let lp_config_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/config/test_keys_lp.json"
+        "/tests/test_keys/test_keys_lp.json"
     );
     let reference_lp = ReferenceLP::create(&lp_config_path)?;
 

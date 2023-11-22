@@ -13,10 +13,10 @@ use toml_base_config::BaseConfig;
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn lp_scan() -> Result<(), Error> {
     let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
     let lp_config_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/config/test_keys_lp.json"
+        "/tests/test_keys/test_keys_lp.json"
     );
 
     let blockchain_config =
@@ -32,10 +32,10 @@ async fn lp_scan() -> Result<(), Error> {
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn lp_scan_last_blocks() -> Result<(), Error> {
     let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
     let lp_config_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/config/test_keys_lp_2.json"
+        "/tests/test_keys/test_keys_lp_2.json"
     );
 
     let blockchain_config =
@@ -53,14 +53,14 @@ async fn lp_scan_last_blocks() -> Result<(), Error> {
 #[cfg_attr(not(feature = "exp_tests"), ignore)]
 async fn lp_scan_2_lps() -> Result<(), Error> {
     let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
     let lp1_config_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/config/test_keys_lp.json"
+        "/tests/test_keys/test_keys_lp.json"
     );
     let lp2_config_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/config/test_keys_lp_2.json"
+        "/tests/test_keys/test_keys_lp_2.json"
     );
 
     let blockchain_config =

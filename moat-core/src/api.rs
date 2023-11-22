@@ -8,14 +8,15 @@ use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_wallet::{RuskHttpClient, Wallet, WalletPath};
 
-use zk_citadel::license::{Session, SessionCookie};
+use zk_citadel::license::{License, Request, Session, SessionCookie};
 
 use crate::license_provider::{LicenseIssuer, ReferenceLP};
 use crate::utils::MoatCoreUtils;
 use crate::wallet_accessor::Password::{self, Pwd};
 use crate::wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 use crate::{
-    CitadelInquirer, LicenseSessionId, RequestCreator, RequestSender, TxAwaiter,
+    BcInquirer, CitadelInquirer, LicenseSessionId, RequestCreator,
+    RequestSender, TxAwaiter,
 };
 
 use rand::rngs::OsRng;
@@ -74,9 +75,49 @@ impl MoatCore {
         Ok(request_hash)
     }
 
+    /// Retrive a vector containing all the licenses owned by a given secret key
+    pub async fn get_owned_licenses(
+        ssk_user: &SecretSpendKey,
+        moat_context: &MoatContext,
+    ) -> Result<Vec<License>, Error> {
+        let client = RuskHttpClient::new(
+            moat_context.blockchain_access_config.rusk_address.clone(),
+        );
+        let end_height = BcInquirer::block_height(&client).await?;
+        let block_range = 0..(end_height + 1);
+
+        let mut licenses_stream =
+            CitadelInquirer::get_licenses(&client, block_range.clone()).await?;
+
+        let pairs = CitadelInquirer::find_all_licenses(&mut licenses_stream)?;
+        let vk = ssk_user.view_key();
+        let mut licenses = vec![];
+
+        for (_pos, license) in pairs.into_iter() {
+            if vk.owns(&license.lsa) {
+                licenses.push(license);
+            }
+        }
+
+        Ok(licenses)
+    }
+
+    /// Retrieve all the requests owned by the LP
+    pub async fn get_owned_requests(
+        ssk_lp: &SecretSpendKey,
+        moat_context: &MoatContext,
+    ) -> Result<Vec<Request>, Error> {
+        let mut reference_lp = ReferenceLP::create_with_ssk(ssk_lp)?;
+        reference_lp
+            .scan(&moat_context.blockchain_access_config)
+            .await?;
+
+        Ok(reference_lp.requests_to_process)
+    }
+
     /// Create and send a transaction containing a license for a given request
     pub async fn issue_license(
-        request_hash: &String,
+        request: &Request,
         ssk_lp: &SecretSpendKey,
         moat_context: &MoatContext,
         attr_data: &JubJubScalar,
@@ -88,29 +129,18 @@ impl MoatCore {
             .scan(&moat_context.blockchain_access_config)
             .await?;
 
-        let request = reference_lp.get_request(request_hash);
+        let license_issuer = LicenseIssuer::new(
+            moat_context.blockchain_access_config.clone(),
+            moat_context.wallet_path.clone(),
+            moat_context.wallet_password.clone(),
+            moat_context.gas_limit,
+            moat_context.gas_price,
+        );
 
-        match request {
-            Some(request) => {
-                let license_issuer = LicenseIssuer::new(
-                    moat_context.blockchain_access_config.clone(),
-                    moat_context.wallet_path.clone(),
-                    moat_context.wallet_password.clone(),
-                    moat_context.gas_limit,
-                    moat_context.gas_price,
-                );
-                let (_tx_id, license_blob) = license_issuer
-                    .issue_license(
-                        rng,
-                        &request,
-                        &reference_lp.ssk_lp,
-                        attr_data,
-                    )
-                    .await?;
-                Ok(MoatCoreUtils::blob_to_hash_hex(&license_blob))
-            }
-            _ => Ok("nothing to do".to_string()),
-        }
+        let (_tx_id, license_blob) = license_issuer
+            .issue_license(rng, request, &reference_lp.ssk_lp, attr_data)
+            .await?;
+        Ok(MoatCoreUtils::blob_to_hash_hex(&license_blob))
     }
 
     /// Create and send a transaction containing a proof that uses a given
@@ -121,9 +151,10 @@ impl MoatCore {
         psk_sp: &PublicSpendKey,
         ssk: &SecretSpendKey,
         challenge: &JubJubScalar,
-        license_hash: &str,
+        license: &License,
         rng: &mut OsRng,
     ) -> Result<Option<SessionCookie>, Error> {
+        let license_hash = MoatCoreUtils::to_hash_hex(license);
         let pos_license = MoatCoreUtils::get_license_to_use(
             &moat_context.blockchain_access_config,
             ssk,
@@ -133,10 +164,7 @@ impl MoatCore {
 
         match pos_license {
             Some((pos, license)) => {
-                println!(
-                    "using license: {}",
-                    MoatCoreUtils::to_hash_hex(&license)
-                );
+                println!("using license: {}", license_hash);
 
                 let (_tx_id, session_cookie) =
                     MoatCoreUtils::prove_and_send_use_license(

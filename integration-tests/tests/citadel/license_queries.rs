@@ -14,8 +14,7 @@ use tracing::trace;
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn call_get_licenses() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
     let config = BlockchainAccessConfig::load_path(config_path)?;
 
     let client = RuskHttpClient::new(config.rusk_address);
@@ -33,8 +32,7 @@ async fn call_get_licenses() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn call_get_merkle_opening() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
     let config = BlockchainAccessConfig::load_path(config_path)?;
 
     let client = RuskHttpClient::new(config.rusk_address);
@@ -49,8 +47,7 @@ async fn call_get_merkle_opening() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn call_get_session() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
     let config = BlockchainAccessConfig::load_path(config_path)?;
 
     let client = RuskHttpClient::new(config.rusk_address);
@@ -69,8 +66,7 @@ async fn call_get_session() -> Result<(), Error> {
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
 async fn call_get_info() -> Result<(), Error> {
-    let config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+    let config_path = concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
     let config = BlockchainAccessConfig::load_path(config_path)?;
 
     let client = RuskHttpClient::new(config.rusk_address);
