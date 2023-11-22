@@ -13,7 +13,7 @@ use clap::Parser;
 #[command(propagate_version = true)]
 pub struct Args {
     /// Wallet directory [default: `$HOME/.dusk/rusk-wallet`]
-    #[clap(short, long)]
+    #[clap(short, long, default_value = concat!(env!("HOME"), "/.dusk/rusk-wallet"))]
     pub wallet_path: PathBuf,
 
     /// Blockchain access config directory

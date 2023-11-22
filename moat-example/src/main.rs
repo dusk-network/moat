@@ -17,7 +17,6 @@ async fn main() -> Result<(), Error> {
     let config_path = "./config.toml";
 
     // Specify a wallet file path and its encryption password
-    // let wallet_path = "/path/to/rusk-wallet/wallet.dat".to_string();
     let wallet_path = concat!(env!("HOME"), "/.dusk/rusk-wallet/wallet.dat");
     let wallet_password = "password";
 
