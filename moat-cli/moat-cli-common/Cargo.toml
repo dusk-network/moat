@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 moat = { path = "../../moat-core" }
 dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
-dusk-wallet = "0.20.1-rc.0"
+dusk-wallet = "0.20.1"
 clap = { version = "4.0", features = ["derive", "env"] }
 requestty = "0.4.1"
 thiserror = "1.0"

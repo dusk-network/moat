@@ -129,7 +129,7 @@ async fn user_round_trip() -> Result<(), Error> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
     let blockchain_config_path =
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/config/config.toml");
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
 
     let blockchain_config =
         BlockchainAccessConfig::load_path(blockchain_config_path)?;
@@ -153,7 +153,7 @@ async fn user_round_trip() -> Result<(), Error> {
 
     let lp_config_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/config/test_keys_lp_2.json"
+        "/tests/test_keys/test_keys_lp_2.json"
     );
 
     let reference_lp = ReferenceLP::create(&lp_config_path)?;

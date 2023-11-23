@@ -17,7 +17,7 @@ pub struct Args {
     pub wallet_path: PathBuf,
 
     /// Blockchain access config directory
-    #[clap(short, long, default_value = "./config.toml")]
+    #[clap(short, long, default_value = "moat-cli/config.toml")]
     pub config_path: PathBuf,
 
     /// Password for the wallet

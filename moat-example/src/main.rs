@@ -46,14 +46,17 @@ async fn main() -> Result<(), Error> {
     .await?;
     println!("Request transacted: {:?}", request_hash);
 
+    // Get owned requests
+    let ssk_lp = ssk_user; // we set the same key just for testing
+    let requests = MoatCore::get_owned_requests(&ssk_lp, &moat_context).await?;
+
     // Issue a license
     let attr_data = JubJubScalar::from(
         "1234".parse::<u64>().expect("attribute date is correct"),
     );
     let rng = &mut OsRng;
-    let ssk_lp = ssk_user; // we set the same key just for testing
     let license_hash = MoatCore::issue_license(
-        &request_hash,
+        requests.get(0).expect("A request was owned."),
         &ssk_lp,
         &moat_context,
         &attr_data,
@@ -61,6 +64,10 @@ async fn main() -> Result<(), Error> {
     )
     .await?;
     println!("License issued: {:?}", license_hash);
+
+    // Get owned licenses
+    let licenses =
+        MoatCore::get_owned_licenses(&ssk_user, &moat_context).await?;
 
     // Use a license
     let psk_sp = psk_lp; // we set the same one than the LP just for testing
@@ -73,7 +80,7 @@ async fn main() -> Result<(), Error> {
         &psk_sp,
         &ssk_user,
         &challenge,
-        &license_hash,
+        licenses.get(0).expect("A license was owned."),
         rng,
     )
     .await?

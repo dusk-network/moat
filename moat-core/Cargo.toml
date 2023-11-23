@@ -10,8 +10,8 @@ futures = "0.3"
 futures-core = "0.3"
 dusk-wallet-core = "0.22.0-plonk.0.16"
 futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
-dusk-wallet = "0.20.1-rc.0"
-zk-citadel = "0.6.0-rc.0"
+dusk-wallet = "0.20.1"
+zk-citadel = "0.6.0"
 dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
 phoenix-core = { version = "0.21", features = ["alloc"] }
 dusk-poseidon = { version = "0.31", default-features = false, features = ["rkyv-impl", "alloc"] }
@@ -33,7 +33,7 @@ hex = "0.4"
 rand = "0.8"
 dusk-bytes = "0.1"
 blake3 = "1.4"
-code-hasher={ path = "../macros/code-hasher" }
+code-hasher = { path = "../macros/code-hasher" }
 tracing = "0.1"
 bytes = "1.4"
 reqwest = "0.11"

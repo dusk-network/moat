@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = "0.20.1-rc.0"
+dusk-wallet = "0.20.1"
 moat = { path = "../../moat-core" }
 moat-cli-common = { path = "../moat-cli-common" }
-zk-citadel = "0.6.0-rc.0"
+zk-citadel = "0.6.0"
 dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
 rkyv = { version = "=0.7.39" }
 dusk-pki = "0.13"
