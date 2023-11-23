@@ -56,7 +56,7 @@ async fn main() -> Result<(), Error> {
     );
     let rng = &mut OsRng;
     let license_hash = MoatCore::issue_license(
-        &requests[0],
+        &requests.get(0).expect("A request was owned."),
         &ssk_lp,
         &moat_context,
         &attr_data,
@@ -80,7 +80,7 @@ async fn main() -> Result<(), Error> {
         &psk_sp,
         &ssk_user,
         &challenge,
-        &licenses[0],
+        &licenses.get(0).expect("A license was owned."),
         rng,
     )
     .await?
