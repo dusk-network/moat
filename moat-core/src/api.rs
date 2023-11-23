@@ -75,7 +75,8 @@ impl MoatCore {
         Ok(request_hash)
     }
 
-    /// Retrive a vector containing all the licenses owned by a given secret key
+    /// Retrieve a vector containing all the licenses owned by a given secret
+    /// key
     pub async fn get_owned_licenses(
         ssk_user: &SecretSpendKey,
         moat_context: &MoatContext,

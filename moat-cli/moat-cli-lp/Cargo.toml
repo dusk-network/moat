@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dusk-wallet = "0.20.1-rc.0"
+dusk-wallet = "0.20.1"
 dusk-jubjub = { version = "0.13", default-features = false }
 moat = { path = "../../moat-core" }
 moat-cli-common = { path = "../moat-cli-common" }
 dusk-pki = "0.13"
-zk-citadel = "0.6.0-rc.0"
+zk-citadel = "0.6.0"
 rkyv = { version = "=0.7.39" }
 toml-base-config = "0.1"
 clap = { version = "4.0", features = ["derive", "env"] }

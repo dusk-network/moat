@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-moat={ path = "../moat-core" }
+moat = { path = "../moat-core" }
 
 [dev-dependencies]
-dusk-wallet = "0.20.1-rc.0"
+dusk-wallet = "0.20.1"
 dusk-jubjub = { version = "0.13", default-features = false }
-zk-citadel = "0.6.0-rc.0"
+zk-citadel = "0.6.0"
 phoenix-core = { version = "0.21", features = ["alloc"] }
 poseidon-merkle = { version = "0.3", features = ["rkyv-impl"] }
 dusk-pki = { version = "0.13", default-features = false, features = ["rkyv-impl"] }
