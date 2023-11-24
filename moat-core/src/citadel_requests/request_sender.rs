@@ -5,7 +5,9 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::wallet_accessor::{BlockchainAccessConfig, Password};
-use crate::{Error, PayloadSender, LICENSE_CONTRACT_ID, NOOP_METHOD_NAME};
+use crate::{
+    Error, PayloadSender, LICENSE_CONTRACT_ID, REQUEST_LICENSE_METHOD_NAME,
+};
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::WalletPath;
 use zk_citadel::license::Request;
@@ -29,7 +31,7 @@ impl RequestSender {
             gas_limit,
             gas_price,
             LICENSE_CONTRACT_ID,
-            NOOP_METHOD_NAME,
+            REQUEST_LICENSE_METHOD_NAME,
         )
         .await?;
         Ok(tx_id)
