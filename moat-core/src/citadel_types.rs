@@ -17,7 +17,7 @@ pub const MAX_REQUEST_SIZE: usize = 8192;
 pub const MAX_LICENSE_SIZE: usize = 16384;
 
 // license contract method names
-pub const NOOP_METHOD_NAME: &str = "noop";
+pub const NOOP_METHOD_NAME: &str = "request_license";
 pub const ISSUE_LICENSE_METHOD_NAME: &str = "issue_license";
 pub const USE_LICENSE_METHOD_NAME: &str = "use_license";
 pub const GET_LICENSES_METHOD_NAME: &str = "get_licenses";
