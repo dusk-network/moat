@@ -9,7 +9,7 @@ use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 use crate::bc_types::Tx;
 use crate::error::Error;
 use crate::Error::PayloadNotPresent;
-use crate::NOOP_METHOD_NAME;
+use crate::REQUEST_LICENSE_METHOD_NAME;
 use bytecheck::CheckBytes;
 use rkyv::validation::validators::DefaultValidator;
 
@@ -23,9 +23,9 @@ impl PayloadExtractor {
             + for<'b> CheckBytes<DefaultValidator<'b>>,
     {
         if let Some(call_info) = tx.call_data.as_ref() {
-            if call_info.fn_name != NOOP_METHOD_NAME {
+            if call_info.fn_name != REQUEST_LICENSE_METHOD_NAME {
                 return Err(Error::PayloadNotPresent(
-                    "fn name not noop".into(),
+                    "fn name not request license".into(),
                 ));
             }
         }
