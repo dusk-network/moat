@@ -16,38 +16,36 @@ use rkyv::{Archive, Deserialize, Infallible};
 pub struct StreamAux;
 
 impl StreamAux {
-    /// Finds and returns first item for which
+    /// Finds and returns items for which
     /// the given filter returns true,
-    /// returns error if no such item was found
-    pub fn find_item<R, const L: usize>(
+    pub fn find_items<R, const L: usize>(
         filter: impl Fn(&R) -> Result<bool, Error>,
         stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
                   + std::marker::Unpin),
-    ) -> Result<R, Error>
+    ) -> Result<Vec<R>, Error>
     where
         R: Archive,
         R::Archived: Deserialize<R, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>
             + Deserialize<R, SharedDeserializeMap>,
     {
+        let mut output = vec![];
         let mut buffer = vec![];
-        while let Some(http_chunk) = stream.next().wait() {
+        if let Some(http_chunk) = stream.next().wait() {
             buffer.extend_from_slice(
                 &http_chunk
                     .map_err(|_| Error::Stream("chunking error".into()))?,
             );
-            let mut chunk = buffer.chunks_exact(L);
-            for bytes in chunk.by_ref() {
+            for bytes in buffer.chunks_exact(L) {
                 let item: R = rkyv::from_bytes(bytes).map_err(|_| {
                     Error::Stream("deserialization error".into())
                 })?;
                 if filter(&item)? {
-                    return Ok(item);
+                    output.push(item);
                 }
             }
-            buffer = chunk.remainder().to_vec();
         }
-        Err(Error::Stream("item not found".into()))
+        Ok(output)
     }
 
     /// Collects all items and returns them in a vector,
