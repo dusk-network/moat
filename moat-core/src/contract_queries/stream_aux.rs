@@ -19,10 +19,10 @@ impl StreamAux {
     /// Finds and returns items for which
     /// the given filter returns true,
     pub fn find_items<R, const L: usize>(
-        filter: impl Fn(&R) -> Result<bool, Error>,
+        mut filter_collect: impl FnMut(&R),
         stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
                   + std::marker::Unpin),
-    ) -> Result<Vec<R>, Error>
+    ) -> Result<(), Error>
     where
         R: Archive + Clone,
         R::Archived: Deserialize<R, Infallible>
@@ -30,53 +30,22 @@ impl StreamAux {
             + Deserialize<R, SharedDeserializeMap>,
     {
         let mut remainder = Vec::<u8>::new();
-        let mut items = vec![];
-        loop {
-            let (v, stop) =
-                Self::do_find_items::<R, L>(&filter, stream, &mut remainder)?;
-            items.extend_from_slice(v.as_slice());
-            if stop {
-                break;
-            }
-        }
-        Ok(items)
-    }
-
-    fn do_find_items<R, const L: usize>(
-        filter: &impl Fn(&R) -> Result<bool, Error>,
-        stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
-                  + std::marker::Unpin),
-        remainder: &mut Vec<u8>,
-    ) -> Result<(Vec<R>, bool), Error>
-    where
-        R: Archive,
-        R::Archived: Deserialize<R, Infallible>
-            + for<'b> CheckBytes<DefaultValidator<'b>>
-            + Deserialize<R, SharedDeserializeMap>,
-    {
-        let mut output = vec![];
-        let mut stream_finished = false;
-        if let Some(http_chunk) = stream.next().wait() {
-            let mut buffer = remainder.clone();
+        while let Some(chunk) = stream.next().wait() {
+            let mut buffer = vec![];
+            buffer.append(&mut remainder);
             buffer.extend_from_slice(
-                &http_chunk
-                    .map_err(|_| Error::Stream("chunking error".into()))?,
+                &chunk.map_err(|_| Error::Stream("chunking error".into()))?,
             );
             let mut iter = buffer.chunks_exact(L);
             for bytes in iter.by_ref() {
                 let item: R = rkyv::from_bytes(bytes).map_err(|_| {
                     Error::Stream("deserialization error".into())
                 })?;
-                if filter(&item)? {
-                    output.push(item);
-                }
+                filter_collect(&item);
             }
-            remainder.clear();
             remainder.extend_from_slice(iter.remainder());
-        } else {
-            stream_finished = true;
         }
-        Ok((output, stream_finished))
+        Ok(())
     }
 
     /// Collects all items and returns them in a vector,
