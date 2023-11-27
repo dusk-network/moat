@@ -24,19 +24,46 @@ impl StreamAux {
                   + std::marker::Unpin),
     ) -> Result<Vec<R>, Error>
     where
+        R: Archive + Clone,
+        R::Archived: Deserialize<R, Infallible>
+            + for<'b> CheckBytes<DefaultValidator<'b>>
+            + Deserialize<R, SharedDeserializeMap>,
+    {
+        let mut remainder = Vec::<u8>::new();
+        let mut items = vec![];
+        loop {
+            let (v, stop) =
+                Self::do_find_items::<R, L>(&filter, stream, &mut remainder)?;
+            items.extend_from_slice(v.as_slice());
+            if stop {
+                break;
+            }
+        }
+        Ok(items)
+    }
+
+    fn do_find_items<R, const L: usize>(
+        filter: &impl Fn(&R) -> Result<bool, Error>,
+        stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
+                  + std::marker::Unpin),
+        remainder: &mut Vec<u8>,
+    ) -> Result<(Vec<R>, bool), Error>
+    where
         R: Archive,
         R::Archived: Deserialize<R, Infallible>
             + for<'b> CheckBytes<DefaultValidator<'b>>
             + Deserialize<R, SharedDeserializeMap>,
     {
         let mut output = vec![];
-        let mut buffer = vec![];
+        let mut stream_finished = false;
         if let Some(http_chunk) = stream.next().wait() {
+            let mut buffer = remainder.clone();
             buffer.extend_from_slice(
                 &http_chunk
                     .map_err(|_| Error::Stream("chunking error".into()))?,
             );
-            for bytes in buffer.chunks_exact(L) {
+            let mut iter = buffer.chunks_exact(L);
+            for bytes in iter.by_ref() {
                 let item: R = rkyv::from_bytes(bytes).map_err(|_| {
                     Error::Stream("deserialization error".into())
                 })?;
@@ -44,8 +71,12 @@ impl StreamAux {
                     output.push(item);
                 }
             }
+            remainder.clear();
+            remainder.extend_from_slice(iter.remainder());
+        } else {
+            stream_finished = true;
         }
-        Ok(output)
+        Ok((output, stream_finished))
     }
 
     /// Collects all items and returns them in a vector,
