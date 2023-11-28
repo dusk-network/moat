@@ -51,9 +51,7 @@ async fn main() -> Result<(), Error> {
     let requests = MoatCore::get_owned_requests(&ssk_lp, &moat_context).await?;
 
     // Issue a license
-    let attr_data = JubJubScalar::from(
-        "1234".parse::<u64>().expect("attribute date is correct"),
-    );
+    let attr_data = JubJubScalar::from(1234u64);
     let rng = &mut OsRng;
     let license_hash = MoatCore::issue_license(
         requests.get(0).expect("A request was owned."),
@@ -71,9 +69,7 @@ async fn main() -> Result<(), Error> {
 
     // Use a license
     let psk_sp = psk_lp; // we set the same one than the LP just for testing
-    let challenge = JubJubScalar::from(
-        "1234".parse::<u64>().expect("challenge value is correct"),
-    );
+    let challenge = JubJubScalar::from(1234u64);
     let session_cookie = MoatCore::use_license(
         &moat_context,
         &psk_lp,
