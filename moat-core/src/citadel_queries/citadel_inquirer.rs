@@ -106,20 +106,15 @@ impl CitadelInquirer {
     ) -> Result<Vec<(u64, License)>, Error> {
         const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
         let mut pairs = vec![];
-        loop {
-            let r = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
-                |(_, lic_vec)| {
-                    let license = Self::deserialise_license(lic_vec);
-                    Ok(ssk_user.view_key().owns(&license.lsa))
-                },
-                stream,
-            );
-            if r.is_err() {
-                break;
-            }
-            let (pos, lic_ser) = r?;
-            pairs.push((pos, Self::deserialise_license(&lic_ser)))
-        }
+        StreamAux::find_items::<(u64, Vec<u8>), ITEM_LEN>(
+            |(pos, lic_vec)| {
+                let license = Self::deserialise_license(lic_vec);
+                if ssk_user.view_key().owns(&license.lsa) {
+                    pairs.push((*pos, license));
+                };
+            },
+            stream,
+        )?;
         Ok(pairs)
     }
 
@@ -131,17 +126,13 @@ impl CitadelInquirer {
     ) -> Result<Vec<(u64, License)>, Error> {
         const ITEM_LEN: usize = CitadelInquirer::GET_LICENSES_ITEM_LEN;
         let mut pairs = vec![];
-        loop {
-            let r = StreamAux::find_item::<(u64, Vec<u8>), ITEM_LEN>(
-                |_| Ok(true),
-                stream,
-            );
-            if r.is_err() {
-                break;
-            }
-            let (pos, lic_ser) = r?;
-            pairs.push((pos, Self::deserialise_license(&lic_ser)))
-        }
+        StreamAux::find_items::<(u64, Vec<u8>), ITEM_LEN>(
+            |(pos, lic_vec)| {
+                let license = Self::deserialise_license(lic_vec);
+                pairs.push((*pos, license));
+            },
+            stream,
+        )?;
         Ok(pairs)
     }
 }
