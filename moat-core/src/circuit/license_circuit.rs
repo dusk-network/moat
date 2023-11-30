@@ -25,13 +25,8 @@ impl LicenseCircuit {
     ) -> Self {
         Self { lpp: *lpp, sc: *sc }
     }
-
-    pub const fn circuit_id() -> &'static [u8; 32] {
-        &Self::CIRCUIT_ID
-    }
 }
 
-#[code_hasher::hash(name = "CIRCUIT_ID", version = "0.2.0")]
 impl Circuit for LicenseCircuit {
     fn circuit<C>(&self, composer: &mut C) -> Result<(), Error>
     where
