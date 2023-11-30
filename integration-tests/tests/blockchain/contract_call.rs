@@ -18,16 +18,18 @@ const PWD_HASH: &str =
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
-pub const STAKE_CONTRACT_ID: ModuleId = {
+pub const LICENSE_CONTRACT_ID: ModuleId = {
     let mut bytes = [0u8; 32];
-    bytes[0] = 0x02;
+    bytes[0] = 0x03;
     bytes
 };
-pub const ADD_OWNER_METHOD_NAME: &str = "add_owner";
+// note that any method can be used here as long as it does not require
+// arguments
+pub const CONTRACT_METHOD_NAME: &str = "request_license";
 
 #[tokio::test(flavor = "multi_thread")]
 #[cfg_attr(not(feature = "int_tests"), ignore)]
-async fn stake_add_owner() -> Result<(), Error> {
+async fn contract_call_with_payload() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
 
@@ -46,14 +48,16 @@ async fn stake_add_owner() -> Result<(), Error> {
     );
 
     let tx_id = PayloadSender::execute_contract_method(
+        // any payload will do as long as the called method does not require
+        // arguments
         request_json.provider_psk,
         &blockchain_config,
         &wallet_path,
         &PwdHash(PWD_HASH.to_string()),
         GAS_LIMIT,
         GAS_PRICE,
-        STAKE_CONTRACT_ID,
-        ADD_OWNER_METHOD_NAME,
+        LICENSE_CONTRACT_ID,
+        CONTRACT_METHOD_NAME,
     )
     .await?;
     let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
