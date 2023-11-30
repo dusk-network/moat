@@ -4,6 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+mod contract_call;
 mod get_crs;
 mod retrieve_txs;
-mod stake_add_owner;
