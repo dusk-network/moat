@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-moat = { path = "../moat-core" }
+moat = { path = "../moat" }
 
 [dev-dependencies]
 dusk-wallet = "0.20.1"
