@@ -1,12 +1,13 @@
 [package]
 name = "zk-citadel-moat"
+description = "SDK for Citadel, a ZK-based SSI system integrated in Dusk Network."
 version = "0.1.0"
 authors = [
     "Milosz Muszynski <milosz@dusk.network>",
     "Xavier Salleras <xavier@dusk.network>"
 ]
-
 edition = "2021"
+license = "MPL-2.0"
 
 [dependencies]
 tokio = { version = "1.15", features = ["rt-multi-thread", "time", "fs", "macros"] }
