@@ -22,8 +22,8 @@ use clap::Parser;
 
 use crate::interactor::Interactor;
 use dusk_wallet::{Wallet, WalletPath};
-use moat::wallet_accessor::Password::{Pwd, PwdHash};
-use moat::wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
+use zk_citadel_moat::wallet_accessor::Password::{Pwd, PwdHash};
+use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, WalletAccessor};
 use moat_cli_common::Error;
 use rand::SeedableRng;
 use toml_base_config::BaseConfig;

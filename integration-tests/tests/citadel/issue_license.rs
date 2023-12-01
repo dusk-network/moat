@@ -6,10 +6,10 @@
 
 use dusk_jubjub::JubJubScalar;
 use dusk_wallet::WalletPath;
-use moat::license_provider::{LicenseIssuer, ReferenceLP};
-use moat::wallet_accessor::BlockchainAccessConfig;
-use moat::wallet_accessor::Password::PwdHash;
-use moat::{Error, JsonLoader, RequestCreator, RequestJson};
+use zk_citadel_moat::license_provider::{LicenseIssuer, ReferenceLP};
+use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
+use zk_citadel_moat::wallet_accessor::Password::PwdHash;
+use zk_citadel_moat::{Error, JsonLoader, RequestCreator, RequestJson};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;

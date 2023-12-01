@@ -14,8 +14,8 @@ use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat::wallet_accessor::{BlockchainAccessConfig, Password};
-use moat::{
+use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
+use zk_citadel_moat::{
     BcInquirer, CitadelInquirer, CrsGetter, LicenseCircuit, LicenseUser,
     RequestCreator, RequestSender, TxAwaiter,
 };

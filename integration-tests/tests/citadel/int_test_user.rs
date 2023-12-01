@@ -24,10 +24,10 @@ use dusk_bytes::DeserializableSlice;
 use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat::license_provider::{LicenseIssuer, ReferenceLP};
-use moat::wallet_accessor::BlockchainAccessConfig;
-use moat::wallet_accessor::Password::PwdHash;
-use moat::{
+use zk_citadel_moat::license_provider::{LicenseIssuer, ReferenceLP};
+use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
+use zk_citadel_moat::wallet_accessor::Password::PwdHash;
+use zk_citadel_moat::{
     BcInquirer, CitadelInquirer, CrsGetter, Error, JsonLoader, LicenseCircuit,
     LicenseSessionId, LicenseUser, PayloadRetriever, RequestCreator,
     RequestJson, RequestSender, TxAwaiter,

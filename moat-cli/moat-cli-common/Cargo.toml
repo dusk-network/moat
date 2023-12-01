@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-moat = { path = "../../moat" }
+zk-citadel-moat = { path = "../../moat" }
 dusk-plonk = { version = "0.16", default-features = false, features = ["rkyv-impl", "alloc"] }
 dusk-wallet = "0.20.1"
 clap = { version = "4.0", features = ["derive", "env"] }

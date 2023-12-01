@@ -5,8 +5,8 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::RuskHttpClient;
-use moat::wallet_accessor::BlockchainAccessConfig;
-use moat::{Error, PayloadRetriever, RequestScanner};
+use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
+use zk_citadel_moat::{Error, PayloadRetriever, RequestScanner};
 use toml_base_config::BaseConfig;
 use tracing::trace;
 use zk_citadel::license::Request;

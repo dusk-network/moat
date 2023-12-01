@@ -7,7 +7,7 @@
 use dusk_jubjub::JubJubScalar;
 use rand::rngs::OsRng;
 
-use moat::api::{Error, MoatContext, MoatCore};
+use zk_citadel_moat::api::{Error, MoatContext, MoatCore};
 
 #[tokio::main]
 #[allow(non_snake_case)]

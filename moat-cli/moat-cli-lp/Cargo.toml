@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 dusk-wallet = "0.20.1"
 dusk-jubjub = { version = "0.13", default-features = false }
-moat = { path = "../../moat" }
+zk-citadel-moat = { path = "../../moat" }
 moat-cli-common = { path = "../moat-cli-common" }
 dusk-pki = "0.13"
 zk-citadel = "0.6.0"

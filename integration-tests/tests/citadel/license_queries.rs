@@ -6,8 +6,8 @@
 
 use dusk_bls12_381::BlsScalar;
 use dusk_wallet::RuskHttpClient;
-use moat::wallet_accessor::BlockchainAccessConfig;
-use moat::{CitadelInquirer, Error, LicenseSessionId, StreamAux};
+use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
+use zk_citadel_moat::{CitadelInquirer, Error, LicenseSessionId, StreamAux};
 use toml_base_config::BaseConfig;
 use tracing::trace;
 

@@ -5,12 +5,12 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_wallet::{RuskHttpClient, WalletPath};
-use moat::wallet_accessor::{BlockchainAccessConfig, Password::PwdHash};
-use moat::{
+use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password::PwdHash};
+use zk_citadel_moat::{
     Error, PayloadExtractor, PayloadRetriever, RequestCreator, RequestJson,
     RequestSender, TxInquirer, MAX_REQUEST_SIZE,
 };
-use moat::{JsonLoader, TxAwaiter};
+use zk_citadel_moat::{JsonLoader, TxAwaiter};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use std::path::PathBuf;

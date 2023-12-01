@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 dusk-jubjub = { version = "0.13", default-features = false }
-moat = { path = "../moat" }
+zk-citadel-moat = { path = "../moat" }
 tokio = { version = "1.21", features = ["full"] }
 rand = "0.8"

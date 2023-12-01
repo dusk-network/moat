@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat::{Error, JsonLoader, PayloadExtractor, Tx};
+use zk_citadel_moat::{Error, JsonLoader, PayloadExtractor, Tx};
 use zk_citadel::license::Request;
 
 #[test]

@@ -7,7 +7,7 @@
 use crate::websocket::ws_common::*;
 use dusk_bls12_381::BlsScalar;
 use futures_util::{SinkExt, StreamExt};
-use moat::{Error, LicenseSession, MAX_RESPONSE_SIZE};
+use zk_citadel_moat::{Error, LicenseSession, MAX_RESPONSE_SIZE};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::Message;
 use tracing::trace;
