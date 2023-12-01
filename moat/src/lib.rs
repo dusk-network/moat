@@ -45,3 +45,4 @@ pub use contract_queries::{
 };
 pub use error::Error;
 pub use json_loader::JsonLoader;
+pub use utils::MoatCoreUtils;

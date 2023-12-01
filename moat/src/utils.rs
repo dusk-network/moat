@@ -38,12 +38,14 @@ pub struct SetupHolder {
 
 pub struct MoatCoreUtils {}
 
+const MAX_OBJECT_SIZE: usize = 16384;
+
 impl MoatCoreUtils {
     pub fn to_hash_hex<T>(object: &T) -> String
     where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
+        T: rkyv::Serialize<AllocSerializer<MAX_OBJECT_SIZE>>,
     {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
+        let blob = rkyv::to_bytes::<_, MAX_OBJECT_SIZE>(object)
             .expect("Serializing should be infallible")
             .to_vec();
         Self::blob_to_hash_hex(blob.as_slice())
@@ -54,6 +56,23 @@ impl MoatCoreUtils {
         hasher.update(blob);
         let result = hasher.finalize();
         hex::encode(result)
+    }
+
+    pub fn to_blob_hex<T>(object: &T) -> String
+    where
+        T: rkyv::Serialize<AllocSerializer<MAX_OBJECT_SIZE>>,
+    {
+        let blob = Self::to_blob(object);
+        hex::encode(blob)
+    }
+
+    pub fn to_blob<T>(object: &T) -> Vec<u8>
+    where
+        T: rkyv::Serialize<AllocSerializer<MAX_OBJECT_SIZE>>,
+    {
+        rkyv::to_bytes::<_, MAX_OBJECT_SIZE>(object)
+            .expect("Serializing should be infallible")
+            .to_vec()
     }
 
     pub async fn get_license_to_use(
@@ -128,12 +147,10 @@ impl MoatCoreUtils {
                     *sh_opt = Some(sh);
                     sh_opt.as_ref().expect("setup holder is not empty")
                 } else {
-                    println!("obtaining setup");
                     let pp_vec = CrsGetter::get_crs(&client).await?;
                     let pp =
                         // SAFETY: CRS vector is checked by the hash check when it is received from the node
                         unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
-                    println!("compiling circuit");
                     let (prover, verifier) =
                         Compiler::compile::<LicenseCircuit>(&pp, LABEL)
                             .expect("Compiling circuit should succeed");
@@ -155,9 +172,6 @@ impl MoatCoreUtils {
             .await?
             .expect("Opening obtained successfully");
 
-        println!(
-            "calculating proof and calling license contract's use_license"
-        );
         let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
             blockchain_access_config,
             wallet_path,

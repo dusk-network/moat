@@ -16,7 +16,7 @@ use zk_citadel::license::Request;
 pub struct RequestScanner;
 
 impl RequestScanner {
-    /// Returns requests found in the given collection of transactions
+    /// Returns requests found in the given collection of transactions.
     pub fn scan_transactions(txs: Transactions) -> Vec<Request> {
         let mut requests = Vec::new();
         for tx in &txs.transactions {

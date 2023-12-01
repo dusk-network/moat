@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::run_result::{
-    LicenseContractSummary, RunResult, ServiceRequestSummery, SessionSummary,
+    LicenseContractSummary, RunResult, ServiceRequestSummary, SessionSummary,
 };
 use crate::Error;
 use dusk_bls12_381::BlsScalar;
@@ -13,9 +13,9 @@ use dusk_bytes::DeserializableSlice;
 use dusk_jubjub::JubJubAffine;
 use dusk_pki::PublicSpendKey;
 use dusk_wallet::RuskHttpClient;
-use moat::wallet_accessor::BlockchainAccessConfig;
-use moat::{CitadelInquirer, LicenseSessionId};
 use zk_citadel::license::{Session, SessionCookie};
+use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
+use zk_citadel_moat::{CitadelInquirer, LicenseSessionId};
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -90,8 +90,7 @@ impl Command {
 
         let session = Session::from(&session.public_inputs);
         let granted = session.verifies_ok(sc, pk_lp, pk_sp);
-        println!("session id={}", hex::encode(session_id.id.to_bytes()));
-        let service_request_summary = ServiceRequestSummery {
+        let service_request_summary = ServiceRequestSummary {
             service_granted: granted,
         };
         Ok(RunResult::RequestService(service_request_summary))

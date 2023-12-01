@@ -9,9 +9,9 @@ use crate::{Command, Menu};
 use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::{Prover, Verifier};
 use dusk_wallet::WalletPath;
-use moat::wallet_accessor::{BlockchainAccessConfig, Password};
 use moat_cli_common::Error;
 use requestty::{ErrorKind, Question};
+use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 enum OpSelection {

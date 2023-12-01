@@ -24,12 +24,13 @@ use zk_citadel::license::License;
 pub struct CitadelInquirer {}
 
 impl CitadelInquirer {
-    // vector overhead length is needed as get_licenses returns licenses
+    // vector overhead length is needed because get_licenses returns licenses
     // serialized as vector of bytes
     const VEC_OVERHEAD_LEN: usize = 8;
     pub const GET_LICENSES_ITEM_LEN: usize =
         std::mem::size_of::<(u64, License)>() + Self::VEC_OVERHEAD_LEN;
 
+    /// Provides licenses issued within a given block height range
     pub async fn get_licenses(
         client: &RuskHttpClient,
         block_heights: Range<u64>,
@@ -46,6 +47,8 @@ impl CitadelInquirer {
         .wait()
     }
 
+    /// Provides opening for a given position in the merkle tree, or None if not
+    /// found.
     pub async fn get_merkle_opening(
         client: &RuskHttpClient,
         pos: u64,
@@ -59,6 +62,7 @@ impl CitadelInquirer {
         .await
     }
 
+    /// Provides session with a given session id, or None if not found.
     pub async fn get_session(
         client: &RuskHttpClient,
         session_id: LicenseSessionId,
@@ -72,6 +76,7 @@ impl CitadelInquirer {
         .await
     }
 
+    /// Provides information about license contract's state.
     pub async fn get_info(
         client: &RuskHttpClient,
     ) -> Result<(u32, u32, u32), Error> {

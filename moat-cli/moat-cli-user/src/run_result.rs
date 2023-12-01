@@ -4,12 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rkyv::ser::serializers::AllocSerializer;
 use std::fmt;
 use std::ops::Range;
 use zk_citadel::license::License;
-// use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
-use sha3::{Digest, Sha3_256};
+use zk_citadel_moat::MoatCoreUtils;
 
 pub struct SubmitRequestSummary {
     pub psk_lp: String,
@@ -71,7 +69,7 @@ impl fmt::Display for RunResult {
                         writeln!(
                             f,
                             "license: {} {}",
-                            RunResult::to_hash_hex(license),
+                            MoatCoreUtils::to_hash_hex(license),
                             if *is_owned { "owned" } else { "" }
                         )?;
                     }
@@ -84,7 +82,7 @@ impl fmt::Display for RunResult {
                         writeln!(
                             f,
                             "using license: {}",
-                            Self::blob_to_hash_hex(
+                            MoatCoreUtils::blob_to_hash_hex(
                                 summary.license_blob.as_slice()
                             )
                         )?;
@@ -97,7 +95,7 @@ impl fmt::Display for RunResult {
                         writeln!(
                             f,
                             "license {} used",
-                            Self::blob_to_hash_hex(
+                            MoatCoreUtils::blob_to_hash_hex(
                                 summary.license_blob.as_slice()
                             ),
                         )?;
@@ -127,41 +125,5 @@ impl fmt::Display for RunResult {
             }
             Empty => Ok(()),
         }
-    }
-}
-
-impl RunResult {
-    pub fn to_hash_hex<T>(object: &T) -> String
-    where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
-    {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
-            .expect("Serializing should be infallible")
-            .to_vec();
-        Self::blob_to_hash_hex(blob.as_slice())
-    }
-
-    pub fn blob_to_hash_hex(blob: &[u8]) -> String {
-        let mut hasher = Sha3_256::new();
-        hasher.update(blob);
-        let result = hasher.finalize();
-        hex::encode(result)
-    }
-
-    pub fn to_blob_hex<T>(object: &T) -> String
-    where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
-    {
-        let blob = Self::to_blob(object);
-        hex::encode(blob)
-    }
-
-    pub fn to_blob<T>(object: &T) -> Vec<u8>
-    where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
-    {
-        rkyv::to_bytes::<_, 16386>(object)
-            .expect("Serializing should be infallible")
-            .to_vec()
     }
 }

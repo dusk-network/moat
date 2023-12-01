@@ -34,8 +34,6 @@ impl MoatCore {
     pub fn get_wallet_keypair(
         moat_context: &MoatContext,
     ) -> Result<(PublicSpendKey, SecretSpendKey), Error> {
-        // We access the wallet to get the key pair
-        println!("wallet_path={}", &moat_context.wallet_path);
         let wallet_accessor = WalletAccessor::create(
             moat_context.wallet_path.clone(),
             moat_context.wallet_password.clone(),
@@ -165,8 +163,6 @@ impl MoatCore {
 
         match pos_license {
             Some((pos, license)) => {
-                println!("using license: {}", license_hash);
-
                 let (_tx_id, session_cookie) =
                     MoatCoreUtils::prove_and_send_use_license(
                         &moat_context.blockchain_access_config,

@@ -21,6 +21,7 @@ use tokio_tungstenite::tungstenite::Message;
 pub struct ContractInquirerWs {}
 
 impl ContractInquirerWs {
+    /// Calls a given query method of a given contract.
     pub async fn query_contract<A, R>(
         url: impl AsRef<str>,
         id: Option<i32>,

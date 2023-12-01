@@ -6,7 +6,9 @@
 
 use crate::websocket::ws_license_contract_mock_multi_server;
 use dusk_bls12_381::BlsScalar;
-use moat::{CitadelInquirerWs, Error, LicenseSession, LicenseSessionId};
+use zk_citadel_moat::{
+    CitadelInquirerWs, Error, LicenseSession, LicenseSessionId,
+};
 
 const TEST_DURATION_SECONDS: u64 = 4;
 const PORT: u32 = 9126;

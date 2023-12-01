@@ -22,7 +22,6 @@ impl TxInquirer {
             .map(|(txs, _)| txs)
     }
 
-    // range retrieval seems to have a limit of 10k
     /// returns transactions in a range and the current top block
     pub async fn txs_from_block_range(
         client: &RuskHttpClient,

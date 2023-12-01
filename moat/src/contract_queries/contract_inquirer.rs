@@ -18,6 +18,7 @@ use rkyv::{check_archived_root, Archive, Deserialize, Infallible};
 pub struct ContractInquirer {}
 
 impl ContractInquirer {
+    /// Calls a given query method of a given contract.
     pub async fn query_contract<A, R>(
         client: &RuskHttpClient,
         args: A,
@@ -52,6 +53,8 @@ impl ContractInquirer {
         Ok(r)
     }
 
+    /// Calls a given query method of a given contract.
+    /// Returns response as a stream to be processed by the caller.
     pub async fn query_contract_with_feeder<A>(
         client: &RuskHttpClient,
         args: A,

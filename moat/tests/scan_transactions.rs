@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use moat::{JsonLoader, RequestScanner, Transactions};
+use zk_citadel_moat::{JsonLoader, RequestScanner, Transactions};
 
 #[test]
 fn scan_transactions() {

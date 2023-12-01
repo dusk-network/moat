@@ -4,13 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::utils::MoatCoreUtils;
 use crate::wallet_accessor::BlockchainAccessConfig;
 use crate::{Error, JsonLoader, RequestScanner, MAX_REQUEST_SIZE};
 use blake3::OUT_LEN;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey, ViewKey};
-use rkyv::ser::serializers::AllocSerializer;
-use sha3::{Digest, Sha3_256};
 use std::collections::BTreeSet;
 use std::path::Path;
 use zk_citadel::license::Request;
@@ -62,9 +61,9 @@ impl ReferenceLP {
         Ok(Self::new(psk_lp, *ssk_lp, vk_lp))
     }
 
-    /// scans the entire blockchain for the requests to process
-    /// returns total number of requests found
-    /// and number of requests addressed to this LP
+    /// Scans the entire blockchain for the requests to process.
+    /// Returns total number of requests found and number of requests addressed
+    /// to this LP.
     pub async fn scan(
         &mut self,
         cfg: &BlockchainAccessConfig,
@@ -91,9 +90,9 @@ impl ReferenceLP {
         }
     }
 
-    /// scans the last n blocks for the requests to process
-    /// returns total number of requests found
-    /// and number of requests addressed to this LP
+    /// Scans last n blocks for the requests to process.
+    /// Returns the total number of requests found and the number of requests
+    /// addressed to this LP.
     pub async fn scan_last_blocks(
         &mut self,
         n: usize,
@@ -113,7 +112,7 @@ impl ReferenceLP {
     }
 
     /// Given a collection of requests, retain only those requests
-    /// in the collection which are owned by 'this' license provider
+    /// in the collection which are owned by 'this' license provider.
     pub fn retain_owned_requests(
         &self,
         mut requests: Vec<Request>,
@@ -136,6 +135,7 @@ impl ReferenceLP {
         }
     }
 
+    /// Take and remove one of the requests to process.
     pub fn take_request(&mut self) -> Option<Request> {
         self.requests_to_process.pop().map(|request| {
             self.requests_hashes.remove(&Self::hash_request(&request));
@@ -143,9 +143,10 @@ impl ReferenceLP {
         })
     }
 
+    /// Retrieve request with a given request hash, or None if not found.
     pub fn get_request(&mut self, request_hash: &String) -> Option<Request> {
         for (index, request) in self.requests_to_process.iter().enumerate() {
-            if Self::to_hash_hex(request) == *request_hash {
+            if MoatCoreUtils::to_hash_hex(request) == *request_hash {
                 self.requests_hashes.remove(&Self::hash_request(request));
                 return Some(self.requests_to_process.remove(index));
             }
@@ -160,22 +161,5 @@ impl ReferenceLP {
                 .as_slice(),
         )
         .as_bytes()
-    }
-
-    fn to_hash_hex<T>(object: &T) -> String
-    where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
-    {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
-            .expect("Serializing should be infallible")
-            .to_vec();
-        Self::blob_to_hash_hex(blob.as_slice())
-    }
-
-    fn blob_to_hash_hex(blob: &[u8]) -> String {
-        let mut hasher = Sha3_256::new();
-        hasher.update(blob);
-        let result = hasher.finalize();
-        hex::encode(result)
     }
 }
