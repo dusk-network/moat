@@ -1,6 +1,11 @@
 [package]
 name = "zk-citadel-moat"
 version = "0.1.0"
+authors = [
+    "Milosz Muszynski <milosz@dusk.network>",
+    "Xavier Salleras Soler <xavier@dusk.network>"
+]
+
 edition = "2021"
 
 [dependencies]

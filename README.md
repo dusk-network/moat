@@ -53,4 +53,4 @@ cargo r --release --bin moat-cli-sp -- --wallet-pass <PASSWORD>
 
 ## Moat API
 
-An API meant for developers willing to integrate Citadel in their code is available [here](https://github.com/dusk-network/moat/blob/main/moat-core/src/api.rs). You can find an example on how to use the API into `moat-example`.
+An API meant for developers willing to integrate Citadel in their code is available [here](https://github.com/dusk-network/moat/blob/main/moat/src/api.rs). You can find an example on how to use the API into `moat-example`.
