@@ -1,7 +1,7 @@
 [package]
 name = "zk-citadel-moat"
 description = "SDK for Citadel, a ZK-based SSI system integrated in Dusk Network."
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     "Milosz Muszynski <milosz@dusk.network>",
     "Xavier Salleras <xavier@dusk.network>"
