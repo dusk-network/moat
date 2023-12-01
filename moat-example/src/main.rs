@@ -68,7 +68,7 @@ async fn main() -> Result<(), Error> {
         MoatCore::get_owned_licenses(&ssk_user, &moat_context).await?;
 
     // Use a license
-    let psk_sp = psk_lp; // we set the same one than the LP just for testing
+    let psk_sp = psk_lp; // we set the same key as the one for LP just for testing
     let challenge = JubJubScalar::from(1234u64);
     let session_cookie = MoatCore::use_license(
         &moat_context,

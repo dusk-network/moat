@@ -7,8 +7,8 @@
 use crate::websocket::{
     send_request_to_ws_server, ws_license_contract_mock_server,
 };
-use zk_citadel_moat::Error;
 use tracing::trace;
+use zk_citadel_moat::Error;
 
 const TEST_DURATION_SECONDS: u64 = 4;
 const PORT: u32 = 9125;

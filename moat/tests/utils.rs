@@ -6,11 +6,11 @@
 
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_pki::SecretSpendKey;
-use zk_citadel_moat::{Error, RequestCreator, MAX_REQUEST_SIZE};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use sha2::Digest;
 use sha2::Sha256;
+use zk_citadel_moat::{Error, RequestCreator, MAX_REQUEST_SIZE};
 
 #[test]
 #[ignore]

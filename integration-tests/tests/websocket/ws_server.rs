@@ -7,10 +7,10 @@
 use crate::websocket::ws_common::*;
 use dusk_bls12_381::BlsScalar;
 use futures_util::{SinkExt, StreamExt};
-use zk_citadel_moat::{Error, LicenseSession, MAX_RESPONSE_SIZE};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::Message;
 use tracing::trace;
+use zk_citadel_moat::{Error, LicenseSession, MAX_RESPONSE_SIZE};
 
 pub async fn ws_license_contract_mock_server(
     seconds: u64,

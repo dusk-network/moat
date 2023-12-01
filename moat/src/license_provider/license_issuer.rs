@@ -43,6 +43,8 @@ impl LicenseIssuer {
         }
     }
 
+    /// Issue license for a given request, License Provider SSK, and attribute
+    /// data. Returns a serialized license.
     pub async fn issue_license<R: RngCore + CryptoRng>(
         &self,
         rng: &mut R,

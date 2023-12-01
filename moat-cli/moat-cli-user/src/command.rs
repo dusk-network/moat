@@ -14,14 +14,14 @@ use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::prelude::*;
 use dusk_wallet::{RuskHttpClient, WalletPath};
+use moat_cli_common::Error;
+use rand::rngs::{OsRng, StdRng};
+use zk_citadel::license::{License, SessionCookie};
 use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel_moat::{
     BcInquirer, CitadelInquirer, CrsGetter, LicenseCircuit, LicenseUser,
     RequestCreator, RequestSender, TxAwaiter,
 };
-use moat_cli_common::Error;
-use rand::rngs::{OsRng, StdRng};
-use zk_citadel::license::{License, SessionCookie};
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -124,7 +124,7 @@ impl Command {
         let psk_lp =
             PublicSpendKey::from_slice(psk_lp_bytes_formatted.as_slice())?;
 
-        let rng = &mut StdRng::from_entropy(); // seed_from_u64(0xcafe);
+        let rng = &mut StdRng::from_entropy();
         let request = RequestCreator::create(&ssk, &psk_lp, rng)?;
         let request_hash = RunResult::to_hash_hex(&request);
         let tx_id = RequestSender::send_request(

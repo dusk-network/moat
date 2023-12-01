@@ -15,6 +15,7 @@ use zk_citadel::license::Request;
 pub struct RequestSender;
 
 impl RequestSender {
+    /// Sends (submits) request into the blockchain.
     pub async fn send_request(
         request: Request,
         config: &BlockchainAccessConfig,

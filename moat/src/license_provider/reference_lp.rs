@@ -23,6 +23,7 @@ pub struct LPConfig {
 impl JsonLoader for LPConfig {}
 
 const BLOCKS_RANGE_LEN: u64 = 10000;
+const MAX_OBJECT_SIZE: usize = 16384;
 
 pub struct ReferenceLP {
     pub psk_lp: PublicSpendKey,
@@ -62,9 +63,9 @@ impl ReferenceLP {
         Ok(Self::new(psk_lp, *ssk_lp, vk_lp))
     }
 
-    /// scans the entire blockchain for the requests to process
-    /// returns total number of requests found
-    /// and number of requests addressed to this LP
+    /// Scans the entire blockchain for the requests to process.
+    /// Returns total number of requests found and number of requests addressed
+    /// to this LP.
     pub async fn scan(
         &mut self,
         cfg: &BlockchainAccessConfig,
@@ -91,9 +92,9 @@ impl ReferenceLP {
         }
     }
 
-    /// scans the last n blocks for the requests to process
-    /// returns total number of requests found
-    /// and number of requests addressed to this LP
+    /// Scans last n blocks for the requests to process.
+    /// Returns the total number of requests found and the number of requests
+    /// addressed to this LP.
     pub async fn scan_last_blocks(
         &mut self,
         n: usize,
@@ -113,7 +114,7 @@ impl ReferenceLP {
     }
 
     /// Given a collection of requests, retain only those requests
-    /// in the collection which are owned by 'this' license provider
+    /// in the collection which are owned by 'this' license provider.
     pub fn retain_owned_requests(
         &self,
         mut requests: Vec<Request>,
@@ -136,6 +137,7 @@ impl ReferenceLP {
         }
     }
 
+    /// Take and remove one of the requests to process.
     pub fn take_request(&mut self) -> Option<Request> {
         self.requests_to_process.pop().map(|request| {
             self.requests_hashes.remove(&Self::hash_request(&request));
@@ -143,6 +145,7 @@ impl ReferenceLP {
         })
     }
 
+    /// Retrieve request with a given request hash, or None if not found.
     pub fn get_request(&mut self, request_hash: &String) -> Option<Request> {
         for (index, request) in self.requests_to_process.iter().enumerate() {
             if Self::to_hash_hex(request) == *request_hash {
@@ -164,9 +167,9 @@ impl ReferenceLP {
 
     fn to_hash_hex<T>(object: &T) -> String
     where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
+        T: rkyv::Serialize<AllocSerializer<MAX_OBJECT_SIZE>>,
     {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
+        let blob = rkyv::to_bytes::<_, MAX_OBJECT_SIZE>(object)
             .expect("Serializing should be infallible")
             .to_vec();
         Self::blob_to_hash_hex(blob.as_slice())

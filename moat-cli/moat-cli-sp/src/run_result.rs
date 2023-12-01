@@ -6,7 +6,7 @@
 
 use std::fmt;
 
-pub struct ServiceRequestSummery {
+pub struct ServiceRequestSummary {
     pub service_granted: bool,
 }
 
@@ -23,7 +23,7 @@ pub struct LicenseContractSummary {
 #[allow(clippy::large_enum_variant)]
 /// Possible results of running a command in interactive mode
 pub enum RunResult {
-    RequestService(ServiceRequestSummery),
+    RequestService(ServiceRequestSummary),
     GetSession(Option<SessionSummary>),
     ShowState(LicenseContractSummary),
 }

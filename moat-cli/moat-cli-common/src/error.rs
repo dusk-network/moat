@@ -10,9 +10,6 @@ use std::num::ParseIntError;
 use std::sync::Arc;
 use thiserror::Error;
 
-// todo: rename CliError to Error
-// todo: make sure it is used in other CLIs as well
-
 #[derive(Error, Debug, Clone)]
 pub enum Error {
     /// Moat core error

@@ -50,7 +50,6 @@ pub struct QueryResult {
     pub block_txs: Vec<SpentTx>,
 }
 
-// {"block":{"header":{"height":77065}}}
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct QueryResult2 {
     pub block: Block,

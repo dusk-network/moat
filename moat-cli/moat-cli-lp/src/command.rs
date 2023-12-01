@@ -11,11 +11,11 @@ use crate::SeedableRng;
 use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
 use dusk_wallet::{RuskHttpClient, WalletPath};
+use moat_cli_common::Error;
+use rand::rngs::StdRng;
 use zk_citadel_moat::license_provider::{LicenseIssuer, ReferenceLP};
 use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel_moat::{BcInquirer, CitadelInquirer};
-use moat_cli_common::Error;
-use rand::rngs::StdRng;
 
 /// Commands that can be run against the Moat
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]

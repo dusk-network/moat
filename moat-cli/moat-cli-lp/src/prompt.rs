@@ -9,9 +9,7 @@ use requestty::{ErrorKind, Question};
 pub(crate) fn request_request_hash() -> Result<String, ErrorKind> {
     let q = Question::input("request_hash")
         .message("Please enter request hash:".to_string())
-        .validate_on_key(|_, _| {
-            true // todo: add some validation of the request hash
-        })
+        .validate_on_key(|_, _| true)
         .validate(|request_hash, _| {
             if request_hash.is_empty() {
                 Err("Please enter a valid request hash".to_string())
@@ -29,9 +27,7 @@ pub(crate) fn request_request_hash() -> Result<String, ErrorKind> {
 pub(crate) fn request_attr_data() -> Result<String, ErrorKind> {
     let q = Question::input("attr_data")
         .message("Please enter the attribute data:".to_string())
-        .validate_on_key(|_, _| {
-            true // todo: add some validation of the attr_data
-        })
+        .validate_on_key(|_, _| true)
         .validate(|attr_data, _| {
             if attr_data.is_empty() {
                 Err("Please enter valid attribute data".to_string())

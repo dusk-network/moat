@@ -128,12 +128,10 @@ impl MoatCoreUtils {
                     *sh_opt = Some(sh);
                     sh_opt.as_ref().expect("setup holder is not empty")
                 } else {
-                    println!("obtaining setup");
                     let pp_vec = CrsGetter::get_crs(&client).await?;
                     let pp =
                         // SAFETY: CRS vector is checked by the hash check when it is received from the node
                         unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
-                    println!("compiling circuit");
                     let (prover, verifier) =
                         Compiler::compile::<LicenseCircuit>(&pp, LABEL)
                             .expect("Compiling circuit should succeed");
@@ -155,9 +153,6 @@ impl MoatCoreUtils {
             .await?
             .expect("Opening obtained successfully");
 
-        println!(
-            "calculating proof and calling license contract's use_license"
-        );
         let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
             blockchain_access_config,
             wallet_path,
