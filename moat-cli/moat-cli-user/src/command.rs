@@ -20,7 +20,7 @@ use zk_citadel::license::{License, SessionCookie};
 use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel_moat::{
     BcInquirer, CitadelInquirer, CrsGetter, LicenseCircuit, LicenseUser,
-    RequestCreator, RequestSender, TxAwaiter,
+    MoatCoreUtils, RequestCreator, RequestSender, TxAwaiter,
 };
 
 use std::fs::File;
@@ -126,7 +126,7 @@ impl Command {
 
         let rng = &mut StdRng::from_entropy();
         let request = RequestCreator::create(&ssk, &psk_lp, rng)?;
-        let request_hash = RunResult::to_hash_hex(&request);
+        let request_hash = MoatCoreUtils::to_hash_hex(&request);
         let tx_id = RequestSender::send_request(
             request,
             blockchain_access_config,
@@ -197,7 +197,10 @@ impl Command {
         .await?;
         Ok(match pos_license {
             Some((pos, license)) => {
-                println!("using license: {}", RunResult::to_hash_hex(&license));
+                println!(
+                    "using license: {}",
+                    MoatCoreUtils::to_hash_hex(&license)
+                );
                 let challenge =
                     JubJubScalar::from(challenge_bytes.parse::<u64>()?);
 
@@ -225,13 +228,13 @@ impl Command {
                 )
                 .await?;
                 let summary = UseLicenseSummary {
-                    license_blob: RunResult::to_blob(&license),
+                    license_blob: MoatCoreUtils::to_blob(&license),
                     tx_id: hex::encode(tx_id.to_bytes()),
                     user_attr: hex::encode(session_cookie.attr_data.to_bytes()),
                     session_id: hex::encode(
                         session_cookie.session_id.to_bytes(),
                     ),
-                    session_cookie: RunResult::to_blob_hex(&session_cookie),
+                    session_cookie: MoatCoreUtils::to_blob_hex(&session_cookie),
                 };
                 RunResult::UseLicense(Some(summary))
             }
@@ -273,7 +276,7 @@ impl Command {
             None
         } else {
             for (pos, license) in pairs.iter() {
-                if license_hash == RunResult::to_hash_hex(license) {
+                if license_hash == MoatCoreUtils::to_hash_hex(license) {
                     return Ok(Some((*pos, license.clone())));
                 }
             }

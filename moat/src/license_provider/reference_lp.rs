@@ -4,13 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::utils::MoatCoreUtils;
 use crate::wallet_accessor::BlockchainAccessConfig;
 use crate::{Error, JsonLoader, RequestScanner, MAX_REQUEST_SIZE};
 use blake3::OUT_LEN;
 use dusk_bytes::DeserializableSlice;
 use dusk_pki::{PublicSpendKey, SecretSpendKey, ViewKey};
-use rkyv::ser::serializers::AllocSerializer;
-use sha3::{Digest, Sha3_256};
 use std::collections::BTreeSet;
 use std::path::Path;
 use zk_citadel::license::Request;
@@ -23,7 +22,6 @@ pub struct LPConfig {
 impl JsonLoader for LPConfig {}
 
 const BLOCKS_RANGE_LEN: u64 = 10000;
-const MAX_OBJECT_SIZE: usize = 16384;
 
 pub struct ReferenceLP {
     pub psk_lp: PublicSpendKey,
@@ -148,7 +146,7 @@ impl ReferenceLP {
     /// Retrieve request with a given request hash, or None if not found.
     pub fn get_request(&mut self, request_hash: &String) -> Option<Request> {
         for (index, request) in self.requests_to_process.iter().enumerate() {
-            if Self::to_hash_hex(request) == *request_hash {
+            if MoatCoreUtils::to_hash_hex(request) == *request_hash {
                 self.requests_hashes.remove(&Self::hash_request(request));
                 return Some(self.requests_to_process.remove(index));
             }
@@ -163,22 +161,5 @@ impl ReferenceLP {
                 .as_slice(),
         )
         .as_bytes()
-    }
-
-    fn to_hash_hex<T>(object: &T) -> String
-    where
-        T: rkyv::Serialize<AllocSerializer<MAX_OBJECT_SIZE>>,
-    {
-        let blob = rkyv::to_bytes::<_, MAX_OBJECT_SIZE>(object)
-            .expect("Serializing should be infallible")
-            .to_vec();
-        Self::blob_to_hash_hex(blob.as_slice())
-    }
-
-    fn blob_to_hash_hex(blob: &[u8]) -> String {
-        let mut hasher = Sha3_256::new();
-        hasher.update(blob);
-        let result = hasher.finalize();
-        hex::encode(result)
     }
 }

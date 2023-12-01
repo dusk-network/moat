@@ -4,12 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rkyv::ser::serializers::AllocSerializer;
 use std::fmt;
 use std::ops::Range;
 use zk_citadel::license::{License, Request};
-// use rkyv::{check_archived_root, Archive, Deserialize, Infallible, Serialize};
-use sha3::{Digest, Sha3_256};
+use zk_citadel_moat::MoatCoreUtils;
 
 pub struct RequestsLPSummary {
     pub found_total: usize,
@@ -50,7 +48,7 @@ impl fmt::Display for RunResult {
                     writeln!(
                         f,
                         "request to process by LP: {}",
-                        RunResult::to_hash_hex(request)
+                        MoatCoreUtils::to_hash_hex(request)
                     )?;
                 }
                 Ok(())
@@ -60,7 +58,7 @@ impl fmt::Display for RunResult {
                     writeln!(
                         f,
                         "issuing license for request: {}",
-                        RunResult::to_hash_hex(&summary.request)
+                        MoatCoreUtils::to_hash_hex(&summary.request)
                     )?;
                     writeln!(
                         f,
@@ -70,7 +68,7 @@ impl fmt::Display for RunResult {
                     writeln!(
                         f,
                         "issued license: {}",
-                        RunResult::blob_to_hash_hex(
+                        MoatCoreUtils::blob_to_hash_hex(
                             summary.license_blob.as_slice()
                         )
                     )?;
@@ -94,7 +92,7 @@ impl fmt::Display for RunResult {
                         writeln!(
                             f,
                             "license: {}",
-                            RunResult::to_hash_hex(license),
+                            MoatCoreUtils::to_hash_hex(license),
                         )?;
                     }
                 }
@@ -109,24 +107,5 @@ impl fmt::Display for RunResult {
                 Ok(())
             }
         }
-    }
-}
-
-impl RunResult {
-    pub fn to_hash_hex<T>(object: &T) -> String
-    where
-        T: rkyv::Serialize<AllocSerializer<16386>>,
-    {
-        let blob = rkyv::to_bytes::<_, 16386>(object)
-            .expect("Serializing should be infallible")
-            .to_vec();
-        Self::blob_to_hash_hex(blob.as_slice())
-    }
-
-    pub fn blob_to_hash_hex(blob: &[u8]) -> String {
-        let mut hasher = Sha3_256::new();
-        hasher.update(blob);
-        let result = hasher.finalize();
-        hex::encode(result)
     }
 }
