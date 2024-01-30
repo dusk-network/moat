@@ -6,7 +6,7 @@
 
 use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
-use dusk_plonk::composer::{Prover, Verifier};
+use dusk_plonk::composer::Prover;
 use dusk_wallet::{RuskHttpClient, Wallet, WalletPath};
 
 use zk_citadel::license::{License, Request, Session, SessionCookie};
@@ -46,6 +46,46 @@ impl MoatCore {
             .wallet
             .spending_keys(moat_context.wallet.default_address())
             .map_err(|e| Error::DuskWallet(Arc::from(e)))
+    }
+
+    /// Check if the prover file exists and read it. Otherwise,
+    /// Retrieve the CRS from the node and compile the circuit to get
+    /// the prover.
+    pub async fn get_prover(
+        moat_context: &MoatContext,
+    ) -> Result<Prover, Error> {
+        let wallet_dir_path = match moat_context.wallet_path.dir() {
+            Some(path) => path,
+            None => panic!(),
+        };
+
+        let prover_path = &wallet_dir_path.join("moat_prover.dat");
+
+        if prover_path.exists() {
+            let mut file = File::open(prover_path)?;
+            let mut prover_bytes = vec![];
+            file.read_to_end(&mut prover_bytes)?;
+            let prover = Prover::try_from_bytes(prover_bytes)?;
+
+            Ok(prover)
+        } else {
+            let client = RuskHttpClient::new(
+                moat_context.blockchain_access_config.rusk_address.clone(),
+            );
+
+            let pp_vec = CrsGetter::get_crs(&client).await?;
+            let pp =
+                // SAFETY: CRS vector is checked by the hash check when it is received from the node
+                unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
+            let (prover, _verifier) =
+                Compiler::compile::<LicenseCircuit>(&pp, LABEL)
+                    .expect("Compiling circuit should succeed");
+
+            let mut file = File::create(prover_path)?;
+            file.write_all(prover.to_bytes().as_slice())?;
+
+            Ok(prover)
+        }
     }
 
     /// Create and send a transaction containing a license request
@@ -116,7 +156,7 @@ impl MoatCore {
         moat_context: &MoatContext,
         attr_data: &JubJubScalar,
         rng: &mut R,
-    ) -> Result<String, Error> {
+    ) -> Result<(String, BlsScalar), Error> {
         let (_psk_lp, ssk_lp) = MoatCore::get_wallet_keypair(moat_context)?;
         let mut reference_lp = ReferenceLP::create_with_ssk(&ssk_lp)?;
 
@@ -124,22 +164,23 @@ impl MoatCore {
             .scan(&moat_context.blockchain_access_config)
             .await?;
 
-        let (_tx_id, license_blob) =
+        let (tx_id, license_blob) =
             LicenseIssuer::issue_license(rng, request, attr_data, moat_context)
                 .await?;
-        Ok(MoatCoreUtils::blob_to_hash_hex(&license_blob))
+        Ok((MoatCoreUtils::blob_to_hash_hex(&license_blob), tx_id))
     }
 
     /// Create and send a transaction containing a proof that uses a given
     /// license
     pub async fn use_license(
+        prover: &Prover,
         moat_context: &MoatContext,
         psk_lp: &PublicSpendKey,
         psk_sp: &PublicSpendKey,
         challenge: &JubJubScalar,
         license: &License,
         rng: &mut OsRng,
-    ) -> Result<Option<SessionCookie>, Error> {
+    ) -> Result<Option<(SessionCookie, BlsScalar)>, Error> {
         let license_hash = MoatCoreUtils::to_hash_hex(license);
         let pos_license = MoatCoreUtils::get_license_to_use(
             moat_context,
@@ -149,8 +190,9 @@ impl MoatCore {
 
         match pos_license {
             Some((pos, license)) => {
-                let (_tx_id, session_cookie) =
+                let (tx_id, session_cookie) =
                     MoatCoreUtils::prove_and_send_use_license(
+                        prover,
                         moat_context,
                         psk_lp,
                         psk_sp,
@@ -161,7 +203,7 @@ impl MoatCore {
                     )
                     .await?;
 
-                Ok(Some(session_cookie))
+                Ok(Some((session_cookie, tx_id)))
             }
             _ => Ok(None),
         }
@@ -197,8 +239,7 @@ impl MoatCore {
 pub struct MoatContext {
     pub blockchain_access_config: BlockchainAccessConfig,
     pub wallet: Wallet<WalletAccessor>,
-    pub prover: Prover,
-    pub verifier: Verifier,
+    pub wallet_path: WalletPath,
     pub gas_limit: u64,
     pub gas_price: u64,
 }
@@ -227,60 +268,12 @@ impl MoatContext {
             .get_wallet(&blockchain_access_config)
             .await?;
 
-        let wallet_dir_path = match wallet_path.dir() {
-            Some(path) => path,
-            None => panic!(),
-        };
-
-        let prover_path = &wallet_dir_path.join("moat_prover.dat");
-        let verifier_path = &wallet_dir_path.join("moat_verifier.dat");
-
-        if prover_path.exists() && verifier_path.exists() {
-            let mut file = File::open(prover_path)?;
-            let mut prover_bytes = vec![];
-            file.read_to_end(&mut prover_bytes)?;
-            let prover = Prover::try_from_bytes(prover_bytes)?;
-
-            file = File::open(verifier_path)?;
-            let mut verifier_bytes = vec![];
-            file.read_to_end(&mut verifier_bytes)?;
-            let verifier = Verifier::try_from_bytes(verifier_bytes)?;
-
-            Ok(Self {
-                blockchain_access_config,
-                wallet,
-                prover,
-                verifier,
-                gas_limit,
-                gas_price,
-            })
-        } else {
-            let client = RuskHttpClient::new(
-                blockchain_access_config.rusk_address.clone(),
-            );
-
-            let pp_vec = CrsGetter::get_crs(&client).await?;
-            let pp =
-                // SAFETY: CRS vector is checked by the hash check when it is received from the node
-                unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
-            let (prover, verifier) =
-                Compiler::compile::<LicenseCircuit>(&pp, LABEL)
-                    .expect("Compiling circuit should succeed");
-
-            let mut file = File::create(prover_path)?;
-            file.write_all(prover.to_bytes().as_slice())?;
-
-            file = File::create(verifier_path)?;
-            file.write_all(verifier.to_bytes().as_slice())?;
-
-            Ok(Self {
-                blockchain_access_config,
-                wallet,
-                prover,
-                verifier,
-                gas_limit,
-                gas_price,
-            })
-        }
+        Ok(Self {
+            blockchain_access_config,
+            wallet,
+            wallet_path,
+            gas_limit,
+            gas_price,
+        })
     }
 }

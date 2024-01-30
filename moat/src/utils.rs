@@ -6,6 +6,7 @@
 
 use crate::api::MoatContext;
 use dusk_pki::PublicSpendKey;
+use dusk_plonk::composer::Prover;
 use rand::rngs::OsRng;
 
 use zk_citadel::license::{License, SessionCookie};
@@ -89,6 +90,7 @@ impl MoatCoreUtils {
 
     #[allow(clippy::too_many_arguments)]
     pub async fn prove_and_send_use_license(
+        prover: &Prover,
         moat_context: &MoatContext,
         psk_lp: &PublicSpendKey,
         psk_sp: &PublicSpendKey,
@@ -106,6 +108,7 @@ impl MoatCoreUtils {
             .expect("Opening obtained successfully");
 
         let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
+            prover,
             moat_context,
             psk_lp,
             psk_sp,

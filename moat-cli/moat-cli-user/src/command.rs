@@ -250,10 +250,14 @@ impl Command {
             .await?
             .expect("Opening obtained successfully");
 
+        println!("getting prover");
+        let prover = MoatCore::get_prover(moat_context).await?;
+
         println!(
             "calculating proof and calling license contract's use_license"
         );
         let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
+            &prover,
             moat_context,
             &psk_lp,
             &psk_sp,

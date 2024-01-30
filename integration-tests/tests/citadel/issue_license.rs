@@ -40,7 +40,7 @@ async fn issue_license() -> Result<(), Error> {
     let (_request_hash, request_tx_id) =
         MoatCore::request_license(&psk_lp, &moat_context, &mut OsRng).await?;
 
-    let attr_data = JubJubScalar::from(1233434334u64);
+    let attr_data = JubJubScalar::from(1234u64);
 
     let tx_id = hex::encode(request_tx_id.to_bytes());
     let client = RuskHttpClient::new(

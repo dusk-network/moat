@@ -14,6 +14,7 @@ use bytecheck::CheckBytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::JubJubScalar;
 use dusk_pki::PublicSpendKey;
+use dusk_plonk::composer::Prover;
 use dusk_plonk::prelude::Proof;
 use poseidon_merkle::Opening;
 use rand::rngs::OsRng;
@@ -36,6 +37,7 @@ impl LicenseUser {
     /// as arguments to the license contract's use_license method.
     /// Returns transaction id and a session cookie.
     pub async fn prove_and_use_license(
+        prover: &Prover,
         moat_context: &MoatContext,
         psk_lp: &PublicSpendKey,
         psk_sp: &PublicSpendKey,
@@ -50,17 +52,10 @@ impl LicenseUser {
         );
         let circuit = LicenseCircuit::new(&cpp, &sc);
 
-        let (proof, public_inputs) = moat_context
-            .prover
-            .prove(rng, &circuit)
-            .expect("Proving should succeed");
+        let (proof, public_inputs) =
+            prover.prove(rng, &circuit).expect("Proving should succeed");
 
         assert!(!public_inputs.is_empty());
-
-        moat_context
-            .verifier
-            .verify(&proof, &public_inputs)
-            .expect("Verifying the circuit should succeed");
 
         let use_license_arg = UseLicenseArg {
             proof,

@@ -182,8 +182,13 @@ async fn user_round_trip() -> Result<(), Error> {
     // so that it is different every time we run the test
     let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
     let challenge = JubJubScalar::from(num_sessions as u64 + 1);
+
+    info!("getting prover (as a user)");
+    let prover = MoatCore::get_prover(&moat_context).await?;
+
     info!("proving license and calling use_license (as a user)");
     let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
+        &prover,
         &moat_context,
         &psk_lp,
         &psk_lp,
