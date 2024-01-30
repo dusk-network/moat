@@ -30,20 +30,16 @@ async fn main() -> Result<(), Error> {
         wallet_password,
         gas_limit,
         gas_price,
-    )?;
+    )
+    .await?;
 
     // Retrieve the keypair from the installed wallet
     let (psk_user, ssk_user) = MoatCore::get_wallet_keypair(&moat_context)?;
 
     // Submit a request to the Blockchain
     let psk_lp = psk_user; // we specify the same key just for testing
-    let request_hash = MoatCore::request_license(
-        &ssk_user,
-        &psk_lp,
-        &moat_context,
-        &mut OsRng,
-    )
-    .await?;
+    let request_hash =
+        MoatCore::request_license(&psk_lp, &moat_context, &mut OsRng).await?;
     println!("Request transacted: {:?}", request_hash);
 
     // Get owned requests
@@ -55,7 +51,6 @@ async fn main() -> Result<(), Error> {
     let rng = &mut OsRng;
     let license_hash = MoatCore::issue_license(
         requests.get(0).expect("A request was owned."),
-        &ssk_lp,
         &moat_context,
         &attr_data,
         rng,
@@ -74,7 +69,6 @@ async fn main() -> Result<(), Error> {
         &moat_context,
         &psk_lp,
         &psk_sp,
-        &ssk_user,
         &challenge,
         licenses.get(0).expect("A license was owned."),
         rng,

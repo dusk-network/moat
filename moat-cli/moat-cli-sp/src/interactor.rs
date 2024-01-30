@@ -4,14 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::config::SPCliConfig;
 use crate::prompt;
 use crate::{Command, Menu};
-use dusk_pki::PublicSpendKey;
-use dusk_wallet::WalletPath;
 use moat_cli_common::Error;
 use requestty::{ErrorKind, Question};
-use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
+use zk_citadel_moat::api::MoatContext;
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 enum OpSelection {
@@ -65,13 +62,7 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
 }
 
 pub struct Interactor {
-    pub wallet_path: WalletPath,
-    pub psw: Password,
-    pub blockchain_access_config: BlockchainAccessConfig,
-    pub config: SPCliConfig,
-    pub gas_limit: u64,
-    pub gas_price: u64,
-    pub psk_sp: PublicSpendKey,
+    pub moat_context: MoatContext,
 }
 
 impl Interactor {
@@ -81,9 +72,7 @@ impl Interactor {
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    let result = command
-                        .run(&self.blockchain_access_config, self.psk_sp)
-                        .await;
+                    let result = command.run(&self.moat_context).await;
                     match result {
                         Ok(run_result) => {
                             println!("{}", run_result);

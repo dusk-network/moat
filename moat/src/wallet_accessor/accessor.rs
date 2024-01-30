@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::api::MoatContext;
 use crate::wallet_accessor::BlockchainAccessConfig;
 use crate::wallet_accessor::Password::{Pwd, PwdHash};
 use dusk_bls12_381::BlsScalar;
@@ -70,7 +71,7 @@ impl WalletAccessor {
         })
     }
 
-    async fn get_wallet(
+    pub async fn get_wallet(
         &self,
         cfg: &BlockchainAccessConfig,
     ) -> Result<Wallet<WalletAccessor>, dusk_wallet::Error> {
@@ -91,39 +92,6 @@ impl WalletAccessor {
         Ok(wallet)
     }
 
-    /// submits a transaction which will execute a given method
-    /// of a given contract
-    pub async fn execute_contract_method<C>(
-        &self,
-        data: C,
-        contract_id: ModuleId,
-        call_name: String,
-        cfg: &BlockchainAccessConfig,
-        gas_limit: u64,
-        gas_price: u64,
-    ) -> Result<BlsScalar, dusk_wallet::Error>
-    where
-        C: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
-    {
-        let wallet = self.get_wallet(cfg).await?;
-
-        debug!(
-            "Sending tx with a call to method '{}' of contract='{}'",
-            call_name.clone(),
-            hex::encode(contract_id)
-        );
-
-        let sender = wallet.default_address();
-        let mut gas = Gas::new(gas_limit);
-        gas.set_price(gas_price);
-
-        let tx = wallet
-            .execute(sender, contract_id, call_name.clone(), data, gas)
-            .await?;
-        let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
-        Ok(tx_id)
-    }
-
     /// provides hashes of all notes belonging to the default address
     pub async fn get_notes(
         &self,
@@ -132,4 +100,40 @@ impl WalletAccessor {
         let wallet = self.get_wallet(cfg).await?;
         wallet.get_all_notes(wallet.default_address()).await
     }
+}
+
+/// submits a transaction which will execute a given method
+/// of a given contract
+pub async fn execute_contract_method<C>(
+    moat_context: &MoatContext,
+    data: C,
+    contract_id: ModuleId,
+    call_name: String,
+) -> Result<BlsScalar, dusk_wallet::Error>
+where
+    C: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
+{
+    debug!(
+        "Sending tx with a call to method '{}' of contract='{}'",
+        call_name.clone(),
+        hex::encode(contract_id)
+    );
+
+    let sender = moat_context.wallet.default_address();
+    let mut gas = Gas::new(moat_context.gas_limit);
+    gas.set_price(moat_context.gas_price);
+
+    moat_context.wallet.sync().await?;
+    assert!(
+        moat_context.wallet.is_online().await,
+        "Wallet should be online"
+    );
+
+    let tx = moat_context
+        .wallet
+        .execute(sender, contract_id, call_name.clone(), data, gas)
+        .await?;
+
+    let tx_id = rusk_abi::hash::Hasher::digest(tx.to_hash_input_bytes());
+    Ok(tx_id)
 }

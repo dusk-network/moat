@@ -4,19 +4,17 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::{RuskHttpClient, WalletPath};
+use dusk_wallet::RuskHttpClient;
 use phoenix_core::transaction::ModuleId;
-use std::path::PathBuf;
-use toml_base_config::BaseConfig;
-use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
-use zk_citadel_moat::wallet_accessor::Password::PwdHash;
 use zk_citadel_moat::{
     Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter,
 };
 
-const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
-const PWD_HASH: &str =
-    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+use zk_citadel_moat::api::MoatContext;
+
+const WALLET_PATH: &str =
+    concat!(env!("HOME"), "/.dusk/rusk-wallet/wallet.dat");
+const WALLET_PASS: &str = "password";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
@@ -35,9 +33,6 @@ async fn contract_call_with_payload() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
 
-    let blockchain_config =
-        BlockchainAccessConfig::load_path(blockchain_config_path)?;
-
     let request_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/tests/request/test_request.json"
@@ -45,24 +40,27 @@ async fn contract_call_with_payload() -> Result<(), Error> {
 
     let request_json: RequestJson = RequestJson::from_file(request_path)?;
 
-    let wallet_path = WalletPath::from(
-        PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
-    );
+    let moat_context = MoatContext::create(
+        blockchain_config_path,
+        WALLET_PATH,
+        WALLET_PASS,
+        GAS_LIMIT,
+        GAS_PRICE,
+    )
+    .await?;
 
     let tx_id = PayloadSender::execute_contract_method(
         // any payload will do as long as the called method does not require
         // arguments
         request_json.provider_psk,
-        &blockchain_config,
-        &wallet_path,
-        &PwdHash(PWD_HASH.to_string()),
-        GAS_LIMIT,
-        GAS_PRICE,
+        &moat_context,
         LICENSE_CONTRACT_ID,
         CONTRACT_METHOD_NAME,
     )
     .await?;
-    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
+    let client = RuskHttpClient::new(
+        moat_context.blockchain_access_config.rusk_address.clone(),
+    );
     TxAwaiter::wait_for(&client, tx_id).await?;
 
     Ok(())

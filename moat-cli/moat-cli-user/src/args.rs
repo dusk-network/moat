@@ -4,8 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use std::path::PathBuf;
-
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -13,12 +11,12 @@ use clap::Parser;
 #[command(propagate_version = true)]
 pub struct Args {
     /// Wallet directory [default: `$HOME/.dusk/rusk-wallet`]
-    #[clap(short, long, default_value = concat!(env!("HOME"), "/.dusk/rusk-wallet"))]
-    pub wallet_path: PathBuf,
+    #[clap(short, long, default_value = concat!(env!("HOME"), "/.dusk/rusk-wallet/wallet.dat"))]
+    pub wallet_path: String,
 
     /// Blockchain access config directory
-    #[clap(short, long, default_value = "moat-cli/config.toml")]
-    pub config_path: PathBuf,
+    #[clap(short, long, default_value = concat!(env!("CARGO_MANIFEST_DIR"), "/../config.toml"))]
+    pub config_path: String,
 
     /// Password for the wallet
     #[clap(long, default_value_t = String::from(""), env = "RUSK_WALLET_PWD")]

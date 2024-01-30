@@ -4,27 +4,25 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::{RuskHttpClient, WalletPath};
+use dusk_wallet::RuskHttpClient;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::sleep;
-use toml_base_config::BaseConfig;
+
 use tracing::Level;
 use zk_citadel::license::Request;
-use zk_citadel_moat::wallet_accessor::{
-    BlockchainAccessConfig, Password::PwdHash,
-};
 use zk_citadel_moat::{
     Error, PayloadExtractor, PayloadRetriever, RequestCreator, RequestJson,
     RequestSender, TxInquirer, MAX_REQUEST_SIZE,
 };
 use zk_citadel_moat::{JsonLoader, TxAwaiter};
 
-const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
-const PWD_HASH: &str =
-    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+use zk_citadel_moat::api::MoatContext;
+
+const WALLET_PATH: &str =
+    concat!(env!("HOME"), "/.dusk/rusk-wallet/wallet.dat");
+const WALLET_PASS: &str = "password";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
 
@@ -55,22 +53,18 @@ async fn send_request() -> Result<(), Error> {
         .expect("Serializing should be infallible")
         .to_vec();
 
-    let config = BlockchainAccessConfig::load_path(config_path)?;
-
-    let wallet_path = WalletPath::from(
-        PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
-    );
-
-    let tx_id = RequestSender::send_request(
-        request,
-        &config,
-        &wallet_path,
-        &PwdHash(PWD_HASH.to_string()),
+    let moat_context = MoatContext::create(
+        config_path,
+        WALLET_PATH,
+        WALLET_PASS,
         GAS_LIMIT,
         GAS_PRICE,
     )
     .await?;
-    let client = RuskHttpClient::new(config.rusk_address);
+
+    let tx_id = RequestSender::send_request(request, &moat_context).await?;
+    let client =
+        RuskHttpClient::new(moat_context.blockchain_access_config.rusk_address);
     TxAwaiter::wait_for(&client, tx_id).await?;
 
     let tx_id_hex = hex::encode(tx_id.to_bytes());

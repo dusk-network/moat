@@ -14,7 +14,7 @@ use dusk_jubjub::JubJubAffine;
 use dusk_pki::PublicSpendKey;
 use dusk_wallet::RuskHttpClient;
 use zk_citadel::license::{Session, SessionCookie};
-use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
+use zk_citadel_moat::api::{MoatContext, MoatCore};
 use zk_citadel_moat::{CitadelInquirer, LicenseSessionId};
 
 /// Commands that can be run against the Moat
@@ -35,8 +35,7 @@ impl Command {
     #[allow(clippy::too_many_arguments)]
     pub async fn run(
         self,
-        blockchain_access_config: &BlockchainAccessConfig,
-        psk_sp: PublicSpendKey,
+        moat_context: &MoatContext,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
             Command::VerifyRequestedService {
@@ -44,32 +43,29 @@ impl Command {
                 psk_lp_bytes,
             } => {
                 Self::verify_requested_service(
-                    blockchain_access_config,
+                    moat_context,
                     &session_cookie,
                     &psk_lp_bytes,
-                    &psk_sp,
                 )
                 .await?
             }
             Command::GetSession { session_id } => {
-                Self::get_session(blockchain_access_config, session_id).await?
+                Self::get_session(moat_context, session_id).await?
             }
-            Command::ShowState => {
-                Self::show_state(blockchain_access_config).await?
-            }
+            Command::ShowState => Self::show_state(moat_context).await?,
         };
         Ok(run_result)
     }
 
     /// Command: Request Service
     async fn verify_requested_service(
-        blockchain_access_config: &BlockchainAccessConfig,
+        moat_context: &MoatContext,
         session_cookie: &str,
         psk_lp_bytes: &str,
-        psk_sp: &PublicSpendKey,
     ) -> Result<RunResult, Error> {
-        let client =
-            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let client = RuskHttpClient::new(
+            moat_context.blockchain_access_config.rusk_address.clone(),
+        );
 
         let bytes = hex::decode(session_cookie)
             .map_err(|_| Error::InvalidEntry("session cookie".into()))?;
@@ -81,6 +77,8 @@ impl Command {
         let psk_lp =
             PublicSpendKey::from_slice(psk_lp_bytes_formatted.as_slice())?;
         let pk_lp = JubJubAffine::from(*psk_lp.A());
+
+        let (psk_sp, _ssk_sp) = MoatCore::get_wallet_keypair(moat_context)?;
         let pk_sp = JubJubAffine::from(*psk_sp.A());
 
         let session_id = LicenseSessionId { id: sc.session_id };
@@ -98,11 +96,12 @@ impl Command {
 
     /// Command: Get Session
     async fn get_session(
-        blockchain_access_config: &BlockchainAccessConfig,
+        moat_context: &MoatContext,
         session_id: String,
     ) -> Result<RunResult, Error> {
-        let client =
-            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let client = RuskHttpClient::new(
+            moat_context.blockchain_access_config.rusk_address.clone(),
+        );
         let session_id_bytes = hex::decode(session_id.clone())
             .map_err(|_| Error::InvalidEntry("session id".into()))?;
         let id = LicenseSessionId {
@@ -126,10 +125,11 @@ impl Command {
 
     /// Command: Show State
     async fn show_state(
-        blockchain_access_config: &BlockchainAccessConfig,
+        moat_context: &MoatContext,
     ) -> Result<RunResult, Error> {
-        let client =
-            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let client = RuskHttpClient::new(
+            moat_context.blockchain_access_config.rusk_address.clone(),
+        );
         let (num_licenses, _, num_sessions) =
             CitadelInquirer::get_info(&client).await?;
         let summary = LicenseContractSummary {

@@ -4,55 +4,32 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::wallet_accessor::{BlockchainAccessConfig, Password};
+use crate::api::{MoatContext, MoatCore};
 use crate::{
     Error, PayloadSender, TxAwaiter, ISSUE_LICENSE_METHOD_NAME,
     LICENSE_CONTRACT_ID, MAX_LICENSE_SIZE,
 };
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubAffine, JubJubScalar};
-use dusk_pki::SecretSpendKey;
 use dusk_poseidon::sponge;
-use dusk_wallet::{RuskHttpClient, WalletPath};
+use dusk_wallet::RuskHttpClient;
 use rand::{CryptoRng, RngCore};
 use tracing::trace;
 use zk_citadel::license::{License, Request};
 
-pub struct LicenseIssuer {
-    config: BlockchainAccessConfig,
-    wallet_path: WalletPath,
-    password: Password,
-    gas_limit: u64,
-    gas_price: u64,
-}
+pub struct LicenseIssuer {}
 
 impl LicenseIssuer {
-    pub fn new(
-        config: BlockchainAccessConfig,
-        wallet_path: WalletPath,
-        password: Password,
-        gas_limit: u64,
-        gas_price: u64,
-    ) -> Self {
-        Self {
-            config,
-            wallet_path,
-            password,
-            gas_limit,
-            gas_price,
-        }
-    }
-
     /// Issue license for a given request, License Provider SSK, and attribute
     /// data. Returns a serialized license.
     pub async fn issue_license<R: RngCore + CryptoRng>(
-        &self,
         rng: &mut R,
         request: &Request,
-        ssk_lp: &SecretSpendKey,
         attr_data: &JubJubScalar,
+        moat_context: &MoatContext,
     ) -> Result<(BlsScalar, Vec<u8>), Error> {
-        let license = License::new(attr_data, ssk_lp, request, rng);
+        let (_psk, ssk) = MoatCore::get_wallet_keypair(moat_context)?;
+        let license = License::new(attr_data, &ssk, request, rng);
         let license_blob = rkyv::to_bytes::<_, MAX_LICENSE_SIZE>(&license)
             .expect("Serializing should be infallible")
             .to_vec();
@@ -65,16 +42,14 @@ impl LicenseIssuer {
         );
         let tx_id = PayloadSender::execute_contract_method(
             tuple,
-            &self.config,
-            &self.wallet_path,
-            &self.password,
-            self.gas_limit,
-            self.gas_price,
+            moat_context,
             LICENSE_CONTRACT_ID,
             ISSUE_LICENSE_METHOD_NAME,
         )
         .await?;
-        let client = RuskHttpClient::new(self.config.rusk_address.clone());
+        let client = RuskHttpClient::new(
+            moat_context.blockchain_access_config.rusk_address.clone(),
+        );
         TxAwaiter::wait_for(&client, tx_id).await?;
         Ok((tx_id, license_blob))
     }
