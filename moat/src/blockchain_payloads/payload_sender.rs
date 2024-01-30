@@ -4,13 +4,13 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::api::MoatContext;
 use crate::error::Error;
-use crate::wallet_accessor::{
-    BlockchainAccessConfig, Password, WalletAccessor,
-};
+use crate::wallet_accessor::accessor;
+
 use crate::MAX_CALL_SIZE;
+
 use dusk_bls12_381::BlsScalar;
-use dusk_wallet::WalletPath;
 use phoenix_core::transaction::ModuleId;
 use rkyv::ser::serializers::AllocSerializer;
 
@@ -21,11 +21,7 @@ impl PayloadSender {
     #[allow(clippy::too_many_arguments)]
     pub async fn execute_contract_method<P, M>(
         payload: P,
-        cfg: &BlockchainAccessConfig,
-        wallet_path: &WalletPath,
-        password: &Password,
-        gas_limit: u64,
-        gas_price: u64,
+        moat_context: &MoatContext,
         contract_id: ModuleId,
         method: M,
     ) -> Result<BlsScalar, Error>
@@ -33,18 +29,13 @@ impl PayloadSender {
         P: rkyv::Serialize<AllocSerializer<MAX_CALL_SIZE>>,
         M: AsRef<str>,
     {
-        let wallet_accessor =
-            WalletAccessor::create(wallet_path.clone(), password.clone())?;
-        let tx_id = wallet_accessor
-            .execute_contract_method(
-                payload,
-                contract_id,
-                method.as_ref().to_string(),
-                cfg,
-                gas_limit,
-                gas_price,
-            )
-            .await?;
+        let tx_id = accessor::execute_contract_method(
+            moat_context,
+            payload,
+            contract_id,
+            method.as_ref().to_string(),
+        )
+        .await?;
         Ok(tx_id)
     }
 }

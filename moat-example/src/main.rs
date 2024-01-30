@@ -30,20 +30,16 @@ async fn main() -> Result<(), Error> {
         wallet_password,
         gas_limit,
         gas_price,
-    )?;
+    )
+    .await?;
 
     // Retrieve the keypair from the installed wallet
     let (psk_user, ssk_user) = MoatCore::get_wallet_keypair(&moat_context)?;
 
     // Submit a request to the Blockchain
     let psk_lp = psk_user; // we specify the same key just for testing
-    let request_hash = MoatCore::request_license(
-        &ssk_user,
-        &psk_lp,
-        &moat_context,
-        &mut OsRng,
-    )
-    .await?;
+    let (request_hash, _request_tx_id) =
+        MoatCore::request_license(&psk_lp, &moat_context, &mut OsRng).await?;
     println!("Request transacted: {:?}", request_hash);
 
     // Get owned requests
@@ -53,9 +49,8 @@ async fn main() -> Result<(), Error> {
     // Issue a license
     let attr_data = JubJubScalar::from(1234u64);
     let rng = &mut OsRng;
-    let license_hash = MoatCore::issue_license(
+    let (license_hash, _license_tx_id) = MoatCore::issue_license(
         requests.get(0).expect("A request was owned."),
-        &ssk_lp,
         &moat_context,
         &attr_data,
         rng,
@@ -67,14 +62,17 @@ async fn main() -> Result<(), Error> {
     let licenses =
         MoatCore::get_owned_licenses(&ssk_user, &moat_context).await?;
 
+    // Get the proving key
+    let prover = MoatCore::get_prover(&moat_context).await?;
+
     // Use a license
     let psk_sp = psk_lp; // we set the same key as the one for LP just for testing
     let challenge = JubJubScalar::from(1234u64);
-    let session_cookie = MoatCore::use_license(
+    let (session_cookie, _use_tx_id) = MoatCore::use_license(
+        &prover,
         &moat_context,
         &psk_lp,
         &psk_sp,
-        &ssk_user,
         &challenge,
         licenses.get(0).expect("A license was owned."),
         rng,

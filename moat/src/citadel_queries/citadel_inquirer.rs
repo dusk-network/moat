@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::api::{MoatContext, MoatCore};
 use crate::error::Error;
 use crate::Error::InvalidQueryResponse;
 use crate::{BlockInPlace, StreamAux};
@@ -14,7 +15,6 @@ use crate::{
     LICENSE_CONTRACT_ID,
 };
 use bytes::Bytes;
-use dusk_pki::SecretSpendKey;
 use dusk_wallet::RuskHttpClient;
 use poseidon_merkle::Opening;
 use rkyv::{check_archived_root, Deserialize, Infallible};
@@ -105,7 +105,7 @@ impl CitadelInquirer {
     /// Finds owned license in a stream of licenses.
     /// It searches in a reverse order to return a newest license.
     pub fn find_owned_licenses(
-        ssk_user: SecretSpendKey,
+        moat_context: &MoatContext,
         stream: &mut (impl futures_core::Stream<Item = Result<Bytes, reqwest::Error>>
                   + std::marker::Unpin),
     ) -> Result<Vec<(u64, License)>, Error> {
@@ -114,6 +114,9 @@ impl CitadelInquirer {
         StreamAux::find_items::<(u64, Vec<u8>), ITEM_LEN>(
             |(pos, lic_vec)| {
                 let license = Self::deserialise_license(lic_vec);
+                let (_psk, ssk_user) =
+                    MoatCore::get_wallet_keypair(moat_context)
+                        .expect("Keys returned.");
                 if ssk_user.view_key().owns(&license.lsa) {
                     pairs.push((*pos, license));
                 };

@@ -20,60 +20,42 @@
 //!     usage of the license)
 
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::DeserializableSlice;
-use dusk_pki::SecretSpendKey;
 use dusk_plonk::prelude::*;
-use dusk_wallet::{RuskHttpClient, WalletPath};
+use dusk_wallet::RuskHttpClient;
 use rand::rngs::{OsRng, StdRng};
 use rand::SeedableRng;
-use std::path::PathBuf;
-use toml_base_config::BaseConfig;
 use tracing::{info, Level};
 use zk_citadel::license::Request;
-use zk_citadel_moat::license_provider::{LicenseIssuer, ReferenceLP};
-use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
-use zk_citadel_moat::wallet_accessor::Password::PwdHash;
+use zk_citadel_moat::license_provider::LicenseIssuer;
 use zk_citadel_moat::{
-    BcInquirer, CitadelInquirer, CrsGetter, Error, JsonLoader, LicenseCircuit,
-    LicenseSessionId, LicenseUser, PayloadRetriever, RequestCreator,
-    RequestJson, RequestSender, TxAwaiter,
+    BcInquirer, CitadelInquirer, Error, LicenseSessionId, LicenseUser,
+    PayloadRetriever, TxAwaiter,
 };
 
-const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
-const PWD_HASH: &str =
-    "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+use zk_citadel_moat::api::{MoatContext, MoatCore};
+
+const WALLET_PATH: &str =
+    concat!(env!("HOME"), "/.dusk/rusk-wallet/wallet.dat");
+const WALLET_PASS: &str = "password";
 const GAS_LIMIT: u64 = 5_000_000_000;
 const GAS_PRICE: u64 = 1;
-
-static LABEL: &[u8] = b"dusk-network";
 
 /// Calls license contract's issue license method.
 /// Awaits for confirmation of the contract-calling transaction.
 async fn issue_license(
-    reference_lp: &ReferenceLP,
-    blockchain_config: &BlockchainAccessConfig,
-    wallet_path: &WalletPath,
+    moat_context: &MoatContext,
     request: &Request,
     rng: &mut StdRng,
 ) -> Result<BlsScalar, Error> {
-    let license_issuer = LicenseIssuer::new(
-        blockchain_config.clone(),
-        wallet_path.clone(),
-        PwdHash(PWD_HASH.to_string()),
-        GAS_LIMIT,
-        GAS_PRICE,
-    );
-
     const ATTRIBUTE_DATA_EXAMPLE: u64 = 1234;
 
-    let (tx_id, _) = license_issuer
-        .issue_license(
-            rng,
-            &request,
-            &reference_lp.ssk_lp,
-            &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
-        )
-        .await?;
+    let (tx_id, _) = LicenseIssuer::issue_license(
+        rng,
+        &request,
+        &JubJubScalar::from(ATTRIBUTE_DATA_EXAMPLE),
+        &moat_context,
+    )
+    .await?;
     Ok(tx_id)
 }
 
@@ -131,78 +113,37 @@ async fn user_round_trip() -> Result<(), Error> {
     let blockchain_config_path =
         concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
 
-    let blockchain_config =
-        BlockchainAccessConfig::load_path(blockchain_config_path)?;
-
-    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
-
-    info!("obtaining CRS");
-    let pp_vec = CrsGetter::get_crs(&client).await?;
-    let pp =
-        // SAFETY: CRS vector is checked by the hash check when it is received from the node
-        unsafe { PublicParameters::from_slice_unchecked(pp_vec.as_slice()) };
-
-    info!("compiling circuit");
-    let (prover, verifier) = Compiler::compile::<LicenseCircuit>(&pp, LABEL)
-        .expect("Compiling circuit should succeed");
-
-    let request_path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/tests/request/test_request.json"
-    );
-
-    let lp_config_path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/tests/test_keys/test_keys_lp_2.json"
-    );
-
-    let reference_lp = ReferenceLP::create(&lp_config_path)?;
-
-    let wallet_path = WalletPath::from(
-        PathBuf::from(WALLET_PATH).as_path().join("wallet.dat"),
-    );
-
-    // create request
-    let request_json: RequestJson = RequestJson::from_file(request_path)?;
-    let ssk_user_bytes = hex::decode(request_json.user_ssk.clone())?;
-    let ssk_user = SecretSpendKey::from_slice(ssk_user_bytes.as_slice())?;
-
-    let request = RequestCreator::create_from_hex_args(
-        request_json.user_ssk,
-        request_json.provider_psk,
-        &mut rng,
-    )?;
-
-    // as a User, submit request to blockchain
-    info!("submitting request to blockchain (as a User)");
-    let tx_id = RequestSender::send_request(
-        request,
-        &blockchain_config,
-        &wallet_path,
-        &PwdHash(PWD_HASH.to_string()),
+    let moat_context = MoatContext::create(
+        blockchain_config_path,
+        WALLET_PATH,
+        WALLET_PASS,
         GAS_LIMIT,
         GAS_PRICE,
     )
     .await?;
-    TxAwaiter::wait_for(&client, tx_id).await?;
+
+    let client = RuskHttpClient::new(
+        moat_context.blockchain_access_config.rusk_address.clone(),
+    );
+    let (psk_lp, _ssk_lp) = MoatCore::get_wallet_keypair(&moat_context)?;
+
+    // as a User, submit request to blockchain
+    info!("submitting request to blockchain (as a User)");
+    let (_request_hash, request_tx_id) =
+        MoatCore::request_license(&psk_lp, &moat_context, &mut OsRng).await?;
+    TxAwaiter::wait_for(&client, request_tx_id).await?;
 
     // as a LP, retrieve request from blockchain
     info!("retrieving request from blockchain (as an LP)");
-    let tx_id = hex::encode(tx_id.to_bytes());
+    let tx_id = hex::encode(request_tx_id.to_bytes());
     let request: Request =
         PayloadRetriever::retrieve_payload(tx_id, &client).await?;
 
     // as a LP, call issue license, wait for tx to confirm
     show_state(&client, "before issue_license").await?;
     info!("calling issue_license (as an LP)");
-    let issue_license_txid = issue_license(
-        &reference_lp,
-        &blockchain_config,
-        &wallet_path,
-        &request,
-        &mut rng,
-    )
-    .await?;
+    let issue_license_txid =
+        issue_license(&moat_context, &request, &mut rng).await?;
     show_state(&client, "after issue_license").await?;
     TxAwaiter::wait_for(&client, issue_license_txid).await?;
     let end_height = BcInquirer::block_height(&client).await?;
@@ -223,8 +164,10 @@ async fn user_round_trip() -> Result<(), Error> {
     let mut licenses_stream =
         CitadelInquirer::get_licenses(&client, block_heights).await?;
 
-    let owned_licenses =
-        CitadelInquirer::find_owned_licenses(ssk_user, &mut licenses_stream)?;
+    let owned_licenses = CitadelInquirer::find_owned_licenses(
+        &moat_context,
+        &mut licenses_stream,
+    )?;
     let (pos, license) = owned_licenses.last().expect("owned license found");
 
     // as a User, call get_merkle_opening, obtain opening
@@ -239,22 +182,20 @@ async fn user_round_trip() -> Result<(), Error> {
     // so that it is different every time we run the test
     let (_, _, num_sessions) = CitadelInquirer::get_info(&client).await?;
     let challenge = JubJubScalar::from(num_sessions as u64 + 1);
+
+    info!("getting prover (as a user)");
+    let prover = MoatCore::get_prover(&moat_context).await?;
+
     info!("proving license and calling use_license (as a user)");
     let (tx_id, session_cookie) = LicenseUser::prove_and_use_license(
-        &blockchain_config,
-        &wallet_path,
-        &PwdHash(PWD_HASH.to_string()),
-        &ssk_user,
-        &reference_lp.psk_lp,
-        &reference_lp.psk_lp,
         &prover,
-        &verifier,
+        &moat_context,
+        &psk_lp,
+        &psk_lp,
         &license,
         opening.expect("opening should be present"),
         &mut OsRng,
         &challenge,
-        GAS_LIMIT,
-        GAS_PRICE,
     )
     .await?;
     TxAwaiter::wait_for(&client, tx_id).await?;

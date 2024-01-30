@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::wallet_accessor::{BlockchainAccessConfig, Password};
+use crate::api::{MoatContext, MoatCore};
 use crate::{
     Error, LicenseCircuit, PayloadSender, LICENSE_CONTRACT_ID,
     USE_LICENSE_METHOD_NAME,
@@ -13,9 +13,9 @@ use crate::{ARITY, DEPTH};
 use bytecheck::CheckBytes;
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::JubJubScalar;
-use dusk_pki::{PublicSpendKey, SecretSpendKey};
-use dusk_plonk::prelude::{Proof, Prover, Verifier};
-use dusk_wallet::WalletPath;
+use dusk_pki::PublicSpendKey;
+use dusk_plonk::composer::Prover;
+use dusk_plonk::prelude::Proof;
 use poseidon_merkle::Opening;
 use rand::rngs::OsRng;
 use rkyv::{Archive, Deserialize, Serialize};
@@ -37,23 +37,18 @@ impl LicenseUser {
     /// as arguments to the license contract's use_license method.
     /// Returns transaction id and a session cookie.
     pub async fn prove_and_use_license(
-        blockchain_config: &BlockchainAccessConfig,
-        wallet_path: &WalletPath,
-        password: &Password,
-        ssk_user: &SecretSpendKey,
+        prover: &Prover,
+        moat_context: &MoatContext,
         psk_lp: &PublicSpendKey,
         psk_sp: &PublicSpendKey,
-        prover: &Prover,
-        verifier: &Verifier,
         license: &License,
         opening: Opening<(), DEPTH, ARITY>,
         rng: &mut OsRng,
         challenge: &JubJubScalar,
-        gas_limit: u64,
-        gas_price: u64,
     ) -> Result<(BlsScalar, SessionCookie), Error> {
+        let (_psk_user, ssk_user) = MoatCore::get_wallet_keypair(moat_context)?;
         let (cpp, sc) = CitadelProverParameters::compute_parameters(
-            ssk_user, license, psk_lp, psk_sp, challenge, rng, opening,
+            &ssk_user, license, psk_lp, psk_sp, challenge, rng, opening,
         );
         let circuit = LicenseCircuit::new(&cpp, &sc);
 
@@ -62,10 +57,6 @@ impl LicenseUser {
 
         assert!(!public_inputs.is_empty());
 
-        verifier
-            .verify(&proof, &public_inputs)
-            .expect("Verifying the circuit should succeed");
-
         let use_license_arg = UseLicenseArg {
             proof,
             public_inputs,
@@ -73,11 +64,7 @@ impl LicenseUser {
 
         let tx_id = PayloadSender::execute_contract_method(
             use_license_arg,
-            blockchain_config,
-            wallet_path,
-            password,
-            gas_limit,
-            gas_price,
+            moat_context,
             LICENSE_CONTRACT_ID,
             USE_LICENSE_METHOD_NAME,
         )

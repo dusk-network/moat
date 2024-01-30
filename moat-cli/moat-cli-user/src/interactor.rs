@@ -6,12 +6,9 @@
 
 use crate::prompt;
 use crate::{Command, Menu};
-use dusk_pki::SecretSpendKey;
-use dusk_plonk::prelude::{Prover, Verifier};
-use dusk_wallet::WalletPath;
 use moat_cli_common::Error;
 use requestty::{ErrorKind, Question};
-use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
+use zk_citadel_moat::api::MoatContext;
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 enum OpSelection {
@@ -78,19 +75,8 @@ fn menu_operation() -> Result<OpSelection, ErrorKind> {
     })
 }
 
-pub struct SetupHolder {
-    pub prover: Prover,
-    pub verifier: Verifier,
-}
-
 pub struct Interactor {
-    pub wallet_path: WalletPath,
-    pub psw: Password,
-    pub blockchain_access_config: BlockchainAccessConfig,
-    pub gas_limit: u64,
-    pub gas_price: u64,
-    pub ssk: SecretSpendKey,
-    pub setup_holder: Option<SetupHolder>,
+    pub moat_context: MoatContext,
 }
 
 impl Interactor {
@@ -100,17 +86,7 @@ impl Interactor {
             match op {
                 OpSelection::Exit => return Ok(()),
                 OpSelection::Run(command) => {
-                    let result = command
-                        .run(
-                            &self.wallet_path,
-                            &self.psw,
-                            &self.blockchain_access_config,
-                            self.gas_limit,
-                            self.gas_price,
-                            self.ssk,
-                            &mut self.setup_holder,
-                        )
-                        .await;
+                    let result = command.run(&self.moat_context).await;
                     match result {
                         Ok(run_result) => {
                             println!("{}", run_result);

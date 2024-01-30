@@ -9,12 +9,11 @@ use crate::run_result::{
 };
 use crate::SeedableRng;
 use dusk_jubjub::JubJubScalar;
-use dusk_pki::SecretSpendKey;
-use dusk_wallet::{RuskHttpClient, WalletPath};
+use dusk_wallet::RuskHttpClient;
 use moat_cli_common::Error;
 use rand::rngs::StdRng;
+use zk_citadel_moat::api::{MoatContext, MoatCore};
 use zk_citadel_moat::license_provider::{LicenseIssuer, ReferenceLP};
-use zk_citadel_moat::wallet_accessor::{BlockchainAccessConfig, Password};
 use zk_citadel_moat::{BcInquirer, CitadelInquirer};
 
 /// Commands that can be run against the Moat
@@ -37,51 +36,38 @@ impl Command {
     #[allow(clippy::too_many_arguments)]
     pub async fn run(
         self,
-        wallet_path: &WalletPath,
-        psw: &Password,
-        blockchain_access_config: &BlockchainAccessConfig,
-        ssk: &SecretSpendKey,
-        gas_limit: u64,
-        gas_price: u64,
+        moat_context: &MoatContext,
     ) -> Result<RunResult, Error> {
         let run_result = match self {
             Command::ListRequestsLP => {
-                Self::list_requests_lp(blockchain_access_config, ssk).await?
+                Self::list_requests_lp(moat_context).await?
             }
             Command::IssueLicenseLP {
                 request_hash,
                 attr_data_bytes,
             } => {
                 Self::issue_license_lp(
-                    wallet_path,
-                    psw,
-                    blockchain_access_config,
-                    ssk,
-                    gas_limit,
-                    gas_price,
+                    moat_context,
                     request_hash,
                     attr_data_bytes,
                 )
                 .await?
             }
-            Command::ListLicenses => {
-                Self::list_licenses(blockchain_access_config).await?
-            }
-            Command::ShowState => {
-                Self::show_state(blockchain_access_config).await?
-            }
+            Command::ListLicenses => Self::list_licenses(moat_context).await?,
+            Command::ShowState => Self::show_state(moat_context).await?,
         };
         Ok(run_result)
     }
 
     /// Command: List Requests LP
     async fn list_requests_lp(
-        blockchain_access_config: &BlockchainAccessConfig,
-        ssk: &SecretSpendKey,
+        moat_context: &MoatContext,
     ) -> Result<RunResult, Error> {
-        let mut reference_lp = ReferenceLP::create_with_ssk(ssk)?;
-        let (found_total, found_owned) =
-            reference_lp.scan(blockchain_access_config).await?;
+        let (_psk, ssk) = MoatCore::get_wallet_keypair(moat_context)?;
+        let mut reference_lp = ReferenceLP::create_with_ssk(&ssk)?;
+        let (found_total, found_owned) = reference_lp
+            .scan(&moat_context.blockchain_access_config)
+            .await?;
         let summary = RequestsLPSummary {
             found_total,
             found_owned,
@@ -95,40 +81,29 @@ impl Command {
     #[allow(clippy::too_many_arguments)]
     /// Command: Issue License LP
     async fn issue_license_lp(
-        wallet_path: &WalletPath,
-        psw: &Password,
-        blockchain_access_config: &BlockchainAccessConfig,
-        ssk: &SecretSpendKey,
-        gas_limit: u64,
-        gas_price: u64,
+        moat_context: &MoatContext,
         request_hash: String,
         attr_data_bytes: String,
     ) -> Result<RunResult, Error> {
         let attr_data = JubJubScalar::from(attr_data_bytes.parse::<u64>()?);
 
         let mut rng = StdRng::from_entropy();
-        let mut reference_lp = ReferenceLP::create_with_ssk(ssk)?;
-        let (_total_count, _this_lp_count) =
-            reference_lp.scan(blockchain_access_config).await?;
+        let (_psk, ssk) = MoatCore::get_wallet_keypair(moat_context)?;
+        let mut reference_lp = ReferenceLP::create_with_ssk(&ssk)?;
+        let (_total_count, _this_lp_count) = reference_lp
+            .scan(&moat_context.blockchain_access_config)
+            .await?;
 
         let request = reference_lp.get_request(&request_hash);
         Ok(match request {
             Some(request) => {
-                let license_issuer = LicenseIssuer::new(
-                    blockchain_access_config.clone(),
-                    wallet_path.clone(),
-                    psw.clone(),
-                    gas_limit,
-                    gas_price,
-                );
-                let (tx_id, license_blob) = license_issuer
-                    .issue_license(
-                        &mut rng,
-                        &request,
-                        &reference_lp.ssk_lp,
-                        &attr_data,
-                    )
-                    .await?;
+                let (tx_id, license_blob) = LicenseIssuer::issue_license(
+                    &mut rng,
+                    &request,
+                    &attr_data,
+                    moat_context,
+                )
+                .await?;
                 let summary = IssueLicenseSummary {
                     request,
                     tx_id: hex::encode(tx_id.to_bytes()),
@@ -142,10 +117,11 @@ impl Command {
 
     /// Command: List Licenses
     async fn list_licenses(
-        blockchain_access_config: &BlockchainAccessConfig,
+        moat_context: &MoatContext,
     ) -> Result<RunResult, Error> {
-        let client =
-            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let client = RuskHttpClient::new(
+            moat_context.blockchain_access_config.rusk_address.clone(),
+        );
         let end_height = BcInquirer::block_height(&client).await?;
         let block_range = 0..(end_height + 1);
 
@@ -161,10 +137,11 @@ impl Command {
 
     /// Command: Show State
     async fn show_state(
-        blockchain_access_config: &BlockchainAccessConfig,
+        moat_context: &MoatContext,
     ) -> Result<RunResult, Error> {
-        let client =
-            RuskHttpClient::new(blockchain_access_config.rusk_address.clone());
+        let client = RuskHttpClient::new(
+            moat_context.blockchain_access_config.rusk_address.clone(),
+        );
         let (num_licenses, _, num_sessions) =
             CitadelInquirer::get_info(&client).await?;
         let summary = LicenseContractSummary {
