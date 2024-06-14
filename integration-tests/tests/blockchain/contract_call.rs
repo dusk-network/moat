@@ -143,14 +143,14 @@ async fn query_bh() -> Result<(), Error> {
         client.call(2, "Chain", &request).await
     }
 
-    pub async fn block_height(client: &RuskHttpClient) -> Result<(u64, String), Error> {
+    pub async fn block_height_and_prev_hash(client: &RuskHttpClient) -> Result<(u64, String), Error> {
         let query = "query { block(height: -1) {header { height, prevBlockHash }} }";
         let response = gql_query(client, query).await?;
         let result = serde_json::from_slice::<QueryResult2>(&response)?;
         Ok((result.block.header.height, result.block.header.prev_block_hash))
     }
 
-    let (block_height, block_hash) = block_height(&client).await?;
+    let (block_height, block_hash) = block_height_and_prev_hash(&client).await?;
     println!("hash of block previous to {} = {}", block_height, block_hash);
     Ok(())
 }
