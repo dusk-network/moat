@@ -4,15 +4,13 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_wallet::{RuskHttpClient, WalletPath};
+use dusk_wallet::{RuskHttpClient, RuskRequest, WalletPath};
 use phoenix_core::transaction::ModuleId;
 use std::path::PathBuf;
 use toml_base_config::BaseConfig;
 use zk_citadel_moat::wallet_accessor::BlockchainAccessConfig;
 use zk_citadel_moat::wallet_accessor::Password::PwdHash;
-use zk_citadel_moat::{
-    Error, JsonLoader, PayloadSender, RequestJson, TxAwaiter,
-};
+use zk_citadel_moat::{Error, JsonLoader, PayloadSender, QueryResult2, RequestJson, TxAwaiter};
 
 const WALLET_PATH: &str = concat!(env!("HOME"), "/.dusk/rusk-wallet");
 const PWD_HASH: &str =
@@ -65,5 +63,94 @@ async fn contract_call_with_payload() -> Result<(), Error> {
     let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
     TxAwaiter::wait_for(&client, tx_id).await?;
 
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn call_charlie() -> Result<(), Error> {
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
+
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
+
+    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
+
+    const CHARLIE_CONTRACT_ID: ModuleId = {
+        let mut bytes = [0u8; 32];
+        bytes[0] = 0xFC;
+        bytes
+    };
+    let contract_id = hex::encode(CHARLIE_CONTRACT_ID.as_slice());
+    println!("About to call Charlie's pay method");
+    let response = client
+        .contract_query::<(), 65536>(
+            contract_id.as_ref(),
+            "ping",
+            &(),
+        )
+        .await?;
+
+    println!("Charlie ping response={:?}", response);
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn call_transfer() -> Result<(), Error> {
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
+
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
+
+    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
+
+    const TRANSFER_CONTRACT_ID: ModuleId = {
+        let mut bytes = [0u8; 32];
+        bytes[0] = 0x01;
+        bytes
+    };
+    let contract_id = hex::encode(TRANSFER_CONTRACT_ID.as_slice());
+    println!("About to call Transfer contract's root method");
+    let response = client
+        .contract_query::<(), 65536>(
+            contract_id.as_ref(),
+            "root",
+            &(),
+        )
+        .await?;
+
+    println!("Transfer root response={:x?}", response);
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn query_bh() -> Result<(), Error> {
+    let blockchain_config_path =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/config.toml");
+
+    let blockchain_config =
+        BlockchainAccessConfig::load_path(blockchain_config_path)?;
+
+    let client = RuskHttpClient::new(blockchain_config.rusk_address.clone());
+
+    pub async fn gql_query(
+        client: &RuskHttpClient,
+        query: impl AsRef<str>,
+    ) -> Result<Vec<u8>, dusk_wallet::Error> {
+        let request =
+            RuskRequest::new("gql", query.as_ref().as_bytes().to_vec());
+        client.call(2, "Chain", &request).await
+    }
+
+    pub async fn block_height(client: &RuskHttpClient) -> Result<(u64, String), Error> {
+        let query = "query { block(height: -1) {header { height, prevBlockHash }} }";
+        let response = gql_query(client, query).await?;
+        let result = serde_json::from_slice::<QueryResult2>(&response)?;
+        Ok((result.block.header.height, result.block.header.prev_block_hash))
+    }
+
+    let (block_height, block_hash) = block_height(&client).await?;
+    println!("hash of block previous to {} = {}", block_height, block_hash);
     Ok(())
 }

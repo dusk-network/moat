@@ -37,6 +37,8 @@ pub struct CallInfoJson {
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Header {
     pub height: u64,
+    #[serde(alias = "prevBlockHash", default)]
+    pub prev_block_hash: String,
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]

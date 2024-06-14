@@ -21,7 +21,7 @@ impl BcInquirer {
     }
 
     pub async fn block_height(client: &RuskHttpClient) -> Result<u64, Error> {
-        let query = "query { block(height: -1) {header { height}} }";
+        let query = "query { block(height: -1) {header { height, prevBlockHash }} }";
         let response = Self::gql_query(client, query).await?;
         let result = serde_json::from_slice::<QueryResult2>(&response)?;
         Ok(result.block.header.height)
